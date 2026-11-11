@@ -15,10 +15,13 @@ and reviewed once. This is internal infrastructure for those two projects, not a
 - **0.1.0 (phase 1, part 1):** scrape helpers (`safe_scrape()`, `perform_with_retry()`, scrape logging, reference-table
   guards: `write_reference_file()`, `reference_table_status()`), posting status (`refresh_posting_status()`: did a
   posting that left its board close?), and the coverage calendar (`refresh_coverage_calendar()`).
+- **0.2.0 (phase 1, part 2):** BLS OEWS role wages (`refresh_oews_wages()`, `attach_oews_estimates()`; areas for
+  MT and WY in `OEWS_AREAS`), BLS QCEW county school pay, and the LLM extraction tier (shadow pilot and the drift
+  check's title reader).
 
 ## Installing
 ```r
-pak::pak("bostickmike/edjobs@v0.1.0")
+pak::pak("bostickmike/edjobs@v0.2.0")
 # or, from a local checkout while developing:
 devtools::load_all("../edjobs")
 ```
