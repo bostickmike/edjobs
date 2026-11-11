@@ -2,3 +2,4 @@
 ^\.github$
 ^README\.md$
 ^inst/connect-spike/manifest\.json$
+^tools$

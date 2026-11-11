@@ -12,10 +12,13 @@ and reviewed once. This is internal infrastructure for those two projects, not a
   change lands (file, filter, measure, bounds, the run dates it applies to). The weekly run evaluates it and reports
   failures (`read_run_expectations()`, `validate_run_expectations()`, `evaluate_run_expectations()`,
   `build_run_expectations_report_markdown()`).
+- **0.1.0 (phase 1, part 1):** scrape helpers (`safe_scrape()`, `perform_with_retry()`, scrape logging, reference-table
+  guards: `write_reference_file()`, `reference_table_status()`), posting status (`refresh_posting_status()`: did a
+  posting that left its board close?), and the coverage calendar (`refresh_coverage_calendar()`).
 
 ## Installing
 ```r
-pak::pak("bostickmike/edjobs@v0.0.1")
+pak::pak("bostickmike/edjobs@v0.1.0")
 # or, from a local checkout while developing:
 devtools::load_all("../edjobs")
 ```
