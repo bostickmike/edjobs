@@ -1,0 +1,24 @@
+Package: edjobs
+Title: Shared Code for the Montana and Wyoming Education Jobs Dashboards
+Version: 0.0.1
+Authors@R: person("Mike", "Bostick", email = "michael.bostick@montana.edu", role = c("aut", "cre"))
+Description: Code shared by the Montana and Wyoming Education Jobs Dashboards:
+    weekly checks of a run's output against written expectations, and, as the
+    migration proceeds, scraping, classification, posting identity and the
+    data checks both state pipelines use. Each state repository pins a tagged
+    version.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+Imports:
+    readxl,
+    utils
+Suggests:
+    testthat (>= 3.0.0),
+    withr,
+    writexl
+Config/testthat/edition: 3
+Config/testthat/parallel: true
+URL: https://github.com/bostickmike/edjobs
+BugReports: https://github.com/bostickmike/edjobs/issues
+Config/roxygen2/version: 8.1.1

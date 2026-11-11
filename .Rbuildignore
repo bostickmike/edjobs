@@ -1,0 +1,4 @@
+^LICENSE\.md$
+^\.github$
+^README\.md$
+^inst/connect-spike/manifest\.json$
