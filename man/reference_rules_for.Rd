@@ -4,11 +4,14 @@
 \alias{reference_rules_for}
 \title{Reference rules for}
 \usage{
-reference_rules_for(path)
+reference_rules_for(path, rules = reference_table_rules())
 }
 \arguments{
 \item{path}{See the description.}
+
+\item{rules}{All rules to look in.}
 }
 \description{
-Reference rules for
+The rules for the reference table at \code{path} (by file name, without
+\code{.csv}), from \code{reference_table_rules()}.
 }

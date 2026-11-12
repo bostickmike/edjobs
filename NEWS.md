@@ -1,4 +1,18 @@
-# edjobs (development version)
+# edjobs 0.7.0
+
+Phase 4: the two known places package code still named states.
+
+* `state_config()`, `set_state_config()`, `current_state_config()`: a state's identity (name, FIPS, app folder)
+  and its own reference tables, as data. `reference_table_rules()` gives the shared `REFERENCE_TABLE_RULES` plus the
+  state's; `reference_rules_for()`, `write_reference_file()`, `log_reference_result()` and
+  `reference_table_status()` use it. `REFERENCE_TABLE_RULES` keeps only the shared tables (BLS OEWS and QCEW, IPEDS
+  staff pay); MT's district crosswalk and OPI district counties and WY's UW salary book move to the states'
+  `state_config.R`. **Breaking for a state:** it must call `set_state_config()` before refreshing or checking one
+  of its own tables.
+* OEWS areas are data: `inst/extdata/oews_area_definitions.csv` (one row per county, keyed by state FIPS) and
+  `oews_area_definitions()` replace the exported `OEWS_AREAS` list. `oews_state_areas()`,
+  `oews_series_plan()` and `oews_area_for_county()` take a postal code or a FIPS code and return the same results
+  as 0.6.0 for MT and WY.
 
 * Documentation: README rewritten (where to start, what each `R/` file does, how to change and release), this
   NEWS file, `vignette("edjobs")` (how the package and the state repos fit together, adding a state) and

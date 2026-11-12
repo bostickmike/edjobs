@@ -45,7 +45,7 @@ test_that("a failed refresh is logged without touching the file", {
   expect_equal(log$source, "Reference: BLS OEWS role wages")
   expect_equal(log$status, "error")
   expect_equal(log$n_rows, 1)
-  expect_error(reference_rules_for("not_a_reference_table.csv"), "No REFERENCE_TABLE_RULES")
+  expect_error(reference_rules_for("not_a_reference_table.csv"), "No reference-table rules")
 })
 
 test_that("reference_table_status flags failed, missing and stale refreshes, and nothing when healthy", {
@@ -72,4 +72,28 @@ test_that("reference_table_status flags failed, missing and stale refreshes, and
                                status = "current", n_rows = 1, error_message = NA))
   log$status[2] <- "ok"
   expect_equal(nrow(reference_table_status(dir, log, today = as.Date("2026-11-03"))), 0)
+})
+
+test_that("a state's own reference tables come from its state_config()", {
+  withr::defer(set_state_config(NULL))
+  set_state_config(NULL)
+  expect_error(reference_rules_for("uw_salary_book.csv"), "No reference-table rules")
+  book <- list(name = "UW salary book", required = "Salary", bounds = list(Salary = c(1000, 5000000)),
+               year_col = "Fiscal_Year", max_age = 2)
+  cfg <- state_config("Wyoming", "56", "Wy_Ed_Jobs", reference_tables = list(uw_salary_book = book))
+  set_state_config(cfg)
+  expect_identical(current_state_config()$fips, "56")
+  expect_equal(reference_rules_for("Wy_Ed_Jobs/uw_salary_book.csv")$name, "UW salary book")
+  expect_setequal(names(reference_table_rules()), c(names(REFERENCE_TABLE_RULES), "uw_salary_book"))
+  # A state's table shows up in the status check too.
+  dir <- withr::local_tempdir()
+  write.csv(data.frame(Salary = 50000, Fiscal_Year = "2020"), file.path(dir, "uw_salary_book.csv"), row.names = FALSE)
+  st <- reference_table_status(dir, data.frame(timestamp = character(0), source = character(0), status = character(0),
+                                               n_rows = integer(0), error_message = character(0)), today = as.Date("2026-11-03"))
+  expect_equal(st$name, "UW salary book")
+  # Shared tables have one set of rules; a state can't redefine them.
+  expect_error(state_config("Wyoming", "56", "Wy_Ed_Jobs", reference_tables = list(oews_role_wages = book)), "already shared")
+  expect_error(state_config("Wyoming", "56", "Wy_Ed_Jobs", reference_tables = list(x = list(name = "x"))), "need name")
+  expect_error(state_config("Wyoming", "WY", "Wy_Ed_Jobs"))
+  expect_error(set_state_config(list(state = "Wyoming")), "state_config")
 })

@@ -197,14 +197,18 @@ safe_scrape <- function(source_name, scrape_fn, expected_cols, log_path = "scrap
 
 #' `REFERENCE_TABLE_RULES`
 #'
-#' Files the pipeline re-downloads and keeps between runs (BLS OEWS and QCEW,
-#' IPEDS staff pay, OPI district counties, the UW salary book). A failed or
+#' Files the pipeline re-downloads and keeps between runs. A failed or
 #' partial download must never replace a good file, so each refresh goes
 #' through write_reference_file(). `required`: columns at most 25\% blank.
 #' `bounds`: the range every non-blank value must fall in -- generous, to
 #' catch a units error or a misparsed column, not real change. `max_age`:
 #' years the newest figure may lag the calendar year before
 #' check_salary_drift.R calls the file stale.
+#'
+#' These are the tables every state refreshes (BLS OEWS and QCEW, IPEDS staff
+#' pay). A state's own tables (MT's district crosswalk and OPI district
+#' counties, WY's UW salary book) come from its `state_config()`
+#' (`reference_tables`); `reference_table_rules()` gives both.
 #' @export
 REFERENCE_TABLE_RULES <- list(
   oews_role_wages = list(name = "BLS OEWS role wages", required = "Annual_Median",
@@ -215,27 +219,21 @@ REFERENCE_TABLE_RULES <- list(
                                 year_col = "Year", max_age = 2),
   ipeds_staff_salaries = list(name = "IPEDS staff salaries", required = "Avg_Salary",
                               bounds = list(Avg_Salary = c(15000, 400000)),
-                              year_col = "Year", max_age = 3),
-  opi_district_counties = list(name = "OPI district counties", required = c("OPI_District", "County"),
-                               bounds = list(), year_col = NA, max_age = NA),
-  # NCES CCD districts -> registry district / OPI-only map entity
-  # (opi_reconcile.R). Coordinates must fall inside Montana.
-  mt_district_crosswalk = list(name = "MT district crosswalk (CCD)",
-                               required = c("OPI_District", "Map_Entity", "Latitude", "Longitude"),
-                               bounds = list(Latitude = c(44.3, 49.1), Longitude = c(-116.1, -104.0)),
-                               year_col = "CCD_Year", max_age = 4),
-  uw_salary_book = list(name = "UW salary book", required = "Salary",
-                        bounds = list(Salary = c(1000, 5000000)),
-                        year_col = "Fiscal_Year", max_age = 2)
+                              year_col = "Year", max_age = 3)
 )
 
 #' Reference rules for
+#'
+#' The rules for the reference table at `path` (by file name, without
+#' `.csv`), from `reference_table_rules()`.
 #' @param path See the description.
+#' @param rules All rules to look in.
 #' @export
-reference_rules_for <- function(path) {
-  rules <- REFERENCE_TABLE_RULES[[sub("\\.csv$", "", basename(path))]]
-  if (is.null(rules)) stop("No REFERENCE_TABLE_RULES entry for ", basename(path))
-  rules
+reference_rules_for <- function(path, rules = reference_table_rules()) {
+  r <- rules[[sub("\\.csv$", "", basename(path))]]
+  if (is.null(r)) stop("No reference-table rules for ", basename(path),
+                       " (REFERENCE_TABLE_RULES, or the state's state_config(reference_tables = ))")
+  r
 }
 
 #' Reference table problem
@@ -326,8 +324,9 @@ log_reference_result <- function(path, status, error_message = NA_character_, lo
 reference_table_status <- function(app_dir, scrape_log, today = Sys.Date(),
                                    this_year = as.integer(format(today, "%Y"))) {
   todays_log <- scrape_log[as.Date(substr(scrape_log$timestamp, 1, 10)) == today, , drop = FALSE]
-  rows <- lapply(names(REFERENCE_TABLE_RULES), function(key) {
-    rules <- REFERENCE_TABLE_RULES[[key]]
+  all_rules <- reference_table_rules()
+  rows <- lapply(names(all_rules), function(key) {
+    rules <- all_rules[[key]]
     path <- file.path(app_dir, paste0(key, ".csv"))
     if (!file.exists(path)) return(NULL)   # tables are per state; verify_schema.R catches a lost one
     problems <- character(0)

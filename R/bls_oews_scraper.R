@@ -16,49 +16,30 @@
 # The API serves only the latest year, so the committed CSV is refreshed only
 # when a newer year appears -- one query a week otherwise.
 #
-# Shared verbatim by the Montana and Wyoming dashboards.
+# Shared by every state; a state's areas are data (oews_area_definitions()).
 
-#' `OEWS_AREAS`
+#' OEWS area definitions
 #'
-#' Areas as defined in BLS's "May 2025 OEWS Metropolitan and Nonmetropolitan
-#' Area Definitions" (bls.gov/oes/2025/may/msa_def.htm). Metro codes are
-#' "00" + the CBSA code; nonmetropolitan areas use state FIPS + "0000" + n.
-#' Counties are listed with " County" as in the district registries.
+#' Every OEWS area of the states the package knows, one row per county
+#' (`state_fips`, `state_abbr`, `area_code`, `area_name`, `area_type` =
+#' state / metro / nonmetro, `county`; the statewide row has no county), from
+#' `inst/extdata/oews_area_definitions.csv`. The areas are BLS's "May 2025
+#' OEWS Metropolitan and Nonmetropolitan Area Definitions"
+#' (bls.gov/oes/2025/may/msa_def.htm): metro codes are "00" + the CBSA code;
+#' nonmetropolitan areas use state FIPS + "0000" + n. Counties are listed
+#' without " County". bls.gov refuses scripted requests, so a new state's rows
+#' are added to the CSV from that page by hand; no code changes.
+#' @param state A state's postal abbreviation ("MT") or FIPS code ("30");
+#'   NULL for every state.
 #' @export
-OEWS_AREAS <- list(
-  MT = list(
-    state = c(code = "3000000", name = "Montana"),
-    areas = list(
-      list(code = "0013740", name = "Billings, MT", counties = c("Carbon", "Stillwater", "Yellowstone")),
-      list(code = "0014580", name = "Bozeman, MT", counties = c("Gallatin")),
-      list(code = "0024500", name = "Great Falls, MT", counties = c("Cascade")),
-      list(code = "0025740", name = "Helena, MT", counties = c("Broadwater", "Jefferson", "Lewis and Clark")),
-      list(code = "0033540", name = "Missoula, MT", counties = c("Mineral", "Missoula")),
-      list(code = "3000003", name = "Southwest Montana nonmetro", counties = c(
-        "Beaverhead", "Deer Lodge", "Granite", "Madison", "Meagher", "Park", "Powell", "Silver Bow", "Sweet Grass")),
-      list(code = "3000004", name = "West Montana nonmetro", counties = c(
-        "Flathead", "Lake", "Lincoln", "Ravalli", "Sanders")),
-      list(code = "3000006", name = "East-Central Montana nonmetro", counties = c(
-        "Big Horn", "Blaine", "Carter", "Chouteau", "Custer", "Daniels", "Dawson", "Fallon", "Fergus",
-        "Garfield", "Glacier", "Golden Valley", "Hill", "Judith Basin", "Liberty", "McCone", "Musselshell",
-        "Petroleum", "Phillips", "Pondera", "Powder River", "Prairie", "Richland", "Roosevelt", "Rosebud",
-        "Sheridan", "Teton", "Toole", "Treasure", "Valley", "Wheatland", "Wibaux"))
-    )
-  ),
-  WY = list(
-    state = c(code = "5600000", name = "Wyoming"),
-    areas = list(
-      list(code = "0016220", name = "Casper, WY", counties = c("Natrona")),
-      list(code = "0016940", name = "Cheyenne, WY", counties = c("Laramie")),
-      list(code = "5600006", name = "Western Wyoming nonmetro", counties = c(
-        "Big Horn", "Fremont", "Hot Springs", "Lincoln", "Park", "Sublette", "Sweetwater", "Teton",
-        "Uinta", "Washakie")),
-      list(code = "5600007", name = "Eastern Wyoming nonmetro", counties = c(
-        "Albany", "Campbell", "Carbon", "Converse", "Crook", "Goshen", "Johnson", "Niobrara", "Platte",
-        "Sheridan", "Weston"))
-    )
-  )
-)
+oews_area_definitions <- function(state = NULL) {
+  d <- utils::read.csv(system.file("extdata", "oews_area_definitions.csv", package = "edjobs"),
+                       colClasses = "character", na.strings = "")
+  if (is.null(state)) return(d)
+  d <- d[d$state_abbr == state | d$state_fips == state, , drop = FALSE]
+  if (nrow(d) == 0) stop("No OEWS area definitions for state ", state, " (inst/extdata/oews_area_definitions.csv)")
+  d
+}
 
 #' `OEWS_OCCUPATIONS`
 #'
@@ -94,13 +75,11 @@ OEWS_HOURLY_MEDIAN <- "08"
 #' @param state See the description.
 #' @export
 oews_state_areas <- function(state) {
-  cfg <- OEWS_AREAS[[state]]
-  data.frame(
-    code = c(cfg$state[["code"]], vapply(cfg$areas, `[[`, "", "code")),
-    name = c(cfg$state[["name"]], vapply(cfg$areas, `[[`, "", "name")),
-    type = c("state", rep("area", length(cfg$areas))),
-    stringsAsFactors = FALSE
-  )
+  d <- oews_area_definitions(state)
+  d <- d[!duplicated(d$area_code), , drop = FALSE]
+  d <- d[order(d$area_type != "state"), , drop = FALSE]
+  data.frame(code = d$area_code, name = d$area_name, type = ifelse(d$area_type == "state", "state", "area"),
+             stringsAsFactors = FALSE, row.names = NULL)
 }
 
 #' Oews series id
@@ -281,8 +260,9 @@ oews_occupation_for_posting <- function(position, title) {
 #' @param state See the description.
 #' @export
 oews_area_for_county <- function(county, state) {
-  cfg <- OEWS_AREAS[[state]]
-  lookup <- unlist(lapply(cfg$areas, function(a) stats::setNames(rep(a$code, length(a$counties)), a$counties)))
+  d <- oews_area_definitions(state)
+  d <- d[!is.na(d$county), , drop = FALSE]
+  lookup <- stats::setNames(d$area_code, d$county)
   bare <- sub(" County$", "", sub(",.*$", "", trimws(as.character(county))))
   unname(lookup[bare])
 }

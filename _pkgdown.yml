@@ -2,6 +2,10 @@ template:
   bootstrap: 5
 
 reference:
+- title: "State configuration"
+  contents:
+  - state_config
+  - set_state_config
 - title: "Scraping helpers and reference-table guards"
   contents:
   - REFERENCE_TABLE_RULES
@@ -198,7 +202,7 @@ reference:
   - IPEDS_STAFF_MIN_COUNT
   - NOT_SENIOR_TITLE
   - OEWS_ANNUAL_MEDIAN
-  - OEWS_AREAS
+  - oews_area_definitions
   - OEWS_ESTIMATE_COLUMNS
   - OEWS_HOURLY_MEDIAN
   - OEWS_OCCUPATIONS

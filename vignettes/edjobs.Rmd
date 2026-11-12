@@ -66,13 +66,15 @@ No state names, FIPS codes, file names or URLs inside package functions. What di
 |---|---|
 | Which boards to scrape | the state's registry rows |
 | Name corrections (district, college) | the state's own `canonicalize_*()` functions and tables |
-| Reference tables a state adds (MT's district crosswalk) | *known gap:* MT's two rules still sit in `REFERENCE_TABLE_RULES`; they are to become state data |
-| Federal areas (OEWS metros and nonmetro areas) | *known gap:* `OEWS_AREAS` lists MT's and WY's; to be derived from BLS's area definitions by FIPS |
+| A state's identity (name, FIPS, app folder) | `state_config()`, set once per session with `set_state_config()` |
+| Reference tables a state adds (MT's district crosswalk, WY's UW salary book) | `state_config(reference_tables = )`; `REFERENCE_TABLE_RULES` holds only the shared ones |
+| Federal areas (OEWS metros and nonmetro areas) | rows in `inst/extdata/oews_area_definitions.csv`, keyed by FIPS (`oews_area_definitions()`) |
 | How spells are built (statewide feed, censoring choices) | a `spell_rules()` object |
 | Directories and files | arguments, never a repo-root assumption |
 
 The test for every change is: *what would a third state have to copy or edit?* Anything other than data is a gap
-to close. The direction is a single `state_config()` per state that carries all of this, and state outputs that
+to close. The direction is for one `state_config()` per state to carry all of this (it holds identity and reference
+tables today; spell rules, the statewide-feed adapter and registry paths are to join it), and state outputs that
 share one schema (same columns and categories) so they stack into a multistate dataset. `build_posting_spells()`
 already does this: every rule set writes `POSTING_SPELL_COLUMNS`.
 
