@@ -10,7 +10,9 @@ state_config(
   app_dir,
   reference_tables = list(),
   feed = NULL,
-  drift_baseline_from = NULL
+  drift_baseline_from = NULL,
+  scraper_sources = list(),
+  autofix = list()
 )
 }
 \arguments{
@@ -33,6 +35,15 @@ scrapes). The drift report reads it.}
 \item{drift_baseline_from}{The first run date whose archive counts toward
 the drift check's per-source baselines (\code{build_historical_counts()}):
 earlier archives predate fixes that changed the counts.}
+
+\item{scraper_sources}{Where the state's sources are listed and how each
+is scraped: a list of \code{scraper_registry()} and \code{scraper_calls()}, in
+lookup order (\code{resolve_scraper_call()}, \code{build_source_url_lookup()}).}
+
+\item{autofix}{Settings for the auto-fix issue: \code{scraper_files} (the
+state's scraper files, read as text), \code{fixtures_by} (\code{"name"} or
+\code{"tests"}, see \code{gather_autofix_evidence()}) and \code{fixture_example} (a path
+pattern for a new fixture, with \code{{platform}} and \code{{date}}).}
 }
 \value{
 A list of class \code{edjobs_state_config}.

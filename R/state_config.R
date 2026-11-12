@@ -26,9 +26,17 @@
 #' @param drift_baseline_from The first run date whose archive counts toward
 #'   the drift check's per-source baselines (`build_historical_counts()`):
 #'   earlier archives predate fixes that changed the counts.
+#' @param scraper_sources Where the state's sources are listed and how each
+#'   is scraped: a list of `scraper_registry()` and `scraper_calls()`, in
+#'   lookup order (`resolve_scraper_call()`, `build_source_url_lookup()`).
+#' @param autofix Settings for the auto-fix issue: `scraper_files` (the
+#'   state's scraper files, read as text), `fixtures_by` (`"name"` or
+#'   `"tests"`, see `gather_autofix_evidence()`) and `fixture_example` (a path
+#'   pattern for a new fixture, with `{platform}` and `{date}`).
 #' @return A list of class `edjobs_state_config`.
 #' @export
-state_config <- function(state, fips, app_dir, reference_tables = list(), feed = NULL, drift_baseline_from = NULL) {
+state_config <- function(state, fips, app_dir, reference_tables = list(), feed = NULL, drift_baseline_from = NULL,
+                         scraper_sources = list(), autofix = list()) {
   stopifnot(is.character(state), length(state) == 1, nzchar(state),
             is.character(fips), grepl("^\\d{2}$", fips), is.character(app_dir), length(app_dir) == 1,
             is.list(reference_tables))
@@ -41,7 +49,14 @@ state_config <- function(state, fips, app_dir, reference_tables = list(), feed =
     miss <- setdiff(c("short_name", "label", "url", "discrepancy_file"), names(feed))
     if (length(miss) > 0) stop("feed needs ", paste(miss, collapse = ", "))
   }
+  if (!is.list(scraper_sources) || !all(vapply(scraper_sources, inherits, logical(1), "edjobs_scraper_source"))) {
+    stop("scraper_sources must be a list of scraper_registry() / scraper_calls()")
+  }
+  extra <- setdiff(names(autofix), c("scraper_files", "fixtures_by", "fixture_example"))
+  if (!is.list(autofix) || length(extra) > 0) stop("autofix takes scraper_files, fixtures_by, fixture_example")
+  if (!is.null(autofix$fixtures_by) && !autofix$fixtures_by %in% c("name", "tests")) stop("autofix$fixtures_by must be \"name\" or \"tests\"")
   structure(list(state = state, fips = fips, app_dir = app_dir, reference_tables = reference_tables, feed = feed,
+                 scraper_sources = scraper_sources, autofix = autofix,
                  drift_baseline_from = if (is.null(drift_baseline_from)) NULL else as.Date(drift_baseline_from)),
             class = "edjobs_state_config")
 }
