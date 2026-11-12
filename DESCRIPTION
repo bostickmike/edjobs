@@ -1,6 +1,6 @@
 Package: edjobs
 Title: Shared Code for the Montana and Wyoming Education Jobs Dashboards
-Version: 0.8.0
+Version: 0.9.0
 Authors@R: person("Mike", "Bostick", email = "michael.bostick@montana.edu", role = c("aut", "cre"))
 Description: Code shared by the Montana and Wyoming Education Jobs Dashboards:
     weekly checks of a run's output against written expectations, and, as the

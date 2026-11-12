@@ -25,7 +25,7 @@ general-purpose scraping tool.
 
 | File | What it does |
 |---|---|
-| `state_config.R` | `state_config()` / `set_state_config()`: a state's identity (name, FIPS, app folder) and its own reference tables, as data |
+| `state_config.R` | `state_config()` / `set_state_config()`: a state's identity (name, FIPS, app folder), its own reference tables, statewide feed and scraper sources, as data |
 | `scrape_helpers.R` | `safe_scrape()`, `perform_with_retry()`, scrape logging, reference-table guards (`write_reference_file()`, `reference_table_status()`) |
 | `platform_scrapers.R` | Shared platform fetch/parse: AppliTrack, SchoolSpring details and ending reasons, PeopleAdmin page pay and dates, NEOGOV card pay |
 | `llm_extract_scraper.R` | The quarantined LLM extraction tier (shadow pilot) and the drift check's title reader |
@@ -33,6 +33,7 @@ general-purpose scraping tool.
 | `posting_spells.R` | One row per posting: starts, endings, flags, Kaplan-Meier durations, the first-seen lookup, frozen boards; state rules in `spell_rules()` |
 | `posting_status.R` | Checks a posting's own page after it leaves its board (closed, open, stated closing date) |
 | `coverage_calendar.R` | Which sources returned rows in each run (what "the source was healthy" means) |
+| `scraper_dispatch.R` | Which function scrapes each source, as data (`scraper_registry()`, `scraper_spec()`, `resolve_scraper_call()`), and the auto-fix issue body built from it |
 | `drift_check.R` | Per-source drift, data-quality and auto-fix helpers shared by both states' monitoring steps |
 | `schema_check.R`, `history_checks.R` | File schema checks, totals-match-parts, rebuild parity |
 | `run_expectations.R` | Checks a run's files against a state's `run_expectations.csv` |

@@ -144,6 +144,21 @@ reference:
   - build_drift_report_markdown
   - scraper_titles
   - summarize_live_check
+  - collapse_statewide_feed_names
+  - scraper_spec
+  - scraper_registry
+  - scraper_calls
+  - resolve_scraper_call
+  - describe_scraper_call
+  - run_scraper_call
+  - build_source_url_lookup
+  - scraper_fetch_fn
+  - fixtures_used_by_tests
+  - fixtures_named_for_source
+  - district_fixture_tokens
+  - gather_autofix_evidence
+  - autofix_evidence_markdown
+  - build_autofix_issue_body
   - AUTOFIX_CLAUDE_WORKFLOW
   - AUTOFIX_DIFF_MAX_LINES
   - AUTOFIX_ELIGIBLE_VERDICTS

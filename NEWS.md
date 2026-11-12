@@ -1,3 +1,21 @@
+# edjobs 0.9.0
+
+Phase 4: scraper dispatch and the auto-fix issue body, the last drift-check functions MT and WY held differently.
+
+* "Which function scrapes this source, with what arguments" is data. A state lists its sources in
+  `state_config(scraper_sources = )`: `scraper_registry()` (a table with one row per source and a platform
+  column, plus a `scraper_spec()` per platform: registry columns or functions of the row as arguments, an optional
+  chromote session, a per-district dispatch map, a naming-convention fallback) and `scraper_calls()` (sources that
+  are each one written-out call).
+* `resolve_scraper_call(name)` looks a source up in them; `describe_scraper_call()` and `run_scraper_call()` follow.
+  `build_source_url_lookup()` builds the corroboration step's name -> page lookup from the same sources and the feed.
+* `gather_autofix_evidence()`, `autofix_evidence_markdown()` and `build_autofix_issue_body()`: one issue body for
+  every state. `state_config(autofix = )` says which scraper files to read, how a source's fixtures are found
+  (`"name"`: `fixtures_named_for_source()`; `"tests"`: `fixtures_used_by_tests()`) and what a new fixture is called.
+* `collapse_statewide_feed_names()` (was MT's), reading the feed label from `state_config(feed = )`.
+* The platform specs stay in the states for now: the two registries name platforms and arguments differently.
+  Once they share a schema the package can hold the specs for the platforms it scrapes.
+
 # edjobs 0.8.0
 
 Phase 4: the drift-check functions MT and WY held differently, except dispatch and the auto-fix issue body (next).
