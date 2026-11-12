@@ -28,6 +28,7 @@ general-purpose scraping tool.
 | `state_config.R` | `state_config()` / `set_state_config()`: a state's identity (name, FIPS, app folder), its own reference tables, statewide feed and scraper sources, as data |
 | `scrape_helpers.R` | `safe_scrape()`, `perform_with_retry()`, scrape logging, reference-table guards (`write_reference_file()`, `reference_table_status()`) |
 | `platform_scrapers.R` | Shared platform fetch/parse: AppliTrack, SchoolSpring details and ending reasons, PeopleAdmin page pay and dates, NEOGOV card pay |
+| `platform_fetchers.R` | The platform fetchers: SchoolSpring list, TedK12, PeopleAdmin feed, NEOGOV classic careers page with each posting's page for its dates (`parse_jobposting_jsonld()`), and shared-board attribution from the registry |
 | `llm_extract_scraper.R` | The quarantined LLM extraction tier (shadow pilot) and the drift check's title reader |
 | `k12_he_classification.R` | Title repair, position / subject / HE job-type classification, posted pay extraction |
 | `posting_spells.R` | One row per posting: starts, endings, flags, Kaplan-Meier durations, the first-seen lookup, frozen boards; state rules in `spell_rules()` |
