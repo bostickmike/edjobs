@@ -1,0 +1,109 @@
+---
+title: "Posting spells and listing durations"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Posting spells and listing durations}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+A *posting spell* is one posting's life on its board: when it went up, when it stopped being listed, and how we know.
+`build_posting_spells()` turns weekly scrapes into one row per posting, and `summarize_posting_durations()` turns
+those into median days listed. This vignette walks through the pieces on a toy panel.
+
+```{r}
+library(edjobs)
+```
+
+## The panel: one row per posting per run
+
+A state reads its archives into a panel. The required columns are `Run_Date`, `Posting_ID`,
+`Posting_Identity_Method`, `District`, `title`, `date_posted`, `url`, `Posting_Source` and `position`. Optional:
+`Close_Date`, `Is_Feed`, `Posted_Approx`, `Bridgeable` and `Role_Hint`.
+
+```{r}
+row <- function(run, id, title, posted = "2026-09-01", method = "Source fallback: district + board + title + posted date",
+                source = "applitrack.com/demo") {
+  data.frame(Run_Date = as.Date(run), Posting_ID = id, Posting_Identity_Method = method, District = "Demo District",
+             title = title, date_posted = posted, url = "https://www.applitrack.com/demo/onlineapp/", Posting_Source = source,
+             position = "Teacher", stringsAsFactors = FALSE)
+}
+panel <- rbind(
+  row("2026-10-16", "fb-1", "Science Teacher"), row("2026-10-23", "fb-1", "Science Teacher"),
+  row("2026-10-30", "applitrack:demo:9", "Science Teacher", method = "Stable per-posting ID"),   # board moved to job IDs
+  row("2026-10-16", "fb-2", "Cook"),                                                           # gone after one run
+  row("2026-10-16", "fb-3", "Substitute Teacher"), row("2026-10-23", "fb-3", "Substitute Teacher"),
+  row("2026-10-30", "fb-3", "Substitute Teacher"))
+```
+
+## Identity across runs
+
+The same posting can change ID: a board starts publishing per-posting links, or a parser fix fills in a posted date.
+`bridge_posting_ids()` joins an earlier fallback-identified posting to the stable ID it carries later, when the
+source, district, title and posted date match uniquely and the two are never listed in the same run. A new exact
+posted date is a real repost and stays separate.
+
+```{r}
+bridged <- bridge_posting_ids(panel)
+unique(bridged[, c("Posting_ID", "Bridged_From")])
+```
+
+## Endings, starts and flags
+
+```{r}
+spells <- build_posting_spells(bridged)
+spells[, c("Title", "First_Seen", "Last_Seen", "Ending", "Start_Basis", "Left_Censored", "Evergreen", "In_Durations")]
+```
+
+- **Ending.** A posting last seen before the latest run "no longer listed" only when its source was healthy the
+  next run (the coverage calendar, or, before the calendar starts, whether the district returned rows from that
+  source). Otherwise the end is censored ("censored: source error", "... partial", "... moved boards", "... relisted
+  next run"). SchoolSpring's own record (filled, canceled) and the posting's own page (`posting_status.csv`) can
+  confirm or overrule an ending. `POSTING_SPELL_EVENTS` lists the endings that count.
+- **Start.** The board's posted date when plausible (on or before the first sighting, at most 365 days earlier);
+  otherwise the first sighting, which is *left-censored* when the posting was already up the first time we saw that
+  board.
+- **Out of durations.** Standing ads (`EVERGREEN_TITLE_PATTERN`, or posted over a year before we first saw them),
+  pools (`POOL_TITLE_PATTERN`), frozen boards (`frozen_board_runs()`), same-title postings that can't be told apart,
+  left-censored starts, and, if the state says so, statewide-feed rows. They stay in the table, flagged.
+
+In the toy panel, "Cook" ended: it was gone on 10-23, when the board still returned rows (there is no calendar
+here, so that is the "district returned rows" proxy). "Science Teacher" is one posting, still listed, under its new
+ID. "Substitute Teacher" is a standing ad, kept in the table but out of durations. Every posting starts on its
+board's posted date; one with no posted date, first seen in the board's first run, would be left-censored.
+
+## A state's rules
+
+What differs between states is a `spell_rules()` object, set once per segment:
+
+```{r}
+spell_rules()$shared_titles                                   # the default
+mt_like <- spell_rules(feed_entity = "OPI statewide feed", feed_in_durations = FALSE, shared_titles = "all",
+                       partial_min_previous = Inf, moved_boards = FALSE, left_censor_after_gap = FALSE)
+identical(names(build_posting_spells(bridged, rules = mt_like)), POSTING_SPELL_COLUMNS)
+```
+
+Every rule set writes the same columns, `POSTING_SPELL_COLUMNS`, so the states' spells stack. Where MT's rules
+still differ from the defaults, and what changing each would do, is measured in the workspace's
+`claude-notes/2026-11-11_spells-convergence.md`.
+
+## Durations
+
+```{r}
+summarize_posting_durations(spells)
+```
+
+`summarize_posting_durations()` fits a Kaplan-Meier curve with delayed entry (a posting first seen at age 60 days
+is only at risk from day 60), over `In_Durations` spells, and reports a median only with at least `min_events`
+endings (20 by default). Read the result as "days a posting stays listed", not time to fill: only SchoolSpring says
+a posting was filled.
+
+## The first-seen lookup
+
+Many boards give no posted date. `first_seen_lookup()` writes, for each posting listed in the latest run, the first
+run that found it, keyed the way the app shows postings (`first_seen_key()`: district, title, link), so the app can
+show "On the board since at least ..." instead of a blank.

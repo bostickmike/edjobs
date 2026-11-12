@@ -3,3 +3,6 @@
 ^README\.md$
 ^inst/connect-spike/manifest\.json$
 ^tools$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$

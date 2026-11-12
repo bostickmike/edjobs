@@ -3,3 +3,5 @@
 *.Rcheck/
 edjobs_*.tar.gz
 .DS_Store
+docs/
+inst/doc

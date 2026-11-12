@@ -36,6 +36,7 @@ jobs:
           # 'release'; the mirror fallback above handles that.
           r-version: 'release'
           use-public-rspm: true
+      - uses: r-lib/actions/setup-pandoc@v2   # builds the vignettes
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::rcmdcheck

@@ -1,0 +1,236 @@
+template:
+  bootstrap: 5
+
+reference:
+- title: "Scraping helpers and reference-table guards"
+  contents:
+  - REFERENCE_TABLE_RULES
+  - empty_df
+  - fetch_json_paginated
+  - is_transient_gateway_error
+  - log_reference_result
+  - log_scrape_result
+  - perform_with_retry
+  - reference_rules_for
+  - reference_table_problem
+  - reference_table_status
+  - safe_scrape
+  - write_reference_file
+- title: "Platform scrapers (AppliTrack, SchoolSpring, PeopleAdmin, NEOGOV)"
+  contents:
+  - PEOPLEADMIN_CLOSE_LABELS
+  - PEOPLEADMIN_OPEN_LABELS
+  - PEOPLEADMIN_PAY_LABELS
+  - SCHOOLSPRING_DETAIL_EMPTY
+  - SCHOOLSPRING_ENDINGS_EMPTY
+  - SCHOOLSPRING_FINAL_STATUS
+  - SCHOOLSPRING_STATUS
+  - add_schoolspring_details
+  - applitrack_posting_url
+  - fetch_applitrack_postings
+  - fetch_schoolspring_details
+  - format_pay_amount
+  - parse_applitrack_output
+  - parse_neogov_card_pay
+  - parse_peopleadmin_posting_dates
+  - parse_peopleadmin_posting_pay
+  - parse_schoolspring_job_json
+  - refresh_schoolspring_endings
+  - schoolspring_job_id
+  - schoolspring_sightings
+  - update_schoolspring_endings
+- title: "LLM extraction tier (shadow pilot)"
+  contents:
+  - LLM_EXTRACT_MAX_CHARS
+  - LLM_EXTRACT_MAX_PLAUSIBLE
+  - LLM_EXTRACT_RESPONSE_FORMAT
+  - LLM_EXTRACT_RESPONSE_SCHEMA
+  - LLM_EXTRACT_SYSTEM_PROMPT
+  - LLM_EXTRACT_TARGETS_PATH
+  - fetch_all_llm_extracted_postings
+  - fetch_llm_extracted_postings
+  - llm_extract_call
+  - llm_extract_empty
+  - llm_extract_endpoint
+  - llm_extract_key_env
+  - llm_extract_looks_boilerplate
+  - llm_extract_model
+  - llm_extract_render_text
+  - llm_extract_title_on_page
+  - llm_extract_token
+  - llm_titles_from_page_text
+  - parse_llm_extracted_postings
+  - read_llm_extract_targets
+- title: "Classification, title repair and posted pay"
+  contents:
+  - K12_ROLE_NOUNS
+  - PAY_PLAUSIBLE_RANGE
+  - POSTED_PAY_COLUMNS
+  - TITLE_DETAIL_OPENING
+  - apply_k12_role_hint
+  - classify_he_faculty_category
+  - classify_he_job_type
+  - classify_he_job_type_rules
+  - classify_k12_broad_category
+  - classify_k12_position
+  - classify_k12_subject
+  - decode_numeric_entities
+  - drop_implausible_pay
+  - ensure_posted_pay_columns
+  - extract_posted_pay
+  - fix_title_encoding
+  - is_implausible_pay
+  - is_placeholder_posting
+  - k12_category_keywords
+  - k12_role_hint
+  - move_title_detail
+  - split_title_detail
+- title: "Posting spells and listing durations"
+  contents:
+  - EVERGREEN_TITLE_PATTERN
+  - FROZEN_MIN_RUNS
+  - POSTING_SPELL_COLUMNS
+  - POSTING_SPELL_EVENTS
+  - bridge_posting_ids
+  - build_frozen_board_report_markdown
+  - build_posting_spells
+  - first_seen_key
+  - frozen_board_runs
+  - parse_board_posted_date
+  - parse_stated_close_date
+  - relisted_next_run
+  - source_health
+  - spell_rules
+  - spell_text
+  - summarize_posting_durations
+  - use_earliest_posted_date
+- title: "Posting status: did a posting that left its board close?"
+  contents:
+  - POSTING_STATUS_BROWSER_PLATFORMS
+  - POSTING_STATUS_COLUMNS
+  - POSTING_STATUS_MAX_CHECKS
+  - POSTING_STATUS_UA
+  - check_posting_pages
+  - drop_closed_wsba_rows
+  - dropped_postings
+  - fetch_posting_page_text
+  - merge_posting_status
+  - parse_posting_status
+  - parse_status_date
+  - posting_status_check_url
+  - posting_status_platform
+  - posting_status_rechecks
+  - refresh_posting_status
+- title: "Coverage calendar"
+  contents:
+  - COVERAGE_CALENDAR_COLUMNS
+  - COVERAGE_HEALTHY_STATUS
+  - append_coverage_calendar
+  - build_coverage_calendar
+  - coverage_calendar_empty
+  - coverage_entity_name
+  - latest_log_entries
+  - read_scrape_log
+  - refresh_coverage_calendar
+- title: "Drift, data-quality and auto-fix checks"
+  contents:
+  - AUTOFIX_CLAUDE_WORKFLOW
+  - AUTOFIX_DIFF_MAX_LINES
+  - AUTOFIX_ELIGIBLE_VERDICTS
+  - AUTOFIX_ENGINES
+  - AUTOFIX_ESCALATION_MARKER
+  - AUTOFIX_ESCALATION_MIN_DAYS
+  - AUTOFIX_LABEL
+  - AUTOFIX_MARKER_RE
+  - AUTOFIX_PAGE_TEXT_MAX_CHARS
+  - STANDING_POOL_PATTERN
+  - TITLE_ABBREVIATION_PATTERN
+  - attach_scrape_log_errors
+  - autofix_engine
+  - autofix_escalation_decision
+  - autofix_issue_title
+  - autofix_linked_prs
+  - build_implausible_pay_report_markdown
+  - build_keyword_conflict_report_markdown
+  - build_other_share_report_markdown
+  - build_pay_coverage_report_markdown
+  - build_title_lint_report_markdown
+  - check_salary_coverage
+  - check_salary_value_bounds
+  - check_salary_yoy_plausibility
+  - combine_verdict_with_llm
+  - drop_standing_pool_titles
+  - find_keyword_conflicts
+  - flag_other_share_jump
+  - flag_pay_coverage_drop
+  - he_keyword_conflict_rules
+  - k12_keyword_conflict_rules
+  - lint_title_shape
+  - other_share_counts
+  - parse_autofix_expected_titles
+  - parse_autofix_marker
+  - pay_coverage_counts
+  - recent_source_titles
+  - score_page_text_for_job_signal
+  - scraper_reads_inner_text
+  - text_diff
+  - title_pay_unrecorded
+- title: "Schema and history checks"
+  contents:
+  - check_file_schema
+  - check_total_matches_parts
+  - rebuild_parity_row
+- title: "Run expectations"
+  contents:
+  - RUN_EXPECTATION_COLUMNS
+  - build_run_expectations_report_markdown
+  - evaluate_run_expectations
+  - format_expectation_range
+  - format_expectation_value
+  - measure_expectation
+  - read_run_expectations
+  - validate_run_expectations
+- title: "Federal pay benchmarks"
+  contents:
+  - HOURLY_OR_STUDENT_TITLE
+  - IPEDS_STAFF_CATEGORIES
+  - IPEDS_STAFF_ENDPOINT
+  - IPEDS_STAFF_MIN_COUNT
+  - NOT_SENIOR_TITLE
+  - OEWS_ANNUAL_MEDIAN
+  - OEWS_AREAS
+  - OEWS_ESTIMATE_COLUMNS
+  - OEWS_HOURLY_MEDIAN
+  - OEWS_OCCUPATIONS
+  - QCEW_API
+  - SENIOR_MANAGEMENT_TITLE
+  - attach_ipeds_staff_estimates
+  - attach_oews_estimates
+  - fetch_ipeds_staff_salaries
+  - fetch_ipeds_staff_year
+  - fetch_oews_latest_year
+  - fetch_oews_wages
+  - fetch_qcew_school_pay
+  - ipeds_staff_category_for_title
+  - is_salaried_staff_posting
+  - oews_api_request
+  - oews_area_for_county
+  - oews_occupation_for_posting
+  - oews_series_id
+  - oews_series_plan
+  - oews_state_areas
+  - parse_ipeds_staff_salaries
+  - parse_oews_response
+  - parse_qcew_school_pay
+  - qcew_county_key
+  - read_qcew_csv
+  - refresh_oews_wages
+- title: "Package"
+  contents:
+  - 'edjobs-package'
+
+articles:
+- title: Guides
+  contents:
+  - edjobs
+  - posting-spells

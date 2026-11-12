@@ -1,0 +1,119 @@
+---
+title: "How edjobs fits the state pipelines"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{How edjobs fits the state pipelines}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", eval = FALSE)
+```
+
+edjobs holds the code that the Montana and Wyoming Education Jobs Dashboards share. This vignette explains what
+lives in the package and what stays in a state repository, how a state uses the package, and how code moves here.
+
+## Two kinds of repository
+
+A **state repository** (for example `bostickmike/Montana-Education-Jobs-Dashboard`) is a weekly pipeline plus a
+Shiny app:
+
+- `<State>_ED_Jobs.Rmd` scrapes every source, classifies postings, and appends this week's rows to the accumulated
+  CSVs the app reads.
+- `<app dir>/app.R` is the dashboard. It reads the committed CSVs and never scrapes.
+- Registries (`k12_district_registry.csv`, `he_institution_registry.csv`) list every board the state scrapes:
+  one row per district or college, with its platform and URL.
+- `.github/workflows/weekly-scrape.yml` runs the tests, the pipeline and the monitoring steps, then commits the
+  data, which redeploys the app.
+
+**edjobs** holds the functions those pipelines share: platform scrapers, the classifier, posting spells, posting
+status checks, the coverage calendar, drift and data-quality checks, run expectations and federal pay benchmarks.
+It has no data of its own. Every state-specific thing arrives as an argument, a registry row or a rules object.
+
+## How a state uses the package
+
+The state pins a version in `EDJOBS_VERSION` (one line, for example `0.6.0`). Each workflow installs that tag:
+
+```{r}
+pak::pak(paste0("bostickmike/edjobs@v", trimws(readLines("EDJOBS_VERSION"))))
+```
+
+The state's own R files attach the package (`library(edjobs)`) and keep only what is the state's own. For posting
+spells, MT's `posting_spells.R` reads MT's archives into a *panel* and sets MT's rules, and the package does the
+rest:
+
+```{r}
+library(edjobs)
+source("posting_spells.R")             # MT's panels and MT_K12_SPELL_RULES
+panel  <- bridge_posting_ids(k12_posting_panel("Archivek12_Data", crosswalk, registry), MT_K12_SPELL_RULES)
+spells <- build_posting_spells(panel, calendar, endings, statuses = statuses, rules = MT_K12_SPELL_RULES)
+summarize_posting_durations(spells, "Position")
+```
+
+A state test (`test-run-expectations.R`) fails if the installed version is not the pinned one, so a state never
+runs against a version it didn't choose.
+
+**Masking.** A function defined in a state file overrides the package's function of the same name. When a function
+moves here, the state's copy is deleted in the same change. The toolkit's `sibling_sync.R` fails if a state still
+defines a package export.
+
+## The rule for package code: no state inside
+
+No state names, FIPS codes, file names or URLs inside package functions. What differs by state comes in as data:
+
+| Difference | How it arrives |
+|---|---|
+| Which boards to scrape | the state's registry rows |
+| Name corrections (district, college) | the state's own `canonicalize_*()` functions and tables |
+| Reference tables a state adds (MT's district crosswalk) | *known gap:* MT's two rules still sit in `REFERENCE_TABLE_RULES`; they are to become state data |
+| Federal areas (OEWS metros and nonmetro areas) | *known gap:* `OEWS_AREAS` lists MT's and WY's; to be derived from BLS's area definitions by FIPS |
+| How spells are built (statewide feed, censoring choices) | a `spell_rules()` object |
+| Directories and files | arguments, never a repo-root assumption |
+
+The test for every change is: *what would a third state have to copy or edit?* Anything other than data is a gap
+to close. The direction is a single `state_config()` per state that carries all of this, and state outputs that
+share one schema (same columns and categories) so they stack into a multistate dataset. `build_posting_spells()`
+already does this: every rule set writes `POSTING_SPELL_COLUMNS`.
+
+## How code moves here
+
+The migration runs in phases (plan: the workspace's `claude-notes/2026-11-10_r-package-migration-plan.md`):
+
+0. Run expectations, to prove installing, pinning and CI.
+1. Files that were already identical in both states.
+2. The classifier and the shared checks.
+3. Platform scrapers.
+4. The forks: functions that differ between the states (posting spells done in 0.6.0; scraper dispatch, the
+   auto-fix issue body, history accumulation, CCD/SAIPE parsers to come). Each difference becomes an argument or
+   a rules field, and the move is checked for parity: rebuilt from the committed archives, each state's output must
+   match what it committed.
+5. Federal context sources by FIPS.
+6. The app's shared helpers.
+
+For each move: the functions, their tests and their real fixtures come here; roxygen comments document them
+(`tools/roxygenize_moved_file.R` turns a state file's comments into roxygen); the state replaces every `source()`
+of the file and deletes its copies; both state suites pass on the new tag; and the pipeline steps that call the
+moved code are rehearsed on real data before the pin is bumped.
+
+## Tests and fixtures
+
+Tests live in `tests/testthat/` and run on every PR (`R CMD check --as-cran`; a warning fails it). Fixtures in
+`tests/testthat/fixtures/` are real captured pages and API responses, not synthetic payloads, so a scraper fix
+comes with a new real fixture. A test that stubs a package function uses `testthat::local_mocked_bindings()`
+(package bindings are locked). Tests of a state's committed data stay in the state repository.
+
+## Auto-fix for a package scraper
+
+When a state's weekly drift check finds a likely-broken scraper whose fetch function is an edjobs export, it opens
+a companion `scraper-autofix` issue on this repository, assigned to Copilot (this repo has its own
+`copilot-setup-steps.yml` and `copilot-instructions.md`). If the issue is still flagged at a later run, the Claude
+fallback runs from the state repository with edjobs checked out in `.edjobs/` and opens its PR here. After a fix
+merges: tag, and bump `EDJOBS_VERSION` in both states.
+
+## Adding a state (where this is heading)
+
+Today a third state would need its own repository with a pipeline Rmd, registries, an app, workflows, and the
+state-specific files (name corrections, posting identity, panels, rules). The package work aims to shrink that to
+data: registries discovered from NCES CCD/IPEDS district and college URLs plus platform fingerprinting, a
+`state_config()`, and a skeleton pipeline and app. Success is measured in days to stand up a state.

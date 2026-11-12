@@ -1,6 +1,6 @@
 Package: edjobs
 Title: Shared Code for the Montana and Wyoming Education Jobs Dashboards
-Version: 0.6.0
+Version: 0.6.0.9000
 Authors@R: person("Mike", "Bostick", email = "michael.bostick@montana.edu", role = c("aut", "cre"))
 Description: Code shared by the Montana and Wyoming Education Jobs Dashboards:
     weekly checks of a run's output against written expectations, and, as the
@@ -22,9 +22,12 @@ Imports:
     survival,
     utils
 Suggests:
+    knitr,
+    rmarkdown,
     testthat (>= 3.0.0),
     withr,
     writexl
+VignetteBuilder: knitr
 Config/testthat/edition: 3
 Config/testthat/parallel: true
 URL: https://github.com/bostickmike/edjobs
