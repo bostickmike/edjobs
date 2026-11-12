@@ -2,3 +2,4 @@
 .Rhistory
 *.Rcheck/
 edjobs_*.tar.gz
+.DS_Store
