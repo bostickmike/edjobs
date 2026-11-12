@@ -3,7 +3,7 @@
 # file names or URLs (vignette("edjobs")); this is where those come in.
 #
 # Phase 4 (2026-11-11) starts it with the identity fields and the state's own
-# reference tables. Later fields (spell rules, statewide-feed adapter,
+# reference tables, then (0.8.0) the statewide feed. Later fields (spell rules, feed adapter,
 # registry paths, schemas) join as the forks move.
 
 .edjobs_state <- new.env(parent = emptyenv())
@@ -19,9 +19,16 @@
 #'   `REFERENCE_TABLE_RULES` (one entry per file name without `.csv`). A name
 #'   already in `REFERENCE_TABLE_RULES` is an error: shared tables have one set
 #'   of rules.
+#' @param feed The state's statewide job feed, or NULL: a list with
+#'   `short_name` ("OPI"), `label` (its `Posting_Source` value), `url` and
+#'   `discrepancy_file` (the report of feed postings missing from direct
+#'   scrapes). The drift report reads it.
+#' @param drift_baseline_from The first run date whose archive counts toward
+#'   the drift check's per-source baselines (`build_historical_counts()`):
+#'   earlier archives predate fixes that changed the counts.
 #' @return A list of class `edjobs_state_config`.
 #' @export
-state_config <- function(state, fips, app_dir, reference_tables = list()) {
+state_config <- function(state, fips, app_dir, reference_tables = list(), feed = NULL, drift_baseline_from = NULL) {
   stopifnot(is.character(state), length(state) == 1, nzchar(state),
             is.character(fips), grepl("^\\d{2}$", fips), is.character(app_dir), length(app_dir) == 1,
             is.list(reference_tables))
@@ -30,7 +37,12 @@ state_config <- function(state, fips, app_dir, reference_tables = list()) {
   bad <- names(reference_tables)[!vapply(reference_tables, function(r)
     all(c("name", "required", "bounds", "year_col", "max_age") %in% names(r)), logical(1))]
   if (length(bad) > 0) stop("Reference table rules need name, required, bounds, year_col, max_age: ", paste(bad, collapse = ", "))
-  structure(list(state = state, fips = fips, app_dir = app_dir, reference_tables = reference_tables),
+  if (!is.null(feed)) {
+    miss <- setdiff(c("short_name", "label", "url", "discrepancy_file"), names(feed))
+    if (length(miss) > 0) stop("feed needs ", paste(miss, collapse = ", "))
+  }
+  structure(list(state = state, fips = fips, app_dir = app_dir, reference_tables = reference_tables, feed = feed,
+                 drift_baseline_from = if (is.null(drift_baseline_from)) NULL else as.Date(drift_baseline_from)),
             class = "edjobs_state_config")
 }
 

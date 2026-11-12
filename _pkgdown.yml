@@ -138,6 +138,12 @@ reference:
   - refresh_coverage_calendar
 - title: "Drift, data-quality and auto-fix checks"
   contents:
+  - build_historical_counts
+  - flag_drift
+  - summarize_central_safety_net
+  - build_drift_report_markdown
+  - scraper_titles
+  - summarize_live_check
   - AUTOFIX_CLAUDE_WORKFLOW
   - AUTOFIX_DIFF_MAX_LINES
   - AUTOFIX_ELIGIBLE_VERDICTS

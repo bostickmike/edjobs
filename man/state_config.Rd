@@ -4,7 +4,14 @@
 \alias{state_config}
 \title{A state's configuration}
 \usage{
-state_config(state, fips, app_dir, reference_tables = list())
+state_config(
+  state,
+  fips,
+  app_dir,
+  reference_tables = list(),
+  feed = NULL,
+  drift_baseline_from = NULL
+)
 }
 \arguments{
 \item{state}{The state's name, as the dashboards show it ("Montana").}
@@ -17,6 +24,15 @@ state_config(state, fips, app_dir, reference_tables = list())
 \code{REFERENCE_TABLE_RULES} (one entry per file name without \code{.csv}). A name
 already in \code{REFERENCE_TABLE_RULES} is an error: shared tables have one set
 of rules.}
+
+\item{feed}{The state's statewide job feed, or NULL: a list with
+\code{short_name} ("OPI"), \code{label} (its \code{Posting_Source} value), \code{url} and
+\code{discrepancy_file} (the report of feed postings missing from direct
+scrapes). The drift report reads it.}
+
+\item{drift_baseline_from}{The first run date whose archive counts toward
+the drift check's per-source baselines (\code{build_historical_counts()}):
+earlier archives predate fixes that changed the counts.}
 }
 \value{
 A list of class \code{edjobs_state_config}.
