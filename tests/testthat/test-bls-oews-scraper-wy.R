@@ -53,7 +53,7 @@ test_that("oews_area_for_county accepts each county format and covers every coun
                c("0013740", "3000004", "3000006", NA))
   expect_equal(oews_area_for_county("Albany County, Wyoming", "WY"), "5600007")
   for (st in c("MT", "WY")) {
-    counties <- unlist(lapply(OEWS_AREAS[[st]]$areas, `[[`, "counties"))
+    counties <- stats::na.omit(oews_area_definitions(st)$county)
     expect_false(any(duplicated(counties)))
     expect_equal(length(counties), c(MT = 56, WY = 23)[[st]])
   }

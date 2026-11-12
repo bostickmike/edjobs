@@ -25,6 +25,7 @@ general-purpose scraping tool.
 
 | File | What it does |
 |---|---|
+| `state_config.R` | `state_config()` / `set_state_config()`: a state's identity (name, FIPS, app folder) and its own reference tables, as data |
 | `scrape_helpers.R` | `safe_scrape()`, `perform_with_retry()`, scrape logging, reference-table guards (`write_reference_file()`, `reference_table_status()`) |
 | `platform_scrapers.R` | Shared platform fetch/parse: AppliTrack, SchoolSpring details and ending reasons, PeopleAdmin page pay and dates, NEOGOV card pay |
 | `llm_extract_scraper.R` | The quarantined LLM extraction tier (shadow pilot) and the drift check's title reader |
@@ -40,7 +41,7 @@ general-purpose scraping tool.
 ## Installing
 
 ```r
-pak::pak("bostickmike/edjobs@v0.6.0")      # the version a state pins
+pak::pak("bostickmike/edjobs@v0.7.0")      # the version a state pins
 devtools::load_all("../edjobs")             # from a local checkout while changing it
 ```
 
