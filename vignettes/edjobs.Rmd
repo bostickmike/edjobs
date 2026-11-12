@@ -69,6 +69,7 @@ No state names, FIPS codes, file names or URLs inside package functions. What di
 | A state's identity (name, FIPS, app folder) | `state_config()`, set once per session with `set_state_config()` |
 | Reference tables a state adds (MT's district crosswalk, WY's UW salary book) | `state_config(reference_tables = )`; `REFERENCE_TABLE_RULES` holds only the shared ones |
 | The statewide feed's name, label and page; the drift baseline date | `state_config(feed = , drift_baseline_from = )` |
+| A state's raw column names for the shared K-12 output columns | `build_k12_combinedclean(columns = )`; the output is `K12_POSTING_COLUMNS` in every state |
 | Which function scrapes each source, with what arguments | `state_config(scraper_sources = )`: `scraper_registry()` with a `scraper_spec()` per platform, `scraper_calls()` for one-off calls; `resolve_scraper_call()` reads them |
 | Federal areas (OEWS metros and nonmetro areas) | rows in `inst/extdata/oews_area_definitions.csv`, keyed by FIPS (`oews_area_definitions()`) |
 | How spells are built (statewide feed, censoring choices) | a `spell_rules()` object |

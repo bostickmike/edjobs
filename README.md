@@ -34,6 +34,7 @@ general-purpose scraping tool.
 | `posting_status.R` | Checks a posting's own page after it leaves its board (closed, open, stated closing date) |
 | `coverage_calendar.R` | Which sources returned rows in each run (what "the source was healthy" means) |
 | `scraper_dispatch.R` | Which function scrapes each source, as data (`scraper_registry()`, `scraper_spec()`, `resolve_scraper_call()`), and the auto-fix issue body built from it |
+| `k12_history.R` | The accumulated K-12 files: one output schema (`K12_POSTING_COLUMNS`), `build_k12_combinedclean()`, `append_weekly_rows()` |
 | `drift_check.R` | Per-source drift, data-quality and auto-fix helpers shared by both states' monitoring steps |
 | `schema_check.R`, `history_checks.R` | File schema checks, totals-match-parts, rebuild parity |
 | `run_expectations.R` | Checks a run's files against a state's `run_expectations.csv` |
