@@ -1,3 +1,15 @@
+# edjobs 0.8.0
+
+Phase 4: the drift-check functions MT and WY held differently, except dispatch and the auto-fix issue body (next).
+
+* `build_historical_counts()`, `flag_drift()`, `summarize_central_safety_net()`, `build_drift_report_markdown()`,
+  `summarize_live_check()` and `scraper_titles()` (WY's, which reads both `title` and `Title`).
+* `state_config()` gains `feed` (the statewide feed's short name, label, URL and discrepancy file) and
+  `drift_baseline_from` (the first archive that counts toward drift baselines; was each state's
+  `BASELINE_VALID_FROM`). The drift functions default to them, so callers don't name the state's feed.
+* `flag_drift(min_mean_count = 3)`: WY's noise floor is the default; MT keeps its own (0) by passing it.
+* The default drift-report explanation is the shared sentence; WY passes its own longer one.
+
 # edjobs 0.7.0
 
 Phase 4: the two known places package code still named states.
