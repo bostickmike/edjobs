@@ -202,6 +202,11 @@ reference:
   - title_pay_unrecorded
 - title: "Schema and history checks"
   contents:
+  - K12_POSTING_COLUMNS
+  - append_weekly_rows
+  - build_k12_combinedclean
+  - build_k12_teacher_rows
+  - summarize_k12_posting_counts
   - check_file_schema
   - check_total_matches_parts
   - rebuild_parity_row

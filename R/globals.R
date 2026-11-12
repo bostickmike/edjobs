@@ -4,4 +4,6 @@ utils::globalVariables(c("N_Rows", ".data", "parts_sum", "total_value", "Distric
                          "Posting_ID", "Run_Date", "Posting_Source", "posted", "title", "t", "key", "run_idx", "chg", "stretch",
                          "From", "To", "Runs", "Postings", "Ongoing", "n", "position", "Role_Hint", "Posting_Identity_Method",
                          "Is_Feed", "date_posted", "Posted_Approx", "url", "Close_Date", "First_Seen", "Next_Run",
-                         "Source_First_Run", "Start_Date", "End_Date"))
+                         "Source_First_Run", "Start_Date", "End_Date",
+                         # k12_history.R
+                         "Broad_Category", "Archive_Date", "Category", "Role_Hint", "position"))

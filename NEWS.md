@@ -1,3 +1,16 @@
+# edjobs 0.10.0
+
+Phase 4: the accumulated K-12 history, with one output schema for every state.
+
+* `K12_POSTING_COLUMNS` (`combinedclean.csv`) and `K12_TEACHER_COLUMNS` (`k12jobanalysis.csv`): the columns every
+  state writes, so the states' files stack. MT's `OPI_District` / `Also_On_OPI` are `Feed_District` /
+  `Also_On_Feed`; WY's `posting_id` is `Posting_ID`, and WY gains `Posting_Source`, `Posting_Identity_Method`,
+  `Feed_District`, `Also_On_Feed` and `Role_Hint` (NA where a state does not record one).
+* `build_k12_combinedclean()` and `build_k12_teacher_rows()`: one builder. A state's raw rows and archives keep
+  their own column names (`columns = `); feed counties, district-name corrections and the feed label come in as
+  arguments. Posting ids are carried through, never rebuilt: the spell history bridges on their values.
+* `append_weekly_rows()` (identical in both states) and `summarize_k12_posting_counts(id_col = )`.
+
 # edjobs 0.9.0
 
 Phase 4: scraper dispatch and the auto-fix issue body, the last drift-check functions MT and WY held differently.
