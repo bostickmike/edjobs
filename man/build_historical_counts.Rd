@@ -7,7 +7,8 @@
 build_historical_counts(
   archive_snapshots,
   name_col,
-  valid_from = current_state_config()$drift_baseline_from
+  valid_from = current_state_config()$drift_baseline_from,
+  failed = NULL
 )
 }
 \arguments{
@@ -18,9 +19,26 @@ build_historical_counts(
 \item{valid_from}{Only snapshots from this date on count (the first run of
 the pipeline as it now is); defaults to the session's
 \code{state_config(drift_baseline_from = )}, else every snapshot.}
+
+\item{failed}{Source-weeks to leave out: a data frame with \code{name} and
+\code{date} ("YYYY-MM-DD"), or NULL.}
 }
 \description{
 \code{archive_snapshots}: a named list (run date -> data frame), one per archived run (a plain argument,
 not a directory scan, so it is testable on in-memory frames). Returns one row per source: \code{name},
 \code{mean_count}, \code{n_weeks}.
+}
+\details{
+Zero weeks (Mike, 2026-11-13): a week a source had no rows counts as 0,
+from the first snapshot it appears in on, so a district that posts only
+some weeks averages over its empty weeks too and an empty week isn't judged
+as a collapse. Two kinds of zero week are left out instead:
+\itemize{
+\item weeks \code{failed} names for that source (its scrape errored or wasn't
+logged: \code{failed_source_weeks()} of the coverage calendar), which say
+nothing about how many postings it has;
+\item the zero weeks after its last week with rows (the stretch it is in now),
+so a silent outage never lowers its own baseline and keeps being flagged.
+\code{n_weeks} is the weeks that count.
+}
 }

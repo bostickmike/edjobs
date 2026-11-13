@@ -34,8 +34,10 @@ schoolspring_domain <- function(job_link) sub("/$", "", sub("^https?://", "", jo
 #' @param domain_name The district's SchoolSpring hostname, e.g.
 #'   "laurel.schoolspring.com".
 #' @param page_size Postings per request.
+#' @param max_pages Stop after this many pages (with a warning): a board that
+#'   repeats its last page would otherwise loop until the job's time limit.
 #' @export
-fetch_schoolspring_postings <- function(domain_name, page_size = 50) {
+fetch_schoolspring_postings <- function(domain_name, page_size = 50, max_pages = 40) {
   all_pages <- list()
   page <- 1
   repeat {
@@ -49,9 +51,11 @@ fetch_schoolspring_postings <- function(domain_name, page_size = 50) {
 
     page_df <- parse_schoolspring_json(resp_body_string(resp), domain_name)
     if (nrow(page_df) == 0) break
+    if (repeats_seen_links(page_df$Link, all_pages)) break   # the board repeated a page
 
     all_pages[[length(all_pages) + 1]] <- page_df
     if (nrow(page_df) < page_size) break  # last page was partial -> no more pages
+    if (page >= max_pages) { warn_page_cap("SchoolSpring", domain_name, max_pages); break }
     page <- page + 1
   }
 
@@ -279,9 +283,10 @@ NEOGOV_BASE <- "https://www.schooljobs.com"
 #'   (schooljobs.com/careers/<slug>): "cwc", "ummissoula".
 #' @param details Read each posting's page for its dates.
 #' @param detail_delay Seconds between posting pages.
+#' @param max_pages Stop after this many list pages (with a warning).
 #' @return Title, Location, Posted_Date, Link, the `POSTED_PAY_COLUMNS`, Close_Date.
 #' @export
-fetch_neogov_postings <- function(agency_slug, details = TRUE, detail_delay = 0.3) {
+fetch_neogov_postings <- function(agency_slug, details = TRUE, detail_delay = 0.3, max_pages = 40) {
   if (grepl("^https?://", agency_slug)) {
     stop("fetch_neogov_postings() takes the agency slug ('cwc'), not a domain: NEOGOV redirects to the agency's own domain")
   }
@@ -298,8 +303,10 @@ fetch_neogov_postings <- function(agency_slug, details = TRUE, detail_delay = 0.
 
     page_result <- parse_neogov_html(resp_body_string(resp), base_domain)
     if (nrow(page_result) == 0) break
+    if (repeats_seen_links(page_result$Link, all_pages)) break   # the board repeated a page
 
     all_pages[[length(all_pages) + 1]] <- page_result
+    if (page >= max_pages) { warn_page_cap("NEOGOV", agency_slug, max_pages); break }
     page <- page + 1
   }
 
@@ -323,6 +330,18 @@ fetch_neogov_postings <- function(agency_slug, details = TRUE, detail_delay = 0.
   postings$Posted_Date <- dplyr::coalesce(found$Posted_Date, as.character(postings$Posted_Date))
   postings$Close_Date <- found$Close_Date
   postings
+}
+
+# TRUE when a page brings no link not already seen (a board repeating its last
+# page instead of returning an empty one).
+repeats_seen_links <- function(links, pages) {
+  links <- links[!is.na(links)]
+  length(pages) > 0 && length(links) > 0 && all(links %in% unlist(lapply(pages, `[[`, "Link")))
+}
+
+warn_page_cap <- function(platform, board, max_pages) {
+  warning(platform, " board '", board, "': stopped at ", max_pages, " pages; raise max_pages if it really has more",
+          call. = FALSE)
 }
 
 neogov_empty <- function() {
@@ -514,8 +533,32 @@ jp_num <- function(x) {
   if (is.na(x)) NA_real_ else suppressWarnings(as.numeric(gsub("[$,]", "", x)))
 }
 
+# A JSON-LD date as an ISO day. Plain "2026-11-01" as is; a date-time with a
+# zone ("2026-11-02T06:59:00Z", "...-07:00") as the day in Mountain time (both
+# states), so a midnight-local deadline doesn't land a day late; a date-time
+# with no zone, its date part. Anything else (11/01/2026, 20261101) is NA, not
+# passed on as a date.
+jsonld_day <- function(x, tz = "America/Denver") {
+  x <- trimws(jp_chr(x))
+  if (is.na(x) || !grepl("^\\d{4}-\\d{2}-\\d{2}", x)) return(NA_character_)
+  d <- substr(x, 1, 10)
+  if (is.na(as.Date(d, format = "%Y-%m-%d", optional = TRUE))) return(NA_character_)
+  zone <- regmatches(x, regexpr("(Z|[+-]\\d{2}:?\\d{2})$", x))
+  if (!grepl("T\\d{2}:\\d{2}", x) || length(zone) == 0) return(d)
+  clock <- sub("^.{10}T(\\d{2}:\\d{2}(:\\d{2})?).*$", "\\1", x)
+  if (nchar(clock) == 5) clock <- paste0(clock, ":00")
+  utc <- as.POSIXct(paste(d, clock), format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
+  if (zone != "Z") {
+    sgn <- if (startsWith(zone, "-")) -1 else 1
+    hm <- as.integer(c(substr(gsub(":", "", zone), 2, 3), substr(gsub(":", "", zone), 4, 5)))
+    utc <- utc - sgn * (hm[1] * 3600 + hm[2] * 60)
+  }
+  if (is.na(utc)) return(d)
+  format(utc, "%Y-%m-%d", tz = tz)
+}
+
 jobposting_row <- function(j) {
-  day <- function(x) { x <- jp_chr(x); if (is.na(x) || !nzchar(x)) NA_character_ else substr(x, 1, 10) }
+  day <- jsonld_day
   # baseSalary: a MonetaryAmount whose value is a QuantitativeValue
   # ({minValue, maxValue, unitText}) or a bare number; or a bare number itself.
   base <- jp_obj(j$baseSalary)

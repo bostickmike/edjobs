@@ -4,7 +4,12 @@
 \alias{fetch_neogov_postings}
 \title{Fetch NEOGOV postings}
 \usage{
-fetch_neogov_postings(agency_slug, details = TRUE, detail_delay = 0.3)
+fetch_neogov_postings(
+  agency_slug,
+  details = TRUE,
+  detail_delay = 0.3,
+  max_pages = 40
+)
 }
 \arguments{
 \item{agency_slug}{The agency's short code from its careers URL
@@ -13,6 +18,8 @@ fetch_neogov_postings(agency_slug, details = TRUE, detail_delay = 0.3)
 \item{details}{Read each posting's page for its dates.}
 
 \item{detail_delay}{Seconds between posting pages.}
+
+\item{max_pages}{Stop after this many list pages (with a warning).}
 }
 \value{
 Title, Location, Posted_Date, Link, the \code{POSTED_PAY_COLUMNS}, Close_Date.

@@ -218,9 +218,13 @@ check_posting_pages <- function(urls, checked_on = Sys.Date(), session_factory =
     if (platform[i] %in% POSTING_STATUS_BROWSER_PLATFORMS && is.null(session) && !is.null(session_factory)) {
       session <<- tryCatch(session_factory(), error = function(e) NULL)
     }
+    t0 <- Sys.time()
     r <- tryCatch(parse_posting_status(platform[i], fetch(check[i], platform[i], session), checked_on),
                   error = function(e) data.frame(Status = "unknown", Signal = paste("check failed:", substr(conditionMessage(e), 1, 80)),
                                                  Stated_Close_Date = NA_character_, stringsAsFactors = FALSE))
+    # One line per page (the weekly run's log shows where time goes; 2026-11-13).
+    message(sprintf("Posting status %d/%d: %-8s %5.1fs %-7s %s", i, length(check), platform[i],
+                    as.numeric(Sys.time() - t0, units = "secs"), r$Status[1], check[i]))
     if (pause > 0) Sys.sleep(pause)
     cbind(data.frame(Check_URL = check[i], Platform = platform[i], stringsAsFactors = FALSE), r)
   })

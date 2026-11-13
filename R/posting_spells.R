@@ -218,7 +218,7 @@ parse_stated_close_date <- function(x) {
 #' @param panel A spells panel.
 #' @export
 use_earliest_posted_date <- function(panel) {
-  posted <- suppressWarnings(as.Date(panel$date_posted))
+  posted <- suppressWarnings(as.Date(substr(panel$date_posted, 1, 10), format = "%Y-%m-%d"))  # text ("Posted 3 weeks ago") -> NA, never an error
   ok <- !is.na(posted) & posted <= panel$Run_Date
   approx <- posted_approx(panel)
   pick <- function(sel) stats::ave(ifelse(sel, as.numeric(posted), NA_real_), panel$Posting_ID,
@@ -252,7 +252,7 @@ bridge_posting_ids <- function(panel, rules = spell_rules()) {
   posted <- ifelse(posted_approx(panel), NA_character_, panel$date_posted)
   key <- paste(panel$Posting_Source, panel$District, spell_key(panel$title), posted, sep = "\u001f")
   stable <- grepl("^Stable", panel$Posting_Identity_Method)
-  fallback <- !stable & !is.na(posted)
+  fallback <- !stable & !is.na(posted) & nzchar(posted)   # "" is no date: never bridge on title alone
   ids_by_key <- function(sel) {
     x <- unique(data.frame(key = key[sel], id = panel$Posting_ID[sel], stringsAsFactors = FALSE))
     x[!x$key %in% x$key[duplicated(x$key)], , drop = FALSE]   # unique key -> one ID
@@ -303,10 +303,11 @@ bridge_adjacent_runs <- function(panel, rules = spell_rules()) {
              same_date, , drop = FALSE]
     if (nrow(m) == 0) next
     hit <- match(panel$Posting_ID, m$Posting_ID_old)
-    panel$Bridged_From[!is.na(hit)] <- panel$Posting_ID[!is.na(hit)]
+    # Keep the first ID a posting ever had; a stable ID never becomes movable by
+    # absorbing a fallback one (that chained two requisitions into one spell).
+    panel$Bridged_From[!is.na(hit)] <- dplyr::coalesce(panel$Bridged_From[!is.na(hit)], panel$Posting_ID[!is.na(hit)])
     panel$Posting_ID[!is.na(hit)] <- m$Posting_ID_new[hit[!is.na(hit)]]
     span$Posting_ID <- panel$Posting_ID
-    movable_ids <- unique(c(movable_ids, m$Posting_ID_new[m$Posting_ID_old %in% movable_ids]))
   }
   panel
 }
@@ -420,9 +421,11 @@ POSTING_SPELL_COLUMNS <- c(
 #' @param statuses posting_status.csv: what each posting's own page said after
 #'   it dropped off its board, or NULL.
 #' @param rules `spell_rules()`.
+#' @param frozen_min_runs Runs inside a frozen stretch that make a posting
+#'   `Frozen_Board`: the `min_runs` `frozen` was built with.
 #' @export
 build_posting_spells <- function(panel, calendar = NULL, endings = NULL, frozen = NULL, statuses = NULL,
-                                 rules = spell_rules()) {
+                                 rules = spell_rules(), frozen_min_runs = FROZEN_MIN_RUNS) {
   if (is.null(panel$Close_Date)) panel$Close_Date <- NA_character_
   if (is.null(panel$Is_Feed)) panel$Is_Feed <- FALSE
   if (is.null(panel$Bridged_From)) panel$Bridged_From <- NA_character_
@@ -523,7 +526,7 @@ build_posting_spells <- function(panel, calendar = NULL, endings = NULL, frozen 
   sp$Ending[relisted & sp$Ending %in% setdiff(POSTING_SPELL_EVENTS, "filled")] <- "censored: relisted next run"
   sp$Event <- sp$Ending %in% POSTING_SPELL_EVENTS
 
-  posted <- suppressWarnings(as.Date(substr(sp$Posted_Date, 1, 10)))
+  posted <- suppressWarnings(as.Date(substr(sp$Posted_Date, 1, 10), format = "%Y-%m-%d"))
   lag <- as.numeric(sp$First_Seen - posted)
   sp$Start_Basis <- ifelse(!is.na(lag) & lag >= 0 & lag <= 365,
                            ifelse(sp$Posted_Approx, "board posted date (approximate)", "board posted date"),
@@ -542,7 +545,7 @@ build_posting_spells <- function(panel, calendar = NULL, endings = NULL, frozen 
   sp$Evergreen <- match_pattern(rules$evergreen_pattern, sp$Title) | (!is.na(lag) & lag > 365)
   sp$Pool <- match_pattern(rules$pool_pattern, sp$Title)
 
-  # Frozen board: the posting spent FROZEN_MIN_RUNS+ runs inside one of its
+  # Frozen board: the posting spent frozen_min_runs+ runs inside one of its
   # board's frozen stretches.
   sp$Frozen_Runs <- 0L
   if (!is.null(frozen) && nrow(frozen) > 0) {
@@ -555,9 +558,9 @@ build_posting_spells <- function(panel, calendar = NULL, endings = NULL, frozen 
       sp$Frozen_Runs[hit] <- pmax(sp$Frozen_Runs[hit], pmax(0L, b - a + 1L))
     }
   }
-  sp$Frozen_Board <- sp$Frozen_Runs >= FROZEN_MIN_RUNS
+  sp$Frozen_Board <- sp$Frozen_Runs >= frozen_min_runs
 
-  close <- suppressWarnings(as.Date(sp$Stated_Close_Date))
+  close <- suppressWarnings(as.Date(substr(sp$Stated_Close_Date, 1, 10), format = "%Y-%m-%d"))
   on_close <- sp$Event & !is.na(close) & !is.na(sp$Next_Run) & close >= sp$Last_Seen & close <= sp$Next_Run
   sp$End_Basis <- ifelse(on_close, "stated closing date", ifelse(sp$Event, "midpoint to next run", "censored"))
   sp$End_Date <- as.Date(ifelse(on_close, close,

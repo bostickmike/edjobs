@@ -142,3 +142,25 @@ test_that("build_k12_teacher_rows and summarize_k12_posting_counts count distinc
   names(teach)[names(teach) == "Posting_ID"] <- "posting_id"
   expect_equal(summarize_k12_posting_counts(teach, id_col = "posting_id")$sum, counts$sum)
 })
+
+# Phase 4 review fixes (2026-11-13).
+test_that("append_weekly_rows keeps an existing row whose date is NA instead of turning it into an all-NA row", {
+  tmp <- withr::local_tempfile(fileext = ".csv")
+  write.csv(data.frame(Archive_Date = c("2026-11-06", NA), n = c(1, 2)), tmp, row.names = FALSE)
+  out <- append_weekly_rows(tmp, data.frame(Archive_Date = "2026-11-13", n = 3))
+  expect_equal(nrow(out), 3)
+  expect_equal(out$n, c(1, 2, 3))
+  expect_false(any(rowSums(is.na(out)) == ncol(out)))
+})
+
+test_that("build_k12_combinedclean says which mapped columns are missing, and warns with no feed label at all", {
+  stub_oews()
+  rows <- k12_rows(); rows$Posting_ID <- paste0("id", seq_len(nrow(rows)))
+  with_feed_label()
+  expect_message(build_k12_combinedclean(rows, oews_none(), data.frame(District = "Alpha Schools", County = "Alpha County"),
+                                         "MT", columns = c(Also_On_Feed = "Also_On_OPI_typo")),
+                 "no Also_On_OPI_typo column \\(mapped to Also_On_Feed\\)")
+  old <- current_state_config(); set_state_config(NULL); withr::defer(set_state_config(old))
+  expect_warning(build_k12_combinedclean(rows, oews_none(), data.frame(District = "Alpha Schools", County = "Alpha County"), "MT"),
+                 "no state_config")
+})

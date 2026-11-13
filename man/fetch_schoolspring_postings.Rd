@@ -4,13 +4,16 @@
 \alias{fetch_schoolspring_postings}
 \title{Fetch SchoolSpring postings}
 \usage{
-fetch_schoolspring_postings(domain_name, page_size = 50)
+fetch_schoolspring_postings(domain_name, page_size = 50, max_pages = 40)
 }
 \arguments{
 \item{domain_name}{The district's SchoolSpring hostname, e.g.
 "laurel.schoolspring.com".}
 
 \item{page_size}{Postings per request.}
+
+\item{max_pages}{Stop after this many pages (with a warning): a board that
+repeats its last page would otherwise loop until the job's time limit.}
 }
 \description{
 The interactive site at a district's schoolspring.com domain sits behind
