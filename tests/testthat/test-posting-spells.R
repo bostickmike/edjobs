@@ -312,3 +312,81 @@ test_that("every rule set writes the same columns, so states' spells stack", {
     for (x in list(p, q)) expect_identical(names(build_posting_spells(bridge_posting_ids(x, r), rules = r)), POSTING_SPELL_COLUMNS)
   expect_error(spell_rules(shared_titles = "some"))
 })
+
+# ---- Phase 4 review fixes (2026-11-13) ---------------------------------------
+test_that("a stable ID that absorbed a fallback one never moves on: two requisition numbers stay two postings", {
+  stable <- "Stable per-posting ID"
+  p <- rbind(ps_row("2026-10-16", "fbA", "Para", posted = NA),
+             ps_row("2026-10-23", "req:100", "Para", posted = NA, method = stable),
+             ps_row("2026-10-30", "req:200", "Para", posted = NA, method = stable))
+  b <- bridge_posting_ids(p)
+  expect_equal(b$Posting_ID, c("req:100", "req:100", "req:200"))
+  expect_equal(b$Bridged_From, c("fbA", NA, NA))
+})
+
+test_that("a fallback chain still bridges, and Bridged_From keeps the first ID the posting had", {
+  p <- rbind(ps_row("2026-10-16", "fbA", "Para", posted = NA),
+             ps_row("2026-10-23", "fbB", "Para", posted = NA),
+             ps_row("2026-10-30", "req:1", "Para", posted = NA, method = "Stable per-posting ID"))
+  b <- bridge_posting_ids(p)
+  expect_equal(unique(b$Posting_ID), "req:1")
+  expect_equal(b$Bridged_From, c("fbA", "fbB", NA))
+})
+
+test_that("a blank posted date is no date: fallback and stable rows never bridge on title alone", {
+  p <- rbind(ps_row("2026-10-16", "fb-1", "Cook", posted = ""),
+             ps_row("2026-10-23", "other", "Bus Driver"),
+             ps_row("2026-10-30", "req:9", "Cook", posted = "", method = "Stable per-posting ID"))
+  b <- bridge_posting_ids(p)
+  expect_equal(b$Posting_ID[b$title == "Cook"], c("fb-1", "req:9"))
+})
+
+test_that("card text in a posted date ('Posted 3 weeks ago') is no date, never an error", {
+  p <- rbind(ps_row("2026-10-16", "a", "Cook", posted = "Posted 3 weeks ago"),
+             ps_row("2026-10-23", "a", "Cook", posted = "2026-10-01"))
+  expect_equal(unique(use_earliest_posted_date(p)$date_posted), "2026-10-01")
+  q <- ps_row("2026-10-16", "b", "Cook", posted = "Posted today")
+  expect_true(is.na(use_earliest_posted_date(q)$date_posted))
+  expect_identical(names(build_posting_spells(bridge_posting_ids(q))), POSTING_SPELL_COLUMNS)
+})
+
+test_that("Frozen_Board uses the min_runs the frozen table was built with", {
+  runs <- format(as.Date("2026-10-02") + 7 * 0:3)
+  p <- do.call(rbind, lapply(runs, function(r) ps_row(r, "a", "Cook")))
+  frozen <- data.frame(District = p$District[1], Posting_Source = p$Posting_Source[1], From = runs[1], To = runs[4],
+                       Runs = 4L, Postings = 1L, Ongoing = TRUE, stringsAsFactors = FALSE)
+  expect_false(build_posting_spells(p, frozen = frozen)$Frozen_Board)
+  expect_true(build_posting_spells(p, frozen = frozen, frozen_min_runs = 4)$Frozen_Board)
+})
+
+test_that("spell_text and spell_key drop zero-width characters and extra spaces", {
+  expect_equal(spell_text(c("Facilities Manager​", "  Math   Teacher ", NA)), c("Facilities Manager", "Math Teacher", NA))
+  expect_equal(spell_key(c("Math  TEACHER", NA)), c("math teacher", ""))
+})
+
+test_that("parse_stated_close_date reads every closing-date form the boards print", {
+  expect_equal(parse_stated_close_date(c("2026-11-09", "11/9/2026", "Nov 9, 2026", "Open Until Filled", NA)),
+               c("2026-11-09", "2026-11-09", "2026-11-09", NA, NA))
+})
+
+test_that("source_health reads the calendar where it covers the run, and the panel before that", {
+  p <- rbind(ps_row("2026-10-16", "a", "Cook"), ps_row("2026-10-23", "b", "Para"))
+  d <- p$District[1]; s <- p$Posting_Source[1]
+  cal <- data.frame(Run_Date = "2026-10-30", Entity = d, Status = "error", stringsAsFactors = FALSE)
+  expect_equal(source_health(p, cal, d, s, FALSE, as.Date("2026-10-30")), "error")
+  expect_equal(source_health(p, NULL, d, s, FALSE, as.Date("2026-10-23")), "ok_proxy")
+  expect_equal(source_health(p, NULL, d, s, FALSE, as.Date("2026-11-06")), "no_rows")
+  expect_equal(source_health(p, cal, "Elsewhere", s, FALSE, as.Date("2026-10-30")), "not_logged")
+  expect_true(is.na(source_health(p, cal, d, s, FALSE, NA)))
+})
+
+test_that("first_seen_lookup keys the latest run's postings the way the app shows them", {
+  p <- rbind(ps_row("2026-10-16", "a", "Cook"), ps_row("2026-10-23", "a", "Cook  "), ps_row("2026-10-23", "b", "Para"))
+  sp <- data.frame(Posting_ID = c("a", "b"), First_Seen = as.Date(c("2026-10-16", "2026-10-23")),
+                   Left_Censored = c(TRUE, FALSE))
+  fs <- first_seen_lookup(p, sp, "K-12")
+  expect_equal(fs$Key, first_seen_key(p$District[2:3], c("Cook", "Para"), p$url[2:3]))
+  expect_equal(fs$First_Seen, c("2026-10-16", "2026-10-23"))
+  expect_equal(fs$Left_Censored, c(TRUE, FALSE))
+  expect_equal(first_seen_key(" A  B ", "Math  Teacher", " u "), "a b | math teacher | u")
+})

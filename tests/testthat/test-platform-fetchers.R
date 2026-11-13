@@ -448,3 +448,36 @@ test_that("a JobPosting block that cannot be read gives NA for that page and the
   expect_message(none <- parse_jobposting_jsonld(jsonld_page('{"@type":"JobPosting","title":"bad"}')), "could not be read")
   expect_true(all(is.na(none)))
 })
+
+# ---- Phase 4 review fixes (2026-11-13) ---------------------------------------
+test_that("a JSON-LD date is an ISO day: zones read in Mountain time, other forms are NA", {
+  f <- edjobs:::jsonld_day
+  expect_equal(f("2026-11-01"), "2026-11-01")
+  expect_equal(f("2026-11-02T06:59:00Z"), "2026-11-01")          # midnight-ish local deadline, not a day late
+  expect_equal(f("2026-11-02T06:59:00-07:00"), "2026-11-02")
+  expect_equal(f("2026-11-02T23:00"), "2026-11-02")
+  for (x in list("11/01/2026", 20261101, "2026-13-45", "", NULL)) expect_true(is.na(f(x)))
+})
+
+test_that("the paged fetchers stop when a board repeats a page, and at max_pages", {
+  pages <- list(data.frame(Link = c("a", "b")))
+  expect_true(edjobs:::repeats_seen_links(c("a", "b"), pages))
+  expect_false(edjobs:::repeats_seen_links(c("b", "c"), pages))
+  expect_false(edjobs:::repeats_seen_links(c("a", "b"), list()))
+  calls <- 0
+  local_mocked_bindings(
+    perform_with_retry = function(req, ...) { calls <<- calls + 1; structure(list(n = calls), class = "fake_resp") },
+    resp_body_string = function(resp, ...) as.character(resp$n),
+    parse_schoolspring_json = function(json, domain) data.frame(Title = "t", Link = paste0("job", json))
+  )
+  expect_warning(out <- fetch_schoolspring_postings("x.schoolspring.com", page_size = 1, max_pages = 3), "stopped at 3 pages")
+  expect_equal(nrow(out), 3)
+})
+
+test_that("fetch_tedk12_postings reads the board's page through the parser", {
+  html <- "<html><body></body></html>"
+  local_mocked_bindings(perform_with_retry = function(req, ...) structure(list(), class = "fake_resp"),
+                        resp_body_string = function(resp, ...) html,
+                        parse_tedk12_postings = function(page, url) data.frame(Title = "Teacher", Link = url))
+  expect_equal(fetch_tedk12_postings("https://x.tedk12.com/hire/index.aspx")$Title, "Teacher")
+})

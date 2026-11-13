@@ -50,6 +50,8 @@ test_that("a failed refresh is logged without touching the file", {
 
 test_that("reference_table_status flags failed, missing and stale refreshes, and nothing when healthy", {
   dir <- withr::local_tempdir()
+  old <- current_state_config(); withr::defer(set_state_config(old))
+  set_state_config(state_config("Test", "00", dir))
   write.csv(data.frame(County = "A", Avg_Annual_Pay = 50000, Year = "2025"),
             file.path(dir, "qcew_county_school_pay.csv"), row.names = FALSE)
   write.csv(data.frame(Annual_Median = 57530, Year = "2021"), file.path(dir, "oews_role_wages.csv"), row.names = FALSE)
@@ -96,4 +98,12 @@ test_that("a state's own reference tables come from its state_config()", {
   expect_error(state_config("Wyoming", "56", "Wy_Ed_Jobs", reference_tables = list(x = list(name = "x"))), "need name")
   expect_error(state_config("Wyoming", "WY", "Wy_Ed_Jobs"))
   expect_error(set_state_config(list(state = "Wyoming")), "state_config")
+})
+
+test_that("reference_table_status warns when no state_config() is loaded (only shared tables are checked)", {
+  old <- current_state_config(); withr::defer(set_state_config(old))
+  set_state_config(NULL)
+  log <- data.frame(timestamp = character(0), source = character(0), status = character(0), n_rows = numeric(0),
+                    error_message = character(0))
+  expect_warning(reference_table_status(withr::local_tempdir(), log, today = as.Date("2026-11-03")), "no state_config")
 })

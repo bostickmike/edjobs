@@ -324,6 +324,7 @@ log_reference_result <- function(path, status, error_message = NA_character_, lo
 reference_table_status <- function(app_dir, scrape_log, today = Sys.Date(),
                                    this_year = as.integer(format(today, "%Y"))) {
   todays_log <- scrape_log[as.Date(substr(scrape_log$timestamp, 1, 10)) == today, , drop = FALSE]
+  if (is.null(current_state_config())) warning("reference_table_status(): no state_config() loaded, so only the shared tables are checked")
   all_rules <- reference_table_rules()
   rows <- lapply(names(all_rules), function(key) {
     rules <- all_rules[[key]]

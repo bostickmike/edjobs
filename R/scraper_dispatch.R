@@ -308,7 +308,9 @@ fixtures_named_for_source <- function(call, source_name, fixture_files) {
   platform <- fixture_files[grepl(prefix, tolower(basename(fixture_files)))]
   tok <- district_fixture_tokens(source_name)
   base <- tolower(basename(platform))
-  exact <- nzchar(tok[["number"]]) & grepl(paste0(tok[["place"]], tok[["number"]]), base, fixed = TRUE)
+  # "fremont1" must not match "fremont14_...": no digit may follow the number.
+  exact <- nzchar(tok[["number"]]) &
+    grepl(paste0("\\Q", tok[["place"]], tok[["number"]], "\\E(?![0-9])"), base, perl = TRUE)
   loose <- grepl(tok[["place"]], base, fixed = TRUE)
   loose <- loose & !grepl(paste0(tok[["place"]], "[0-9]"), base)
   own <- c(platform[exact], platform[loose & !exact])

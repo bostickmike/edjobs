@@ -330,3 +330,11 @@ test_that("a long capture is truncated to fit an issue body", {
   expect_true(any(grepl("diff truncated", md, fixed = TRUE)))
   expect_equal(autofix_evidence_markdown(NULL, "2026-09-30"), character(0))
 })
+
+test_that("fixtures_named_for_source: district 1's fixture is not district 14's (2026-11-13 review)", {
+  files <- c("apptegy_fremont14_2026-10-01.html", "apptegy_fremont1_2026-09-01.html")
+  own <- fixtures_named_for_source(list(platform = "apptegy"), "Fremont County School District 1", files)$own
+  expect_equal(own, "apptegy_fremont1_2026-09-01.html")
+  expect_equal(fixtures_named_for_source(list(platform = "apptegy"), "Fremont County School District 1",
+                                         files[1])$own, character(0))
+})

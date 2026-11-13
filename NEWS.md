@@ -1,3 +1,27 @@
+# edjobs 0.12.0
+
+Fixes from the phase 4 close-out review (2026-11-13, `claude-notes/2026-11-13_phase4-full-review.md`).
+
+* `bridge_adjacent_runs()`: a stable ID that absorbed a fallback one no longer becomes movable, so it can't then be
+  bridged into a different requisition number (fbA -> req:100 -> req:200 had become one spell). `Bridged_From` keeps
+  the first ID a posting had.
+* `bridge_posting_ids()`: a blank (`""`) posted date is no date; fallback rows never bridge on title alone.
+* `use_earliest_posted_date()` and `build_posting_spells()` read dates as ISO only: card text ("Posted 3 weeks ago",
+  which `fetch_neogov_postings()` keeps when a posting's page can't be read) is NA, never an error.
+* `build_posting_spells(frozen_min_runs = )`: `Frozen_Board` uses the `min_runs` the frozen table was built with.
+* `append_weekly_rows()`: an existing row with an NA date is kept as is (it had become an all-NA row).
+* `build_k12_combinedclean()` says which `columns =` mappings found no column, and warns when no `state_config()`
+  and no `feed_label` are given (feed rows would get no `Role_Hint`). `reference_table_status()` warns likewise.
+* `fetch_neogov_postings()` / `fetch_schoolspring_postings()`: `max_pages` (default 40, with a warning) and a stop
+  when a board repeats a page, instead of looping until the job's time limit.
+* `parse_jobposting_jsonld()`: dates must be ISO; a date-time with a zone is read as the day in Mountain time
+  (`2026-11-02T06:59:00Z` is 11-01). Other forms (`11/01/2026`, `20261101`) are NA.
+* `check_posting_pages()` writes one line per page (platform, seconds, status, URL), so a weekly run's log shows
+  where the time goes (the 2026-11-13 WY run hit its time limit in that step's chunk).
+* `fixtures_named_for_source()`: "fremont1" no longer matches "fremont14_..." fixtures.
+* Tests for `spell_text()`/`spell_key()`, `parse_stated_close_date()`, `source_health()`, `first_seen_lookup()`,
+  `fetch_tedk12_postings()`.
+
 # edjobs 0.11.0
 
 Phase 4: the platform fetchers that still differed between the states, one version each.

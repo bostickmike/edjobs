@@ -80,7 +80,7 @@ append_weekly_rows <- function(existing_path, new_rows, date_col = "Archive_Date
 
   # Same-day re-run guard -- drop this date's rows from the existing file
   # before appending, so a re-run replaces rather than duplicates.
-  existing <- existing[existing[[date_col]] != new_dates, , drop = FALSE]
+  existing <- existing[!(existing[[date_col]] %in% new_dates), , drop = FALSE]   # `!=` made an NA date an all-NA row
 
   dplyr::bind_rows(existing, new_rows[names(existing)])
 }
@@ -135,6 +135,14 @@ summarize_k12_posting_counts <- function(k12jobs, id_col = "Posting_ID") {
 build_k12_combinedclean <- function(rows, oews_wages, district_county, state, columns = character(0),
                                     feed_counties = NULL, canonicalize_district = function(x) x,
                                     feed_label = state_feed("label")) {
+  absent <- names(columns)[!columns %in% names(rows) & !names(columns) %in% names(rows)]
+  if (length(absent) > 0 && nrow(rows) > 0) {
+    message("build_k12_combinedclean(): no ", paste0(columns[absent], collapse = ", "), " column (mapped to ",
+            paste(absent, collapse = ", "), "); left NA")
+  }
+  if (is.null(feed_label) && is.null(current_state_config())) {
+    warning("build_k12_combinedclean(): no state_config() loaded and no feed_label, so no feed rows get a Role_Hint")
+  }
   for (to in names(columns)) {
     from <- columns[[to]]
     if (from %in% names(rows) && from != to) {

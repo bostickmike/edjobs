@@ -10,7 +10,8 @@ build_posting_spells(
   endings = NULL,
   frozen = NULL,
   statuses = NULL,
-  rules = spell_rules()
+  rules = spell_rules(),
+  frozen_min_runs = FROZEN_MIN_RUNS
 )
 }
 \arguments{
@@ -27,6 +28,9 @@ build_posting_spells(
 it dropped off its board, or NULL.}
 
 \item{rules}{\code{spell_rules()}.}
+
+\item{frozen_min_runs}{Runs inside a frozen stretch that make a posting
+\code{Frozen_Board}: the \code{min_runs} \code{frozen} was built with.}
 }
 \description{
 One row per posting (\code{POSTING_SPELL_COLUMNS}): its start and how it was
