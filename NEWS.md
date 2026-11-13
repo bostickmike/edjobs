@@ -14,6 +14,9 @@ The daily presence check, phase 0 (shadow: written, read by nothing yet). Plan a
   way; it now also reads Tyler Portico links (`tylerportico:<tenant>:<id>`, the id a GUID or a number).
 * New reusable workflow `.github/workflows/presence.yml`: runs the check from the caller's `main` and commits the
   two files to a side branch (`presence`, created on the first run), never `main`.
+  `edjobs_ref` installs a branch instead of the caller's `EDJOBS_VERSION`, for testing before a tag. Tested from a
+  WY branch (run 43510367152): first run created the branch and committed the files (2 min 16 s in all); a re-run the
+  same day fetched it, found the day checked and committed nothing.
 * First live run (2026-11-13, from the Mac): WY 30 boards (AppliTrack, SchoolSpring, TedK12), all answered, 528
   postings, all keyed, 43 s; MT 39 boards (adds Tyler Portico), all answered, 594 postings, all keyed, 64 s. Of
   WY's 530 keys on these boards in that morning's weekly archive, 523 were seen.
