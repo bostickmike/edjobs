@@ -1,0 +1,98 @@
+# Daily presence check for a state dashboard repo (edjobs::refresh_presence();
+# plan: claude-notes/2026-11-09_daily-presence-check-plan.md).
+#
+# Reads every board on the given registry platforms once (list pages only,
+# the weekly run's own fetch_* call for each district) and commits
+# presence_checks.csv and presence_sightings.csv to a side branch (`presence`),
+# never main: a push to main redeploys the dashboard. The branch is created on
+# the first run. A second run the same day (Mountain time) changes nothing.
+# Installs edjobs at the version in the caller's EDJOBS_VERSION, as the weekly
+# run does.
+#
+# Called from a state repo:
+#   jobs:
+#     presence:
+#       permissions: { contents: write }
+#       uses: bostickmike/edjobs/.github/workflows/presence.yml@v0.13.0
+#       with:
+#         platforms: AppliTrack,SchoolSpring,TedK12,TylerPortico
+name: Presence check (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      platforms:
+        description: Registry Platform values to check, comma-separated (as the state's registry spells them)
+        type: string
+        required: true
+      setup_files:
+        description: State files to source first (space-separated); they define the state config and its fetch_* functions
+        type: string
+        default: state_config.R direct_api_scrapers.R
+      branch:
+        description: Side branch the files are committed to
+        type: string
+        default: presence
+      dry_run:
+        description: Run the check but commit nothing
+        type: boolean
+        default: false
+
+concurrency:
+  group: presence-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  presence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      BRANCH: ${{ inputs.branch }}
+      PLATFORMS: ${{ inputs.platforms }}
+      SETUP_FILES: ${{ inputs.setup_files }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Check out the presence branch into presence/
+        run: |
+          set -euo pipefail
+          if git ls-remote --exit-code --heads origin "$BRANCH" > /dev/null; then
+            git fetch --depth=1 origin "$BRANCH"
+            git worktree add -B "$BRANCH" presence FETCH_HEAD
+          else
+            echo "Branch $BRANCH doesn't exist yet; starting it (orphan)."
+            git worktree add --orphan -b "$BRANCH" presence
+          fi
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: 'release'
+          use-public-rspm: true
+
+      - name: Install edjobs at the pinned version
+        run: |
+          Rscript -e 'install.packages("pak")' \
+                  -e 'pak::pak(c(paste0("bostickmike/edjobs@v", trimws(readLines("EDJOBS_VERSION"))), "here", "purrr"), ask = FALSE)'
+
+      - name: Check every board once
+        run: |
+          Rscript -e 'suppressMessages(for (f in strsplit(Sys.getenv("SETUP_FILES"), " +")[[1]]) source(f))' \
+                  -e 'edjobs::refresh_presence("presence", trimws(strsplit(Sys.getenv("PLATFORMS"), ",")[[1]]),' \
+                  -e '                         summary_path = Sys.getenv("GITHUB_STEP_SUMMARY"))'
+
+      - name: Commit to the presence branch
+        if: ${{ !inputs.dry_run }}
+        working-directory: presence
+        run: |
+          set -euo pipefail
+          git add -A .
+          if git diff --cached --quiet; then
+            echo "Nothing to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -q -m "Presence check $(TZ=America/Denver date +%Y-%m-%d)"
+          git push origin "HEAD:$BRANCH"

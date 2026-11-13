@@ -1,3 +1,23 @@
+# edjobs 0.13.0
+
+The daily presence check, phase 0 (shadow: written, read by nothing yet). Plan and scope:
+`claude-notes/2026-11-09_daily-presence-check-plan.md`, `2026-11-12_twice-weekly-and-daily-presence-scope.md`.
+
+* `refresh_presence()`: once a day, reads every board on the given registry platforms (list pages only, through
+  each district's own `resolve_scraper_call()`, so the same call the weekly run makes) and updates
+  `presence_checks.csv` (one row per board per day: ok / empty / error, postings, keyed postings, seconds) and
+  `presence_sightings.csv` (one row per unbroken stretch of sightings of a posting). A stretch ends only when the
+  board answered a check without the posting; a day it errored or the job didn't run doesn't break it. A second
+  run the same day (Mountain time, `presence_today()`) does nothing. Parts: `run_presence_check()`,
+  `presence_rows()`, `update_presence_sightings()`, `presence_summary_markdown()`.
+* `k12_link_posting_id()` moved here from WY (`k12_he_classification.R`), so both states key postings the same
+  way; it now also reads Tyler Portico links (`tylerportico:<tenant>:<id>`, the id a GUID or a number).
+* New reusable workflow `.github/workflows/presence.yml`: runs the check from the caller's `main` and commits the
+  two files to a side branch (`presence`, created on the first run), never `main`.
+* First live run (2026-11-13, from the Mac): WY 30 boards (AppliTrack, SchoolSpring, TedK12), all answered, 528
+  postings, all keyed, 43 s; MT 39 boards (adds Tyler Portico), all answered, 594 postings, all keyed, 64 s. Of
+  WY's 530 keys on these boards in that morning's weekly archive, 523 were seen.
+
 # edjobs 0.12.1
 
 No R code changes.
