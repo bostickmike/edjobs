@@ -37,6 +37,10 @@ on:
         description: Run the check but commit nothing
         type: boolean
         default: false
+      edjobs_ref:
+        description: Install edjobs at this git ref instead of the caller's EDJOBS_VERSION (for testing a branch)
+        type: string
+        default: ''
 
 concurrency:
   group: presence-${{ github.repository }}
@@ -72,9 +76,11 @@ jobs:
           use-public-rspm: true
 
       - name: Install edjobs at the pinned version
+        env:
+          EDJOBS_REF: ${{ inputs.edjobs_ref }}
         run: |
-          Rscript -e 'install.packages("pak")' \
-                  -e 'pak::pak(c(paste0("bostickmike/edjobs@v", trimws(readLines("EDJOBS_VERSION"))), "here", "purrr"), ask = FALSE)'
+          Rscript -e 'ref <- Sys.getenv("EDJOBS_REF"); if (!nzchar(ref)) ref <- paste0("v", trimws(readLines("EDJOBS_VERSION")))' \
+                  -e 'install.packages("pak"); pak::pak(c(paste0("bostickmike/edjobs@", ref), "here", "purrr"), ask = FALSE)'
 
       - name: Check every board once
         run: |
