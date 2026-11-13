@@ -1,3 +1,31 @@
+# edjobs 0.11.0
+
+Phase 4: the platform fetchers that still differed between the states, one version each.
+
+* `fetch_neogov_postings(agency_slug)`: one NEOGOV platform for every state, reading the classic careers page
+  (schooljobs.com / governmentjobs.com; NEOGOV redirects to the agency's own domain, so a registry needs only the
+  slug). Measured 2026-11-12: every posting that only an Attract site listed (UM 11, Casper 1) had closed months
+  earlier, and the classic page had none past its closing date, so MT's University of Montana moves off Attract.
+  Each posting's own page is read for its exact posted date and closing date (`fetch_neogov_posting_details()`,
+  `details = TRUE`): Posted_Date is exact where the page gives it, Close_Date the stated closing date or NA.
+* `parse_jobposting_jsonld()`: a page's schema.org JobPosting block (dates, organization, address, pay) in the
+  dashboards' terms. Built for NEOGOV; the same block appears on many district sites.
+* `assign_shared_board_institutions()`: a board that carries several institutions' postings is registry data.
+  Each covered institution's `SharesBoard` row names the board and a `Location_Pattern`; postings whose Location
+  matches get that institution. Replaces MT's hard-coded street-address rule for UM's board.
+* `fetch_schoolspring_postings()` / `parse_schoolspring_json()` (WY's: a `Posting_ID` column), `fetch_tedk12_postings()` /
+  `parse_tedk12_postings()` (WY's: the board URL only where a row has no JobID link), `schoolspring_domain()`.
+* `fetch_peopleadmin_atom()` / `parse_peopleadmin_atom()`: MT's (each entry's `<author>`, the department, as Location);
+  `location_from_author = FALSE` keeps WY's single campus name per college.
+* `NEOGOV_BASE`, `neogov_job_id()`, `parse_neogov_html()`, `parse_neogov_posting_page()`.
+* Fixed before release (review, 2026-11-12): `parse_neogov_html()` reads each card's own Location and date, so a
+  card missing one gives NA for that card only (matched by position, one card without its meta block blanked every
+  Location on the page, which filed a shared board's other campuses under its owner); a card whose location line is
+  missing gives NA, not its pay line. `fetch_neogov_postings()` warns when no posting on a board has a Location.
+  `parse_jobposting_jsonld()` reads the text forms schema.org allows (a string `hiringOrganization` or address, a
+  bare-number salary, an array `@type`, an `@graph` list) instead of erroring, and one block or page that still
+  cannot be read gives NA for that page, not an error for the board.
+
 # edjobs 0.10.0
 
 Phase 4: the accumulated K-12 history, with one output schema for every state.

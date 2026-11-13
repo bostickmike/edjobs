@@ -36,6 +36,21 @@ reference:
   - format_pay_amount
   - parse_applitrack_output
   - parse_neogov_card_pay
+  - parse_neogov_html
+  - parse_neogov_posting_page
+  - parse_jobposting_jsonld
+  - fetch_neogov_postings
+  - fetch_neogov_posting_details
+  - neogov_job_id
+  - NEOGOV_BASE
+  - fetch_schoolspring_postings
+  - parse_schoolspring_json
+  - schoolspring_domain
+  - fetch_tedk12_postings
+  - parse_tedk12_postings
+  - fetch_peopleadmin_atom
+  - parse_peopleadmin_atom
+  - assign_shared_board_institutions
   - parse_peopleadmin_posting_dates
   - parse_peopleadmin_posting_pay
   - parse_schoolspring_job_json
