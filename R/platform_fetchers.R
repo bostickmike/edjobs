@@ -623,3 +623,117 @@ assign_shared_board_institutions <- function(postings, board, registry, board_co
   }
   postings
 }
+
+# ---------------------------------------------------------------------------
+# Red Rover Hiring (jobs.redroverk12.com) -- the unauthenticated GraphQL API
+# the board's own Next.js app calls. Moved from WY in 0.14.0; MT read the
+# same boards by rendering them in Chrome until then, which gave a per-posting
+# link to only some postings (Columbia Falls: 8 of 23 on 2026-11-10).
+# ---------------------------------------------------------------------------
+
+#' A Red Rover board's org slug, from its URL
+#'
+#' `https://jobs.redroverk12.com/org/jcsd1` -> `"jcsd1"`. The slug is what the
+#' board's links carry; the API wants the numeric org ID instead, which is not
+#' derivable from the slug (the board page carries it: `"orgId":"4161"` for
+#' `sd659912`; some boards use the ID as their slug).
+#' @param job_link The board URL.
+#' @export
+redrover_org_slug <- function(job_link) sub(".*/org/([^/?]+).*", "\\1", job_link, ignore.case = TRUE)
+
+#' Standing application forms a Red Rover board lists as openings
+#'
+#' Excluded by [parse_redrover_json()] (St. Ignatius, MT, lists two).
+#' @export
+REDROVER_PLACEHOLDER_TITLES <- c("Classified Application", "Certified Application", "Volunteer Application")
+
+# Red Rover's own pay types, mapped to Pay_Unit. The labels are the ones the
+# job board itself prints ("per unit" is how it shows a STIPEND, e.g. a
+# coaching season). The board hides pay when minPay is empty or the type is
+# UNKNOWN ("per period"), so those stay NA here too.
+REDROVER_PAY_UNITS <- c(HOURLY = "hour", DAILY = "day", SALARIED = "year", STIPEND = "stipend")
+REDROVER_PAY_LABELS <- c(HOURLY = "per hour", DAILY = "per day", SALARIED = "per year", STIPEND = "per unit")
+
+redrover_pay_columns <- function(n, pay_type, min_pay, max_pay) {
+  lo <- suppressWarnings(as.numeric(if (is.null(min_pay)) rep(NA, n) else min_pay))
+  hi <- suppressWarnings(as.numeric(if (is.null(max_pay)) rep(NA, n) else max_pay))
+  type <- if (is.null(pay_type)) rep(NA_character_, n) else as.character(pay_type)
+  stated <- !is.na(lo) & lo > 0 & !is.na(type) & type %in% names(REDROVER_PAY_UNITS)
+  hi <- ifelse(stated & (is.na(hi) | hi < lo), lo, hi)
+  money <- function(x) paste0("$", formatC(x, format = "f", digits = 2, big.mark = ","))
+  data.frame(
+    Pay_Min = ifelse(stated, lo, NA_real_),
+    Pay_Max = ifelse(stated, hi, NA_real_),
+    Pay_Unit = ifelse(stated, unname(REDROVER_PAY_UNITS[type]), NA_character_),
+    Pay_Text = ifelse(stated, paste(ifelse(hi > lo, paste(money(lo), "-", money(hi)), money(lo)),
+                                    unname(REDROVER_PAY_LABELS[type])), NA_character_),
+    stringsAsFactors = FALSE
+  )
+}
+
+#' Fetch a Red Rover board's postings
+#'
+#' @param org_id The board's numeric organization ID (see [redrover_org_slug()]).
+#' @param org_slug The slug its links carry, for each posting's link and ID.
+#' @export
+fetch_redrover_postings <- function(org_id, org_slug) {
+  query <- 'query GetJobPostings($search: JobPostingSearchInput!) {
+  jobSeekerSiteUnauthenticated {
+    jobPostingSearch(search: $search) {
+      results {
+        id
+        name
+        organizationName
+        location { name }
+        activePublicOnDateUtc
+        payTypeId
+        minPay
+        maxPay
+      }
+    }
+  }
+}'
+  resp <- request("https://api.redroverk12.com/graphql") %>%
+    httr2::req_headers(`Content-Type` = "application/json") %>%
+    httr2::req_body_json(list(
+      operationName = "GetJobPostings",
+      variables = list(search = list(orgId = as.character(org_id), searchTerm = "", locationIds = list(),
+                                     jobPostingCategoryIds = list())),
+      query = query
+    )) %>%
+    perform_with_retry()
+  parse_redrover_json(resp_body_string(resp), org_slug)
+}
+
+#' Parse a Red Rover GraphQL response
+#'
+#' One row per posting: Title, Location, Posted_Date, Posting_ID
+#' (`redrover:<slug>:<id>`), Link (the posting's own page) and posted pay.
+#' Standing application forms ([REDROVER_PLACEHOLDER_TITLES]) are dropped.
+#' @param json_text The response body.
+#' @param org_slug The board's slug.
+#' @export
+parse_redrover_json <- function(json_text, org_slug) {
+  empty <- data.frame(Title = character(0), Location = character(0), Posted_Date = character(0),
+                      Posting_ID = character(0), Link = character(0), Pay_Min = numeric(0), Pay_Max = numeric(0),
+                      Pay_Unit = character(0), Pay_Text = character(0), stringsAsFactors = FALSE)
+  parsed <- jsonlite::fromJSON(json_text, simplifyVector = TRUE)
+  results <- parsed$data$jobSeekerSiteUnauthenticated$jobPostingSearch$results
+  if (is.null(results) || length(results) == 0 || nrow(results) == 0) return(empty)
+  results <- results[!trimws(results$name) %in% REDROVER_PLACEHOLDER_TITLES, , drop = FALSE]
+  if (nrow(results) == 0) return(empty)
+
+  out <- cbind(
+    data.frame(
+      Title = results$name,
+      Location = results$location$name,
+      Posted_Date = substr(results$activePublicOnDateUtc, 1, 10),
+      Posting_ID = paste0("redrover:", tolower(org_slug), ":", results$id),
+      Link = paste0("https://jobs.redroverk12.com/org/", org_slug, "/opening/", results$id),
+      stringsAsFactors = FALSE
+    ),
+    redrover_pay_columns(nrow(results), results$payTypeId, results$minPay, results$maxPay)
+  )
+  rownames(out) <- NULL
+  out
+}
