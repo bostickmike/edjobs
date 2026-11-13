@@ -69,6 +69,8 @@ jobs:
           gh api --paginate "repos/$REPO/actions/workflows" \
             --jq '.workflows[] | [.id, .state, .path] | @tsv' > workflows.tsv
           while IFS=$'\t' read -r id state path; do
+            # GitHub-managed workflows (dynamic/..., e.g. the Copilot agent) aren't ours to toggle.
+            case "$path" in dynamic/*) echo "$path: skipped (GitHub-managed)"; continue ;; esac
             case "$state" in
               active|disabled_inactivity)
                 if [ "$DRY_RUN" = "true" ]; then
