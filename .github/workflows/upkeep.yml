@@ -1,0 +1,148 @@
+# Upkeep for a state dashboard repo: the things that can stop its weekly runs
+# without anyone noticing (claude-notes/2026-11-12_twice-weekly-and-daily-presence-scope.md).
+#
+# 1. Keepalive. GitHub disables scheduled workflows in a public repo after 60
+#    days with no repository activity, and a disabled schedule sends no failure
+#    email: the run simply never starts. GitHub's docs don't say whether a
+#    workflow's own data commits count as activity, so don't rely on them. Each
+#    run re-enables every workflow that is active (or was disabled for
+#    inactivity) through the API, the approach of the community
+#    keepalive-workflow action. Workflows someone disabled by hand stay off.
+# 2. Token expiry. Reads the caller's token file (default
+#    .github/token-expiry.csv: secret,expires,renew) and opens one issue per
+#    secret from `warn_days` before its date. A PAT passed as `pat` is also
+#    asked for its real expiry (GitHub's
+#    github-authentication-token-expiration header), which wins over the file
+#    and is reported when the two differ.
+#
+# Called from a state repo:
+#   jobs:
+#     upkeep:
+#       permissions: { actions: write, issues: write, contents: read }
+#       uses: bostickmike/edjobs/.github/workflows/upkeep.yml@v0.12.1
+#       secrets:
+#         pat: ${{ secrets.COPILOT_TOKEN }}
+name: Upkeep (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      token_file:
+        description: CSV of secret,expires (YYYY-MM-DD),renew (how to renew)
+        type: string
+        default: .github/token-expiry.csv
+      warn_days:
+        description: Open an issue this many days before an expiry date
+        type: number
+        default: 30
+      pat_secret_name:
+        description: Name, in the token file, of the PAT passed as the `pat` secret
+        type: string
+        default: COPILOT_TOKEN
+      dry_run:
+        description: Report only; enable nothing and open no issue
+        type: boolean
+        default: false
+    secrets:
+      pat:
+        description: A personal access token whose real expiry date to read
+        required: false
+
+jobs:
+  upkeep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      DRY_RUN: ${{ inputs.dry_run }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: ${{ inputs.token_file }}
+          sparse-checkout-cone-mode: false
+
+      - name: Keep the scheduled workflows enabled
+        run: |
+          set -euo pipefail
+          echo "## Keepalive" >> "$GITHUB_STEP_SUMMARY"
+          gh api --paginate "repos/$REPO/actions/workflows" \
+            --jq '.workflows[] | [.id, .state, .path] | @tsv' > workflows.tsv
+          while IFS=$'\t' read -r id state path; do
+            # GitHub-managed workflows (dynamic/..., e.g. the Copilot agent) aren't ours to toggle.
+            case "$path" in dynamic/*) echo "$path: skipped (GitHub-managed)"; continue ;; esac
+            case "$state" in
+              active|disabled_inactivity)
+                if [ "$DRY_RUN" = "true" ]; then
+                  msg="would re-enable ($state)"
+                else
+                  gh api -X PUT "repos/$REPO/actions/workflows/$id/enable" > /dev/null
+                  msg="re-enabled (was $state)"
+                fi
+                [ "$state" = "disabled_inactivity" ] && \
+                  echo "::warning::$path had been disabled for inactivity"
+                ;;
+              *) msg="left alone ($state)" ;;
+            esac
+            echo "$path: $msg"
+            echo "- \`$path\`: $msg" >> "$GITHUB_STEP_SUMMARY"
+          done < workflows.tsv
+
+      - name: Warn before tokens expire
+        env:
+          PAT: ${{ secrets.pat }}
+          TOKEN_FILE: ${{ inputs.token_file }}
+          WARN_DAYS: ${{ inputs.warn_days }}
+          PAT_NAME: ${{ inputs.pat_secret_name }}
+        run: |
+          set -euo pipefail
+          echo "## Token expiry (warn $WARN_DAYS days ahead)" >> "$GITHUB_STEP_SUMMARY"
+          if [ ! -f "$TOKEN_FILE" ]; then
+            echo "::error::$TOKEN_FILE not found"
+            exit 1
+          fi
+          today=$(date -u +%Y-%m-%d)
+
+          # The PAT's real expiry, if one was passed (empty header = no expiry).
+          pat_expires=""
+          if [ -n "${PAT:-}" ]; then
+            pat_expires=$(curl -sS -o /dev/null -D - -H "Authorization: Bearer $PAT" https://api.github.com/rate_limit |
+              tr -d '\r' | awk -F': ' 'tolower($1)=="github-authentication-token-expiration" {print substr($2,1,10)}')
+            echo "$PAT_NAME: GitHub reports expiry '${pat_expires:-none}'"
+          fi
+
+          # Skip the header; fields: secret,expires,renew (renew may hold commas).
+          tail -n +2 "$TOKEN_FILE" | while IFS=, read -r secret expires renew; do
+            [ -z "$secret" ] && continue
+            renew=$(echo "$renew" | sed 's/^"//; s/"$//')
+            source_note="date in $TOKEN_FILE"
+            if [ "$secret" = "$PAT_NAME" ] && [ -n "$pat_expires" ]; then
+              if [ "$pat_expires" != "$expires" ]; then
+                echo "::warning::$secret: GitHub says it expires $pat_expires, $TOKEN_FILE says $expires; update the file"
+              fi
+              expires=$pat_expires
+              source_note="date reported by GitHub"
+            fi
+            days=$(( ( $(date -u -d "$expires" +%s) - $(date -u -d "$today" +%s) ) / 86400 ))
+            line="$secret expires $expires ($source_note): $days days"
+            echo "$line"
+            echo "- $line" >> "$GITHUB_STEP_SUMMARY"
+            [ "$days" -gt "$WARN_DAYS" ] && continue
+
+            title="Token expiring: $secret on $expires"
+            open=$(gh issue list -R "$REPO" --state open --search "\"Token expiring: $secret\" in:title" \
+              --json number --jq 'length')
+            if [ "$open" -gt 0 ]; then
+              echo "An issue for $secret is already open."
+              continue
+            fi
+            body=$(printf '%s\n\n%s\n\n%s\n' \
+              "\`$secret\` expires on **$expires** ($days days from $today; $source_note). When it does, the workflows that use it stop working." \
+              "How to renew: $renew" \
+              "After renewing, update the secret in every repo that uses it and the date in \`$TOKEN_FILE\`, then close this issue. Opened by the upkeep workflow (bostickmike/edjobs, \`.github/workflows/upkeep.yml\`).")
+            if [ "$DRY_RUN" = "true" ]; then
+              echo "Would open: $title"
+            else
+              gh issue create -R "$REPO" --title "$title" --body "$body"
+            fi
+          done

@@ -1,3 +1,13 @@
+# edjobs 0.12.1
+
+No R code changes.
+
+* New reusable workflow `.github/workflows/upkeep.yml` for the state repos (self-sustaining checks 1 and 2 of
+  `claude-notes/2026-11-12_twice-weekly-and-daily-presence-scope.md`): re-enables every active workflow through the
+  API each run, so GitHub's 60-day inactivity rule can't silently stop a weekly schedule, and opens one issue per
+  secret 30 days before its date in the caller's `.github/token-expiry.csv` (a PAT passed as `pat` is asked for its
+  real expiry, which wins over the file).
+
 # edjobs 0.12.0
 
 Fixes from the phase 4 close-out review (2026-11-13, `claude-notes/2026-11-13_phase4-full-review.md`).
