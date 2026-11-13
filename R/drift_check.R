@@ -823,14 +823,27 @@ state_feed <- function(field, default = NULL) {
 #' `archive_snapshots`: a named list (run date -> data frame), one per archived run (a plain argument,
 #' not a directory scan, so it is testable on in-memory frames). Returns one row per source: `name`,
 #' `mean_count`, `n_weeks`.
+#'
+#' Zero weeks (Mike, 2026-11-13): a week a source had no rows counts as 0,
+#' from the first snapshot it appears in on, so a district that posts only
+#' some weeks averages over its empty weeks too and an empty week isn't judged
+#' as a collapse. Two kinds of zero week are left out instead:
+#' - weeks `failed` names for that source (its scrape errored or wasn't
+#'   logged: `failed_source_weeks()` of the coverage calendar), which say
+#'   nothing about how many postings it has;
+#' - the zero weeks after its last week with rows (the stretch it is in now),
+#'   so a silent outage never lowers its own baseline and keeps being flagged.
+#' `n_weeks` is the weeks that count.
 #' @param archive_snapshots Named list of run date -> data frame.
 #' @param name_col The column naming the source.
 #' @param valid_from Only snapshots from this date on count (the first run of
 #'   the pipeline as it now is); defaults to the session's
 #'   `state_config(drift_baseline_from = )`, else every snapshot.
+#' @param failed Source-weeks to leave out: a data frame with `name` and
+#'   `date` ("YYYY-MM-DD"), or NULL.
 #' @export
 build_historical_counts <- function(archive_snapshots, name_col,
-                                    valid_from = current_state_config()$drift_baseline_from) {
+                                    valid_from = current_state_config()$drift_baseline_from, failed = NULL) {
   if (is.null(valid_from)) valid_from <- as.Date("1900-01-01")
   # archive_snapshots: named list of data.frames, names are "YYYY-MM-DD"
   # dates, each data.frame has a `name_col` column of source names (one row
@@ -846,17 +859,42 @@ build_historical_counts <- function(archive_snapshots, name_col,
     as.data.frame(table(df[[name_col]]), stringsAsFactors = FALSE)
   })
 
-  all_counts <- do.call(rbind, counts_by_week)
-  names(all_counts) <- c("name", "count")
+  valid_dates <- sort(valid_dates)
+  counts_by_week <- lapply(valid_dates, function(d) {
+    x <- as.data.frame(table(archive_snapshots[[d]][[name_col]]), stringsAsFactors = FALSE)
+    if (nrow(x) > 0) x$week <- match(d, valid_dates)
+    x
+  })
+  all_counts <- do.call(rbind, counts_by_week[vapply(counts_by_week, nrow, integer(1)) > 0])
+  if (is.null(all_counts) || nrow(all_counts) == 0) {
+    return(data.frame(name = character(0), n_weeks = integer(0), mean_count = numeric(0)))
+  }
+  names(all_counts)[1:2] <- c("name", "count")
   all_counts$count <- as.numeric(all_counts$count)
+  bad <- if (is.null(failed) || nrow(failed) == 0) character(0) else
+    paste(failed$name, match(as.character(failed$date), valid_dates), sep = "\u001f")
+  out <- lapply(split(all_counts, all_counts$name), function(x) {
+    weeks <- seq(min(x$week), max(x$week))            # first appearance .. last week with rows
+    weeks <- weeks[!paste(x$name[1], weeks, sep = "\u001f") %in% bad]
+    data.frame(name = x$name[1], n_weeks = length(weeks),
+               mean_count = sum(x$count[x$week %in% weeks]) / max(length(weeks), 1), stringsAsFactors = FALSE)
+  })
+  out <- do.call(rbind, out)
+  rownames(out) <- NULL
+  out[out$n_weeks > 0, , drop = FALSE]
+}
 
-  stats::aggregate(count ~ name, data = all_counts, FUN = function(x) c(n = length(x), mean = mean(x))) -> agg
-  data.frame(
-    name = agg$name,
-    n_weeks = agg$count[, "n"],
-    mean_count = agg$count[, "mean"],
-    stringsAsFactors = FALSE
-  )
+#' Source-weeks whose scrape failed, from the coverage calendar
+#'
+#' For `build_historical_counts(failed = )`: the weeks a source's scrape
+#' errored or wasn't logged, which say nothing about how many postings it has.
+#' @param calendar coverage_calendar.csv rows (Run_Date, Entity, Status), or NULL.
+#' @return `name`, `date`.
+#' @export
+failed_source_weeks <- function(calendar) {
+  if (is.null(calendar) || nrow(calendar) == 0) return(data.frame(name = character(0), date = character(0)))
+  x <- calendar[calendar$Status %in% c("error", "not_logged"), , drop = FALSE]
+  unique(data.frame(name = as.character(x$Entity), date = as.character(x$Run_Date), stringsAsFactors = FALSE))
 }
 
 #' Sources whose count collapsed against their own history

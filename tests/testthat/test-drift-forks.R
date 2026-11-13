@@ -32,7 +32,10 @@ test_that("WY: build_historical_counts excludes pre-fix snapshots and computes c
 
   expect_equal(baseline$n_weeks[baseline$name == "A"], 3)
   expect_equal(baseline$mean_count[baseline$name == "A"], (3 + 2 + 3) / 3)
+  # B had no rows on the third week, after its last week with rows: left out
+  # (it may be an outage starting), so its baseline is its two weeks.
   expect_equal(baseline$n_weeks[baseline$name == "B"], 2)
+  expect_equal(baseline$mean_count[baseline$name == "B"], (1 + 2) / 2)
 })
 
 test_that("WY: build_historical_counts returns an empty frame when no snapshots are post-fix", {
@@ -252,7 +255,10 @@ test_that("MT: build_historical_counts excludes pre-pipeline snapshots and compu
 
   expect_equal(baseline$n_weeks[baseline$name == "A"], 3)
   expect_equal(baseline$mean_count[baseline$name == "A"], (3 + 2 + 3) / 3)
+  # B had no rows on the third week, after its last week with rows: left out
+  # (it may be an outage starting), so its baseline is its two weeks.
   expect_equal(baseline$n_weeks[baseline$name == "B"], 2)
+  expect_equal(baseline$mean_count[baseline$name == "B"], (1 + 2) / 2)
 })
 
 test_that("MT: build_historical_counts returns an empty frame when no snapshots are post-baseline", {
@@ -444,4 +450,42 @@ test_that("the feed and the drift baseline come from state_config(), with state-
   set_state_config(state_config("Test", "00", "app", feed = mt_feed, drift_baseline_from = "2026-08-06"))
   expect_equal(build_historical_counts(snaps, "name")$n_weeks, 1)
   expect_true(any(grepl("OPI", summarize_central_safety_net()$markdown)))
+})
+
+test_that("build_historical_counts: zero weeks count between a source's first and last weeks with rows", {
+  set_state_config(NULL); withr::defer(set_state_config(NULL))
+  snaps <- list("2026-10-02" = data.frame(name = c("A", "A", "A")), "2026-10-09" = data.frame(name = c("C", "C")),
+                "2026-10-16" = data.frame(name = c("A", "A", "A")), "2026-10-23" = data.frame(name = "C"),
+                "2026-10-30" = data.frame(name = character(0)))
+  b <- build_historical_counts(snaps, "name")
+  # A: 3, 0, 3 (10-09 is an empty week between busy ones); 10-23 and 10-30 come after its last rows.
+  expect_equal(b$n_weeks[b$name == "A"], 3); expect_equal(b$mean_count[b$name == "A"], 6 / 3)
+  # C: from its first week (10-09) to its last (10-23): 2, 0, 1. 10-02 predates it.
+  expect_equal(b$n_weeks[b$name == "C"], 3); expect_equal(b$mean_count[b$name == "C"], 3 / 3)
+  # An intermittent board averages under the floor and isn't judged on an empty week.
+  expect_false("C" %in% flag_drift(data.frame(name = c("A", "C"), count = c(3, 0)), b, min_mean_count = 2)$name)
+})
+
+test_that("a silent outage never lowers its own baseline: it keeps being flagged", {
+  set_state_config(NULL); withr::defer(set_state_config(NULL))
+  busy <- data.frame(name = rep("A", 5))
+  snaps <- setNames(c(rep(list(busy), 4), rep(list(data.frame(name = character(0))), 20)),
+                    format(as.Date("2026-06-05") + 7 * 0:23))
+  b <- build_historical_counts(snaps, "name")
+  expect_equal(b$mean_count, 5); expect_equal(b$n_weeks, 4)
+  expect_equal(nrow(flag_drift(data.frame(name = "A", count = 0), b)), 1)
+})
+
+test_that("weeks the calendar says failed are left out, not counted as 0", {
+  set_state_config(NULL); withr::defer(set_state_config(NULL))
+  snaps <- list("2026-10-02" = data.frame(name = rep("A", 4)), "2026-10-09" = data.frame(name = character(0)),
+                "2026-10-16" = data.frame(name = rep("A", 4)))
+  cal <- data.frame(Run_Date = c("2026-10-09", "2026-10-09", "2026-10-16"), Entity = c("A", "B", "A"),
+                    Status = c("error", "empty", "ok"))
+  f <- failed_source_weeks(cal)
+  expect_equal(f, data.frame(name = "A", date = "2026-10-09"))
+  expect_equal(build_historical_counts(snaps, "name")$mean_count, 8 / 3)
+  b <- build_historical_counts(snaps, "name", failed = f)
+  expect_equal(b$mean_count, 4); expect_equal(b$n_weeks, 2)
+  expect_equal(nrow(failed_source_weeks(NULL)), 0)
 })

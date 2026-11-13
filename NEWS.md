@@ -10,6 +10,11 @@ Fixes from the phase 4 close-out review (2026-11-13, `claude-notes/2026-11-13_ph
   which `fetch_neogov_postings()` keeps when a posting's page can't be read) is NA, never an error.
 * `build_posting_spells(frozen_min_runs = )`: `Frozen_Board` uses the `min_runs` the frozen table was built with.
 * `append_weekly_rows()`: an existing row with an NA date is kept as is (it had become an all-NA row).
+* `build_historical_counts()` (drift baselines; Mike, 2026-11-13): a week a source had no rows counts as 0 between its
+  first and last weeks with rows, so a district that posts only some weeks isn't judged against its busy weeks
+  alone. Zero weeks after its last rows (an outage in progress) and weeks `failed =` names (new
+  `failed_source_weeks()` of the coverage calendar: errored or not logged) are left out, so an outage never lowers
+  its own baseline. Replayed since 09-01: WY 9 flags either way; MT 20 -> 19 (a Red Lodge false alarm).
 * `build_k12_combinedclean()` says which `columns =` mappings found no column, and warns when no `state_config()`
   and no `feed_label` are given (feed rows would get no `Role_Hint`). `reference_table_status()` warns likewise.
 * `fetch_neogov_postings()` / `fetch_schoolspring_postings()`: `max_pages` (default 40, with a warning) and a stop
