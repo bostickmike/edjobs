@@ -354,3 +354,97 @@ test_that("parse_neogov_html keeps every posting when the card pay can't be read
   expect_true(all(POSTED_PAY_COLUMNS %in% names(out)))
   expect_true(all(is.na(out$Pay_Min)))
 })
+
+# ---- Review of 0.11.0 (2026-11-12): odd but valid page shapes ---------------
+
+# The UM fixture with one card's markup changed, for the per-card tests.
+um_page_with <- function(card_no, edit) {
+  doc <- xml2::read_html(read_fixture("neogov_ummissoula_p1_2026-10-30.html"))
+  cards <- xml2::xml_find_all(doc, "//ul[contains(@class,'job-listing-container')]/li[contains(@class,'list-item')]")
+  edit(cards[[card_no]])
+  as.character(doc)
+}
+
+test_that("parse_neogov_html reads each card's own Location, so one card without its meta block blanks only that card", {
+  full <- parse_neogov_html(read_fixture("neogov_ummissoula_p1_2026-10-30.html"), "https://www.schooljobs.com")
+  html <- um_page_with(2, function(card) xml2::xml_remove(xml2::xml_find_all(card, ".//ul[contains(@class,'list-meta')]")))
+  out <- parse_neogov_html(html, "https://www.schooljobs.com")
+  expect_equal(nrow(out), 10)
+  expect_true(is.na(out$Location[2]))
+  expect_equal(out$Location[-2], full$Location[-2])
+  # Card 2 is Helena College's; the other Helena card keeps its campus.
+  expect_equal(full$Location[2], "Helena College Donaldson Campus")
+  expect_true("Helena College Airport Campus" %in% out$Location)
+  expect_equal(out$Posted_Date, full$Posted_Date)
+})
+
+test_that("parse_neogov_html gives NA, not the pay line, when only a card's location line is missing", {
+  html <- um_page_with(1, function(card) xml2::xml_remove(xml2::xml_find_first(card, ".//ul[contains(@class,'list-meta')]/li")))
+  out <- parse_neogov_html(html, "https://www.schooljobs.com")
+  expect_true(is.na(out$Location[1]))
+  expect_false(is.na(out$Pay_Min[1]))
+  expect_true(all(!is.na(out$Location[-1])))
+})
+
+test_that("parse_neogov_html gives NA for one card's missing date and keeps the rest", {
+  full <- parse_neogov_html(read_fixture("neogov_ummissoula_p1_2026-10-30.html"), "https://www.schooljobs.com")
+  html <- um_page_with(3, function(card) xml2::xml_remove(xml2::xml_find_all(card, ".//*[contains(@class,'list-entry-starts')]")))
+  out <- parse_neogov_html(html, "https://www.schooljobs.com")
+  expect_true(is.na(out$Posted_Date[3]))
+  expect_equal(out$Posted_Date[-3], full$Posted_Date[-3])
+})
+
+test_that("fetch_neogov_postings warns when no posting on the board has a Location", {
+  page1 <- '<ul class="job-listing-container"><li class="list-item" data-job-id="1">
+    <h3><a class="item-details-link" href="/careers/x/jobs/1/a">A job</a></h3></li></ul>'
+  none <- '<div class="jobs-not-found-container"><h2>No jobs at this time.</h2></div>'
+  landed <- "https://www.schooljobs.com/careers/home/index?agency=x&page="
+  httr2::local_mocked_responses(list(
+    httr2::response(200, url = paste0(landed, 1), body = charToRaw(page1)),
+    httr2::response(200, url = paste0(landed, 2), body = charToRaw(none))))
+  expect_warning(out <- fetch_neogov_postings("x", details = FALSE), "no posting has a Location")
+  expect_equal(nrow(out), 1)
+})
+
+jsonld_page <- function(json) paste0('<html><head><script type="application/ld+json">', json, '</script></head></html>')
+
+test_that("parse_jobposting_jsonld reads the text forms schema.org allows instead of erroring", {
+  # A string hiringOrganization, a string address and a bare-number salary
+  # value each threw "$ operator is invalid for atomic vectors" in 0.11.0.
+  j <- parse_jobposting_jsonld(jsonld_page('{"@type":"JobPosting","title":"Teacher","datePosted":"2026-11-01T08:00:00",
+    "hiringOrganization":"Helena College","jobLocation":{"@type":"Place","address":"Helena, MT"},
+    "baseSalary":{"@type":"MonetaryAmount","currency":"USD","value":52000,"unitText":"YEAR"}}'))
+  expect_equal(j$Title, "Teacher")
+  expect_equal(j$Date_Posted, "2026-11-01")
+  expect_equal(j$Organization, "Helena College")
+  expect_true(is.na(j$Locality) && is.na(j$Region))
+  expect_equal(c(j$Pay_Min, j$Pay_Max), c(52000, 52000))
+  expect_equal(j$Pay_Unit, "year")
+
+  bare <- parse_jobposting_jsonld(jsonld_page('{"@type":"JobPosting","title":"Aide","baseSalary":18.5,
+    "jobLocation":"Missoula","hiringOrganization":{"name":"UM"}}'))
+  expect_equal(bare$Pay_Min, 18.5)
+  expect_true(is.na(bare$Pay_Unit))
+  expect_true(is.na(bare$Locality))
+  expect_equal(bare$Organization, "UM")
+})
+
+test_that("parse_jobposting_jsonld finds a JobPosting by an array @type, inside @graph, and in an array of locations", {
+  j <- parse_jobposting_jsonld(jsonld_page('{"@context":"https://schema.org","@graph":[{"@type":"WebPage"},
+    {"@type":["JobPosting"],"title":"Counselor","jobLocation":[{"@type":"Place","address":{"addressLocality":"Butte","addressRegion":"MT"}}],
+     "baseSalary":{"value":{"minValue":"40,000","maxValue":"$50,000","unitText":"year"}}}]}'))
+  expect_equal(j$Title, "Counselor")
+  expect_equal(c(j$Locality, j$Region), c("Butte", "MT"))
+  expect_equal(c(j$Pay_Min, j$Pay_Max), c(40000, 50000))
+  expect_equal(j$Pay_Unit, "year")
+})
+
+test_that("a JobPosting block that cannot be read gives NA for that page and the next block is tried", {
+  local_mocked_bindings(jobposting_row = function(j) if (identical(j$title, "bad")) stop("boom") else data.frame(Title = j$title))
+  html <- paste0('<html><head><script type="application/ld+json">{"@type":"JobPosting","title":"bad"}</script>',
+                 '<script type="application/ld+json">{"@type":"JobPosting","title":"good"}</script></head></html>')
+  expect_message(j <- parse_jobposting_jsonld(html), "could not be read")
+  expect_equal(j$Title, "good")
+  expect_message(none <- parse_jobposting_jsonld(jsonld_page('{"@type":"JobPosting","title":"bad"}')), "could not be read")
+  expect_true(all(is.na(none)))
+})

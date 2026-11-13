@@ -18,6 +18,13 @@ Phase 4: the platform fetchers that still differed between the states, one versi
 * `fetch_peopleadmin_atom()` / `parse_peopleadmin_atom()`: MT's (each entry's `<author>`, the department, as Location);
   `location_from_author = FALSE` keeps WY's single campus name per college.
 * `NEOGOV_BASE`, `neogov_job_id()`, `parse_neogov_html()`, `parse_neogov_posting_page()`.
+* Fixed before release (review, 2026-11-12): `parse_neogov_html()` reads each card's own Location and date, so a
+  card missing one gives NA for that card only (matched by position, one card without its meta block blanked every
+  Location on the page, which filed a shared board's other campuses under its owner); a card whose location line is
+  missing gives NA, not its pay line. `fetch_neogov_postings()` warns when no posting on a board has a Location.
+  `parse_jobposting_jsonld()` reads the text forms schema.org allows (a string `hiringOrganization` or address, a
+  bare-number salary, an array `@type`, an `@graph` list) instead of erroring, and one block or page that still
+  cannot be read gives NA for that page, not an error for the board.
 
 # edjobs 0.10.0
 
