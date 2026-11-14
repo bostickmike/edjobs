@@ -50,7 +50,7 @@ cyberschool_empty <- function() {
              Closing_Date = character(0), Link = character(0), stringsAsFactors = FALSE)
 }
 
-cyberschool_text <- function(x) trimws(gsub("[ \r\n\t ]+", " ", x))
+cyberschool_text <- function(x) trimws(gsub("[\u00a0\r\n\t ]+", " ", x))
 
 # Classic: one .listItem_holder per job.
 cyberschool_classic_items <- function(doc, url, location) {
