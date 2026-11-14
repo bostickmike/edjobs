@@ -38,7 +38,7 @@ APPTEGY_BOILER <- paste(c(
   paste0("^(key responsibilities|position summary|qualifications|requirements|duties|essential|job description|",
          "work schedule|evaluation|employment type|reports to|salary|compensation|about us|none at this time|",
          "no (current )?openings)"),
-  "^[\u00b7\u2022*\u25aa\u25e6\u25cf\ufffd-]", "^city of\\b", "county$", "forms?\\b.*\\b(here|located)", "\\(fillable\\)",
+  "^[\u00b7\u2022*\u25aa\u25e6\u25cf\ufffd\uf0b7\uf0a7-]", "^city of\\b", "county$", "forms?\\b.*\\b(here|located)", "\\(fillable\\)",
   "sign-on bonus", "housing", "collective bargaining", "title ix", "^bp [0-9]+", "^copy of\\b", "\\bpolicy\\b",
   "^questions\\??$", "^[0-9]{4}\\s*[-\u2013]\\s*[0-9]{4}$", "applicants$", "jobs for teachers",
   "office of public instruction", "\\bor be\\b|\\bable to\\b", "\\bpositions? (are|is) (available|open)",
@@ -51,7 +51,9 @@ APPTEGY_BOILER <- paste(c(
   "^(employment|current openings|job openings|open positions)$", "application$", "applications$", "^menu$",
   "^translate$", "^search site$", "^sign in$", "\\bportal\\b", "wish list", "^endorsements?\\b", "^flexible hours$",
   "holidays off", "\\b(position|job) descriptions?\\b", "^no (positions?|openings?|vacancies) (are |is )?(currently )?(available|open)",
-  "veterans'? preference", "slideshow", "brochure", "^search\\b", "^history$", "^location:", "^job summary$", "^\\("),
+  "veterans'? preference", ",? [A-Z]{2} [0-9]{5}(-[0-9]{4})?$", "^[0-9]+ [A-Za-z]+ (street|st|avenue|ave|road|rd|drive|dr|lane|ln|boulevard|blvd|highway|hwy)\\b",
+  "school district #? ?[0-9]+$", "^dear\\b", "\\binformation$", "salary schedule", "responsibilities", "^following\\b",
+  "\\bcontact$", "\\bdocuments?$", "and more$", "\\bresources$", "^jobs?$", "slideshow", "brochure", "^search\\b", "^history$", "^location:", "^job summary$", "^\\("),
   collapse = "|")
 
 #' Split one Apptegy line into its title part(s)
@@ -114,7 +116,7 @@ apptegy_sentence_titles <- function(l) {
   t <- trimws(sub(paste0("(?i)^.*?\\b(?:(?:accepting|seeking) (?:applications|applicants) for|(?:is|are) (?:currently |now )?(?:seeking|looking for|hiring))",
                          "\\s+(?:an?\\s+|the\\s+|one\\s+|two\\s+)?"), "", hits, perl = TRUE))
   t <- t[grepl(APPTEGY_ROLE_WORDS, t, ignore.case = TRUE) & lengths(strsplit(t, "\\s+")) <= 12 & nchar(t) <= 90]
-  t <- t[!grepl("(?i)\\b(you|individuals?|candidates?|people|someone|persons?)\\b", t, perl = TRUE)]
+  t <- t[!grepl("(?i)\\b(you|individuals?|candidates?|people|someone|persons?)\\b|^(the )?following\\b", t, perl = TRUE)]
   paste0(toupper(substr(t, 1, 1)), substring(t, 2))
 }
 
@@ -122,7 +124,7 @@ apptegy_sentence_titles <- function(l) {
 # date, reads as a sentence, or is application or job-description text.
 apptegy_is_detail <- function(x) {
   grepl("\\$|[0-9]{2,}|[.!?]$|^[a-z]", x) || lengths(strsplit(x, "\\s+")) >= 6 ||
-    grepl("(?i)\\b(job description|vacanc(y|ies)|apply|application|posting|details|click|see|deadline|open(ing)?|until|closes?|start(s|ing)?|begin(s|ning)?|immediate(ly)?|must|required|salary|pay|wage|stipend|doe|negotiable)\\b",
+    grepl("(?i)\\b(job description|vacanc(y|ies)|apply|application|posting|details|click|see|deadline|open(ing)?|until|closes?|start(s|ing)?|begin(s|ning)?|immediate(ly)?|must|required|salary|pay|wage|stipend|doe|negotiable|district[- ]wide)\\b",
           x, perl = TRUE)
 }
 
@@ -187,7 +189,7 @@ apptegy_title_rows <- function(text, start = NA, stop = NA, skip_section = NA) {
     # A header is short: a long sentence ending in ":" ("... is looking to hire ... Teachers. Ashland Public Offers:")
     # is read as a sentence.
     is_header <- (ok(skip_section) && grepl(skip_section, l, perl = TRUE)) || (grepl(":$", l) && lengths(strsplit(l, "\\s+")) <= 10) ||
-                 grepl("^[A-Z]{4,}$", l) ||
+                 grepl("^[A-Z]{3,}$", l) || (l == toupper(l) && grepl(", AND ", l, fixed = TRUE)) ||
       grepl("^(certified|certificated|classified|coaching|teaching|extra ?curricular|district staff|support staff|certified teachers|athletics?)( (positions|openings|staff|employees))?$", l, ignore.case = TRUE) ||
       (l == toupper(l) && grepl("(OPENINGS|POSITIONS|SUBSTITUTES|EMPLOYEES|OPPORTUNITIES)$", l)) ||
       grepl("^(job title|job type|job description|employment opportunities)$", l, ignore.case = TRUE) ||
@@ -221,6 +223,10 @@ apptegy_title_rows <- function(text, start = NA, stop = NA, skip_section = NA) {
     l <- trimws(sub("(?i)\\.(pdf|docx?)$", "", l, perl = TRUE))
     l <- trimws(sub("(?i)(?<=\\S)\\s+(job\\s+)?opening$", "", l, perl = TRUE))
     l <- trimws(sub("\\s*\\([^()]*\\$[^()]*\\)$", "", l, perl = TRUE))
+    # "Substitute Certified Teachers $160/day": pay after the title
+    pre_pay <- trimws(sub("\\s+\\$[0-9].*$", "", l))
+    if (pre_pay != l && grepl(role_rx, pre_pay, ignore.case = TRUE) && lengths(strsplit(pre_pay, "\\s+")) <= 6 &&
+        !grepl(",", pre_pay) && !grepl("(?i)\\b(at|of|from|to|is|are)$", pre_pay, perl = TRUE)) l <- pre_pay
     if (!nzchar(l)) next
     words <- lengths(strsplit(l, "\\s+"))
     # Length is judged without parenthetical asides ("Two paraeducators (Bona fide occupational qualifications) to ...")
@@ -245,6 +251,9 @@ apptegy_title_rows <- function(text, start = NA, stop = NA, skip_section = NA) {
     # A school or district name on its own
     if (grepl("\\b(schools?|school district)$", l, ignore.case = TRUE) &&
         !has_role(sub("(?i)\\b(high|middle|elementary)? ?schools?$", "", l, perl = TRUE))) next
+    # A person's name on its own ("Lisa Weigel" above "Human Resources Contact")
+    if (grepl("^[A-Z][a-z]+ [A-Z][a-z'-]+$", l) && !has_role(l) &&
+        any(grepl("(?i)contact|@|[0-9]{3}[-. )]+[0-9]{3}", L[max(1, li - 1):min(length(L), li + 1)][-min(2, li)], perl = TRUE))) next
     # "Superintendent / Principal: Christy Bortz": a contact, not a posting
     if (grepl("^[^:]{3,60}:\\s*[A-Z][a-z]+( [A-Z]\\.)? [A-Z][a-z'-]+$", l) && !has_role(sub("^[^:]*:", "", l))) next
     # "Penny Benner, Superintendent": a contact, not a posting
