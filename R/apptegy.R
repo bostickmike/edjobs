@@ -18,7 +18,7 @@ APPTEGY_ROLE_WORDS <- paste0("\\b(", paste(c(
   "teachers?", "aides?", "para(professional|educator)?s?", "coach(es|ing)?", "custodians?", "custodial", "janitor(ial)?",
   "cooks?", "drivers?", "bus", "secretar(y|ies)", "clerks?", "principals?", "superintendent", "counsel(or|ors|ing)",
   "nurses?", "substitutes?", "subs", "librarians?", "specialists?", "directors?", "coordinators?", "technicians?",
-  "maintenance", "food service", "food program", "support staff", "kitchen", "cafeteria", "lunch", "advisors?",
+  "maintenance", "grounds ?keepers?", "snow removal", "food service", "food program", "support staff", "kitchen", "cafeteria", "lunch", "advisors?",
   "instructors?", "interventionist", "psychologist", "therapist", "pathologist", "speech", "business manager",
   "bookkeeper", "assistants?", "tutors?", "transportation", "mechanic", "groundskeeper", "supervisors?", "dean",
   "athletic", "receptionist", "registrar", "officer", "office manager", "concessions?", "music", "band", "choir",
@@ -50,7 +50,9 @@ APPTEGY_BOILER <- paste(c(
   "\\b(mt|montana) [0-9]{5}\\b", "insurance", "benefits?( package)?$",
   "^(employment|current openings|job openings|open positions)$", "application$", "applications$", "^menu$",
   "^translate$", "^search site$", "^sign in$", "\\bportal\\b", "wish list", "^endorsements?\\b", "^flexible hours$",
-  "holidays off"), collapse = "|")
+  "holidays off", "\\b(position|job) descriptions?\\b", "^no (positions?|openings?|vacancies) (are |is )?(currently )?(available|open)",
+  "veterans'? preference", "slideshow", "brochure", "^search\\b", "^history$", "^location:", "^job summary$", "^\\("),
+  collapse = "|")
 
 #' Split one Apptegy line into its title part(s)
 #'
@@ -100,6 +102,22 @@ apptegy_split_line <- function(l) {
   l
 }
 
+# Titles a sentence names after "accepting applications for", "is seeking",
+# "is looking for" or "is hiring": the phrase up to the next clause, kept when
+# it names a role and is short ("Big Timber Grade School is accepting
+# applications for a SPED Teacher." -> "SPED Teacher").
+apptegy_sentence_titles <- function(l) {
+  rx <- paste0("(?i)\\b(?:(?:accepting|seeking) (?:applications|applicants) for|(?:is|are) (?:currently |now )?(?:seeking|looking for|hiring))",
+               "\\s+(?:an?\\s+|the\\s+|one\\s+|two\\s+)?([^.!?;,:]+?)(?=[.!?;,:](?:\\s|$)|\\s+(?:for|to|who|that|starting|beginning|at|in|on|and is|if)\\b|$)")
+  hits <- regmatches(l, gregexpr(rx, l, perl = TRUE))[[1]]
+  if (!length(hits)) return(character(0))
+  t <- trimws(sub(paste0("(?i)^.*?\\b(?:(?:accepting|seeking) (?:applications|applicants) for|(?:is|are) (?:currently |now )?(?:seeking|looking for|hiring))",
+                         "\\s+(?:an?\\s+|the\\s+|one\\s+|two\\s+)?"), "", hits, perl = TRUE))
+  t <- t[grepl(APPTEGY_ROLE_WORDS, t, ignore.case = TRUE) & lengths(strsplit(t, "\\s+")) <= 12 & nchar(t) <= 90]
+  t <- t[!grepl("(?i)\\b(you|individuals?|candidates?|people|someone|persons?)\\b", t, perl = TRUE)]
+  paste0(toupper(substr(t, 1, 1)), substring(t, 2))
+}
+
 # The part after a title's separator is details when it states pay, a year or
 # date, reads as a sentence, or is application or job-description text.
 apptegy_is_detail <- function(x) {
@@ -135,6 +153,10 @@ apptegy_title_rows <- function(text, start = NA, stop = NA, skip_section = NA) {
   if (is.null(text) || length(text) == 0 || is.na(text[1])) return(none)
   L <- trimws(strsplit(paste(text, collapse = "\n"), "\n")[[1]])
   L <- trimws(gsub("[\u00a0\t ]+", " ", L)); L <- L[nzchar(L)]
+  # Section headers run together on one line ("...at this time.Aide Positions:Paraprofessional (Full Time)Classified
+  # Positions:..."): each "<Word> Positions:" header and what follows it on a line of its own.
+  L <- unlist(strsplit(gsub("(?<=[a-z.)])([A-Z][a-z]+ Positions:)\\s*", "\n\\1\n", L, perl = TRUE), "\n"))
+  L <- trimws(L); L <- L[nzchar(L)]
   if (!length(L)) return(none)
   ok <- function(x) length(x) == 1 && !is.na(x) && nzchar(x)
   if (ok(start)) {
@@ -150,15 +172,22 @@ apptegy_title_rows <- function(text, start = NA, stop = NA, skip_section = NA) {
 
   role_rx <- APPTEGY_ROLE_WORDS
   has_role <- function(x) grepl(role_rx, x, ignore.case = TRUE)
-  titles <- character(0); lines <- character(0)
-  keep <- function(t, src) { titles <<- c(titles, t); lines <<- c(lines, rep(src, length(t))) }
+  titles <- character(0); lines <- character(0); at <- integer(0); sent <- logical(0); li <- 0L
+  keep <- function(t, src, from_sentence = FALSE) {
+    titles <<- c(titles, t); lines <<- c(lines, rep(src, length(t))); at <<- c(at, rep(li, length(t)))
+    sent <<- c(sent, rep(from_sentence, length(t)))
+  }
+  roles_of <- function(x) unique(sub("e$", "", sub("e?s$", "", tolower(regmatches(x, gregexpr(role_rx, x, ignore.case = TRUE))[[1]]))))
   skipping <- FALSE; header <- NA_character_; label_next <- FALSE
   for (li in seq_along(L)) {
     l <- L[li]; src <- l
     # Card template: a bare "Title:" label, then the title
     if (label_next) { label_next <- FALSE; if (!grepl(":$", l)) keep(l, src); next }
     if (l == "Title:") { label_next <- TRUE; next }
-    is_header <- (ok(skip_section) && grepl(skip_section, l, perl = TRUE)) || grepl(":$", l) ||
+    # A header is short: a long sentence ending in ":" ("... is looking to hire ... Teachers. Ashland Public Offers:")
+    # is read as a sentence.
+    is_header <- (ok(skip_section) && grepl(skip_section, l, perl = TRUE)) || (grepl(":$", l) && lengths(strsplit(l, "\\s+")) <= 10) ||
+                 grepl("^[A-Z]{4,}$", l) ||
       grepl("^(certified|certificated|classified|coaching|teaching|extra ?curricular|district staff|support staff|certified teachers|athletics?)( (positions|openings|staff|employees))?$", l, ignore.case = TRUE) ||
       (l == toupper(l) && grepl("(OPENINGS|POSITIONS|SUBSTITUTES|EMPLOYEES|OPPORTUNITIES)$", l)) ||
       grepl("^(job title|job type|job description|employment opportunities)$", l, ignore.case = TRUE) ||
@@ -167,7 +196,8 @@ apptegy_title_rows <- function(text, start = NA, stop = NA, skip_section = NA) {
       grepl("^(classified|certified|certificated|coaching|extra ?curricular) positions?\\s*[-\u2013:]\\s*\\S+(,\\s*\\S+)+", l, ignore.case = TRUE)
     # A short "... Openings" / "Positions" line with no role word is a section header ("Other Employment Openings")
     is_header <- is_header || (lengths(strsplit(l, "\\s+")) <= 5 &&
-                                 grepl("(?i)(openings|positions|vacancies|opportunities)$", l, perl = TRUE) && !has_role(l))
+                                 grepl("(?i)(openings|positions|vacancies|opportunities)$", l, perl = TRUE) &&
+                                 !has_role(gsub("(?i)\\b(jh|hs|ms|k-?12|7-12)\\b", " ", l, perl = TRUE)))
     if (is_header) { header <- l; skipping <- ok(skip_section) && grepl(skip_section, l, perl = TRUE); next }
     if (skipping) next
     # An all-caps title wrapped onto a second line ("SEEKING TWO (2) EVENING SHIFT SCHOOL CUSTODIANS" /
@@ -186,12 +216,24 @@ apptegy_title_rows <- function(text, start = NA, stop = NA, skip_section = NA) {
     l <- parts
     l <- trimws(sub("(?i)^(now )?(seeking|hiring|looking for)( an?)?\\s+", "", l, perl = TRUE))
     l <- trimws(sub("(?i)\\s*(for|in) the 20[0-9]{2}\\s*[-\u2013]\\s*(20)?[0-9]{2} school year\\.?$", "", l, perl = TRUE))
+    # A linked document's name ("Part-time Bus Driver.pdf"); a trailing aside that states pay
+    # ("Substitute Teachers (Certified sub=$120.00/day; ...)": the pay is still read from the line).
+    l <- trimws(sub("(?i)\\.(pdf|docx?)$", "", l, perl = TRUE))
+    l <- trimws(sub("(?i)(?<=\\S)\\s+(job\\s+)?opening$", "", l, perl = TRUE))
+    l <- trimws(sub("\\s*\\([^()]*\\$[^()]*\\)$", "", l, perl = TRUE))
     if (!nzchar(l)) next
     words <- lengths(strsplit(l, "\\s+"))
     # Length is judged without parenthetical asides ("Two paraeducators (Bona fide occupational qualifications) to ...")
     l_np <- trimws(gsub("\\s*\\([^)]*\\)", "", l))
-    if (nchar(l_np) > 90 || lengths(strsplit(l_np, "\\s+")) > 12) next
-    if (grepl("[.!?]$", l) && words > 4) next
+    if (nchar(l_np) > 90 || lengths(strsplit(l_np, "\\s+")) > 12 || (grepl("[.!?:]$", l) && words > 4)) {
+      # A sentence: keep the titles it names ("... is accepting applications for a SPED Teacher.")
+      st <- apptegy_sentence_titles(l)
+      # ... unless it restates a title kept just above (the posting's own description).
+      near <- titles[at >= li - 3 & !sent]
+      st <- st[!vapply(st, function(x) any(vapply(near, function(n) length(intersect(roles_of(x), roles_of(n))) > 0, TRUE)), TRUE)]
+      if (length(st)) keep(st, src, from_sentence = TRUE)
+      next
+    }
     if (grepl(APPTEGY_BOILER, l, ignore.case = TRUE)) next
     # A contact: a name above, an email below ("Sam Hoff" / "K-12 Principal" / "SamHoff@...")
     if (li > 1 && li < length(L) && grepl("@", L[li + 1]) && grepl("^[A-Z][a-z]+ [A-Z][a-z'-]+$", L[li - 1]) &&
@@ -203,6 +245,8 @@ apptegy_title_rows <- function(text, start = NA, stop = NA, skip_section = NA) {
     # A school or district name on its own
     if (grepl("\\b(schools?|school district)$", l, ignore.case = TRUE) &&
         !has_role(sub("(?i)\\b(high|middle|elementary)? ?schools?$", "", l, perl = TRUE))) next
+    # "Superintendent / Principal: Christy Bortz": a contact, not a posting
+    if (grepl("^[^:]{3,60}:\\s*[A-Z][a-z]+( [A-Z]\\.)? [A-Z][a-z'-]+$", l) && !has_role(sub("^[^:]*:", "", l))) next
     # "Penny Benner, Superintendent": a contact, not a posting
     if (grepl("^[A-Z][a-z]+ [A-Z][a-z]+,\\s", l) && !has_role(sub(",.*$", "", l))) next
     if (grepl("(?i)^20[0-9]{2}\\s*[-\u2013]\\s*(20)?[0-9]{2} school year$", l, perl = TRUE)) next
@@ -215,7 +259,7 @@ apptegy_title_rows <- function(text, start = NA, stop = NA, skip_section = NA) {
       core <- sub("(?i)\\s+(positions?|openings?|vacancies)$", "", sub(":$", "", header), perl = TRUE)
       core <- sub("(?i)coaching$", "Coach", core, perl = TRUE)
       # Two words or more: a bare "Coaching Positions:" adds nothing (Conrad's "ESports").
-      if (has_role(core) && lengths(strsplit(core, "\\s+")) >= 2) l <- paste(core, "-", l)
+      if (has_role(core) && lengths(strsplit(core, "\\s+")) %in% 2:6) l <- paste(core, "-", l)
     }
     if (has_role(l) || under_jobs) keep(l, src)
   }
