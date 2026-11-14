@@ -44,7 +44,7 @@ APPTEGY_BOILER <- paste(c(
   "office of public instruction", "\\bor be\\b|\\bable to\\b", "\\bpositions? (are|is) (available|open)",
   "[0-9]{1,2}(:[0-9]{2})? ?(am|pm)\\b", "pay (scale|range)", "negotiated agreement", "video", "website", "\\bforms?$",
   "^\\$", "^(read more|back to top|google maps|tags:)", "^resume$", "^transcripts$", "licenses and credentials",
-  "letters? of (recommendation|reference|interest)", "^(superintendent|principal|clerk|business manager),? [A-Z][a-z]+",
+  "letters? of (recommendation|reference|interest)", 
   "volunteer", "^(required|encouraged|job dependent)$", "until filled",
   "^(start date|department|supervisor|position type|school/building|supervisory|knowledge skills)",
   "\\b(mt|montana) [0-9]{5}\\b", "insurance", "benefits?( package)?$",
@@ -53,7 +53,8 @@ APPTEGY_BOILER <- paste(c(
   "holidays off", "\\b(position|job) descriptions?\\b", "^no (positions?|openings?|vacancies) (are |is )?(currently )?(available|open)",
   "veterans'? preference", ",? [A-Z]{2} [0-9]{5}(-[0-9]{4})?$", "^[0-9]+ [A-Za-z]+ (street|st|avenue|ave|road|rd|drive|dr|lane|ln|boulevard|blvd|highway|hwy)\\b",
   "school district #? ?[0-9]+$", "^dear\\b", "\\binformation$", "salary schedule", "responsibilities", "^following\\b",
-  "\\bcontact$", "\\bdocuments?$", "and more$", "\\bresources$", "^jobs?$", "slideshow", "brochure", "^search\\b", "^history$", "^location:", "^job summary$", "^\\("),
+  "\\bcontact$", "\\bdocuments?$", "and more$", "\\bresources$", "^jobs?$", "^load more$", "^(hours|job duties|experience|closing date|education)$", "^varies\\b", "^attn\\b", "cooperative$",
+  "jobs[- ]for[- ]teachers", "^updated\\b", "slideshow", "brochure", "^search\\b", "^history$", "^location:", "^job summary$", "^\\("),
   collapse = "|")
 
 #' Split one Apptegy line into its title part(s)
@@ -200,7 +201,9 @@ apptegy_title_rows <- function(text, start = NA, stop = NA, skip_section = NA) {
     is_header <- is_header || (lengths(strsplit(l, "\\s+")) <= 5 &&
                                  grepl("(?i)(openings|positions|vacancies|opportunities)$", l, perl = TRUE) &&
                                  !has_role(gsub("(?i)\\b(jh|hs|ms|k-?12|7-12)\\b", " ", l, perl = TRUE)))
-    if (is_header) { header <- l; skipping <- ok(skip_section) && grepl(skip_section, l, perl = TRUE); next }
+    # A "Job Descriptions" section lists every kind of job the district has, not openings.
+    jd <- grepl("(?i)^job descriptions:?$", l, perl = TRUE)
+    if (is_header || jd) { header <- l; skipping <- jd || (ok(skip_section) && grepl(skip_section, l, perl = TRUE)); next }
     if (skipping) next
     # An all-caps title wrapped onto a second line ("SEEKING TWO (2) EVENING SHIFT SCHOOL CUSTODIANS" /
     # "AND ONE (1) MID SHIFT SCHOOL CUSTODIAN") continues the title kept from the line above.
@@ -220,6 +223,12 @@ apptegy_title_rows <- function(text, start = NA, stop = NA, skip_section = NA) {
     l <- trimws(sub("(?i)\\s*(for|in) the 20[0-9]{2}\\s*[-\u2013]\\s*(20)?[0-9]{2} school year\\.?$", "", l, perl = TRUE))
     # A linked document's name ("Part-time Bus Driver.pdf"); a trailing aside that states pay
     # ("Substitute Teachers (Certified sub=$120.00/day; ...)": the pay is still read from the line).
+    # Link decorations and status asides: "(opens in new window/tab)", "Click Here, for job description",
+    # "(6/4/26 open until filled)" (the posting is open: the aside goes, the title stays)
+    l <- trimws(sub("(?i)\\s*\\(opens in (a )?new (window|tab)[^)]*\\)\\s*$", "", l, perl = TRUE))
+    l <- trimws(sub("(?i)\\s+click here\\b.*$", "", l, perl = TRUE))
+    l <- trimws(sub("(?i)(\\s+link|\\s*-)$", "", l, perl = TRUE))
+    l <- trimws(sub("(?i)\\s*\\([^()]*\\b(open|until filled|posted)\\b[^()]*\\)\\s*$", "", l, perl = TRUE))
     l <- trimws(sub("(?i)\\.(pdf|docx?)$", "", l, perl = TRUE))
     l <- trimws(sub("(?i)(?<=\\S)\\s+(job\\s+)?opening$", "", l, perl = TRUE))
     l <- trimws(sub("\\s*\\([^()]*\\$[^()]*\\)$", "", l, perl = TRUE))
@@ -241,6 +250,16 @@ apptegy_title_rows <- function(text, start = NA, stop = NA, skip_section = NA) {
       next
     }
     if (grepl(APPTEGY_BOILER, l, ignore.case = TRUE)) next
+    # "Superintendent of Schools: Dr. Penny Bolinger, Ed.D.": a contact
+    if (grepl("^[^:]{3,60}:\\s*(Dr|Mr|Mrs|Ms|Miss)\\.?\\s+[A-Z]", src)) next
+    # "Superintendent, Corey Austin" / "Principal Jane Smith": a contact
+    if (grepl("^(Superintendent|Principal|Clerk|Business Manager),? [A-Z][a-z]+ [A-Z][a-z'-]+", l)) next
+    # A document's file name ("HobsonCBA2025-7Finalized")
+    if (!grepl(" ", l) && nchar(l) >= 10 && grepl("[0-9]", l)) next
+    # A notice that a kind of job is not open ("School Nurse: We currently have NO School Nurse positions available")
+    if (grepl("\\b(NO|no|not any)\\b[^.]*\\b(positions?|openings?|vacanc(y|ies))\\b", src, perl = TRUE)) next
+    # "5th Grade Teacher Filled": no longer open
+    if (grepl("(?i)\\bfilled\\b", l, perl = TRUE) && !grepl("(?i)until filled", l, perl = TRUE)) next
     # A contact: a name above, an email below ("Sam Hoff" / "K-12 Principal" / "SamHoff@...")
     if (li > 1 && li < length(L) && grepl("@", L[li + 1]) && grepl("^[A-Z][a-z]+ [A-Z][a-z'-]+$", L[li - 1]) &&
         !has_role(L[li - 1])) next
