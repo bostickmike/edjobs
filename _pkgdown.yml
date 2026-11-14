@@ -58,7 +58,7 @@ reference:
   - schoolspring_job_id
   - schoolspring_sightings
   - update_schoolspring_endings
-- title: "CMS-family routines (CyberSchool, Apptegy, Google Sites, Finalsite, WordPress)"
+- title: "CMS-family routines (CyberSchool, Apptegy, Google Sites, Finalsite, WordPress, Edlio)"
   contents:
   - fetch_cyberschool_postings
   - parse_cyberschool_postings
@@ -78,6 +78,9 @@ reference:
   - fetch_wordpress_postings
   - parse_wordpress_postings
   - wordpress_page_text
+  - fetch_edlio_postings
+  - parse_edlio_postings
+  - district_page_text
 - title: "LLM extraction tier (shadow pilot)"
   contents:
   - LLM_EXTRACT_MAX_CHARS
