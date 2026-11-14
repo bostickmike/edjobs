@@ -209,6 +209,12 @@ apptegy_title_rows <- function(text, start = NA, stop = NA, skip_section = NA) {
                                  !has_role(gsub("(?i)\\b(jh|hs|ms|k-?12|7-12|special education|sped|music|art|math(ematics)?|science|english|ela|reading|history|social studies|spanish|physical education|pe|health|kindergarten|preschool|ag(riculture)?|fcs|cte)\\b", " ", l, perl = TRUE)))
     # A "Job Descriptions" section lists every kind of job the district has, not openings.
     jd <- grepl("(?i)^job descriptions\\b[^.]*:?$", l, perl = TRUE)
+    # "Substitute Custodial Positions" with nothing listed under it (the next line ends the list or is a sentence):
+    # a standing posting named like a header (WY's Sheridan 3), not a section. Generic kinds ("Substitute
+    # Teaching/Classified Positions") stay headers.
+    if (is_header && grepl("(?i)^substitute\\s+(.+?)\\s+positions?$", l, perl = TRUE) &&
+        !grepl("(?i)^substitute\\s+(teaching|classified|certified|certificated|coaching|support|all|other|various)\\b", l, perl = TRUE) &&
+        (li == length(L) || lengths(strsplit(L[li + 1], "\\s+")) > 12)) { keep(l, src); next }
     if (is_header || jd) { header <- l; skipping <- jd || (ok(skip_section) && grepl(skip_section, l, perl = TRUE)); next }
     if (skipping) next
     # An all-caps title wrapped onto a second line ("SEEKING TWO (2) EVENING SHIFT SCHOOL CUSTODIANS" /

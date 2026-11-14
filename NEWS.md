@@ -7,6 +7,8 @@ WY's own-page districts on the CMS families (notes: `claude-notes/2026-11-14_wy-
   camel-case file name reads as words ("AssistantBoysSoccerCoach", "SubsMusicTeachingPosition.pdf"). On every cached
   live page (MT and WY, all families) this changes 4 titles: Weston 1's two (same postings, cleaner titles), Washakie
   2's "Music Teacher" (excluded there by a stop rule) and Fromberg's substitute music posting, which was missed.
+* A "Substitute <job> Positions" line with nothing listed under it is a posting, not a section header (WY Sheridan 3's
+  "Substitute Custodial Positions"); no other cached page changes.
 
 # edjobs 0.23.0
 

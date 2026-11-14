@@ -148,3 +148,11 @@ test_that("job-description file names and camel-case file names keep the job (WY
   # A job-description heading alone, or one naming no role, is still not a title
   expect_equal(apptegy_title_lines("Openings:\nJob Description\nBoard Policy Job Description"), character(0))
 })
+
+test_that("a 'Substitute <job> Positions' line with nothing under it is a posting (WY's Sheridan 3)", {
+  expect_equal(apptegy_title_lines("JH Assistant Basketball Coaches\nSubstitute Custodial Positions\nSheridan County School District #3 is a place where educators come to do deeply meaningful work in a setting that feels personal."),
+               c("JH Assistant Basketball Coaches", "Substitute Custodial Positions"))
+  # A header over a list stays a header; generic kinds stay headers
+  expect_equal(apptegy_title_lines("Substitute Custodial Positions\nNight Custodian"), "Night Custodian")
+  expect_equal(apptegy_title_lines("Bus Driver\nSubstitute Teaching Positions"), "Bus Driver")
+})
