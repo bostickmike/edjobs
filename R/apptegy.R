@@ -394,7 +394,6 @@ fetch_apptegy_postings <- function(chromote_session, url, location, mode = "text
 parse_apptegy_postings <- function(content, url, location, mode = "text",
                                    start = NA, stop = NA, skip_section = NA) {
   mode <- match.arg(mode, c("text", "pagebuilder"))
-  na_rule <- function(x) if (is.null(x) || length(x) != 1 || is.na(x) || !nzchar(trimws(x))) NA_character_ else x
   start <- na_rule(start); stop <- na_rule(stop); skip_section <- na_rule(skip_section)
   text <- if (mode == "text") {
     content
@@ -403,12 +402,21 @@ parse_apptegy_postings <- function(content, url, location, mode = "text",
     if (is.null(nodes)) NULL else paste(apptegy_pagebuilder_lines(nodes), collapse = "\n")
   }
   rows <- if (is.null(text)) apptegy_title_rows(NULL) else apptegy_title_rows(text, start, stop, skip_section)
+  title_rows_postings(rows, url, location)
+}
+
+# The family routines' output from the filter's rows: Title, Location,
+# Posted_Date (NA), Link (the page), and posted pay read from each title's own
+# line, only when that line gave one title (a "1. Cook 2. Driver" line's pay
+# belongs to no single item).
+title_rows_postings <- function(rows, url, location) {
   out <- data.frame(Title = rows$Title, Location = rep(location, nrow(rows)), Posted_Date = rep(NA_character_, nrow(rows)),
                     Link = rep(url, nrow(rows)), stringsAsFactors = FALSE)
-  # Pay from the title's own line, only when that line gave one title (a
-  # "1. Cook 2. Driver" line's pay belongs to no single item).
   if (nrow(out) == 0) return(ensure_posted_pay_columns(out))
   shared <- rows$Line %in% rows$Line[duplicated(rows$Line)]
   pay <- extract_posted_pay(ifelse(shared, NA_character_, rows$Line))
   cbind(out, pay)
 }
+
+# Optional per-district rule: NA for NULL, NA or "".
+na_rule <- function(x) if (is.null(x) || length(x) != 1 || is.na(x) || !nzchar(trimws(x))) NA_character_ else x
