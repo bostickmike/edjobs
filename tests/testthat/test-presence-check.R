@@ -31,15 +31,17 @@ test_that("presence_rows reads each fetcher's columns into title, link and key",
 
 day <- as.Date("2026-11-16")
 chk <- function(dates, status = "ok", district = "A") {
-  data.frame(Date = as.Date(dates), District = district, Platform = "P", Status = status, N_Postings = 1L,
+  data.frame(Date = as.Date(dates), Board = district, Platform = "P", Status = status, N_Postings = 1L,
              N_Keyed = 1L, Seconds = 1, Error = NA_character_, stringsAsFactors = FALSE)
 }
 seen1 <- function(key = "k1", district = "A") {
-  data.frame(District = district, Platform = "P", Link_Key = key, title = "T", url = "u", stringsAsFactors = FALSE)
+  data.frame(Board = district, Platform = "P", District = district, Link_Key = key, List_Key = NA_character_,
+             title = "T", url = "u", stringsAsFactors = FALSE)
 }
 stretch <- function(first, last, n, key = "k1") {
-  data.frame(District = "A", Platform = "P", Link_Key = key, First_Day = as.Date(first), Last_Day = as.Date(last),
-             Days_Seen = n, Title = "T", URL = "u", stringsAsFactors = FALSE)
+  data.frame(Board = "A", Platform = "P", District = "A", Link_Key = key, List_Key = NA_character_,
+             First_Day = as.Date(first), Last_Day = as.Date(last), Days_Seen = n, Title = "T", URL = "u",
+             stringsAsFactors = FALSE)
 }
 
 test_that("a posting seen on consecutive answered checks extends one stretch", {
@@ -94,7 +96,7 @@ test_that("refresh_presence checks each board once, records errors, and does not
   expect_warning(refresh_presence(dir, c("Good", "Bad"), today = day, sources = sources, delay = 0, envir = env,
                                   summary_path = summary_file), "skipped unreadable registry")
   checks <- read.csv(file.path(dir, "presence_checks.csv"))
-  expect_equal(checks$District, c("Bad SD", "Good SD"))
+  expect_equal(checks$Board, c("Bad SD", "Good SD"))
   expect_equal(checks$Status, c("error", "ok"))
   expect_match(checks$Error[1], "HTTP 503")
   sightings <- read.csv(file.path(dir, "presence_sightings.csv"))
@@ -113,4 +115,50 @@ test_that("refresh_presence checks each board once, records errors, and does not
   s <- read.csv(file.path(dir, "presence_sightings.csv"))
   expect_equal(s$Last_Day, c(format(day + 1), format(day)))
   expect_equal(s$Days_Seen, c(2L, 1L))
+})
+
+test_that("fingerprint keys: dates in either form, the archived excerpt, occurrence suffixes", {
+  expect_equal(presence_iso_date(c("11/12/2026", "2026-11-12", "2026-11-12T06:00:00Z", "Open Until Filled", NA)),
+               c("2026-11-12", "2026-11-12", "2026-11-12", "", ""))
+  long <- paste(rep("word", 300), collapse = "  \n ")
+  excerpt <- substr(gsub("\\s+", " ", long), 1, 600)   # what the weekly archive stores
+  k1 <- opi_posting_key("Big Sandy K-12", "F E Miley School", "Music", "05/29/2026", long)
+  k2 <- opi_posting_key("big sandy k-12 ", "F E Miley School", "Music", "2026-05-29", excerpt)
+  expect_identical(k1, k2)
+  expect_match(k1, "^opi:[0-9a-f]{16}$")
+  expect_false(identical(k1, opi_posting_key("Big Sandy K-12", "F E Miley School", "Music", "05/29/2026", "other")))
+  expect_true(is.na(opi_posting_key(NA, "x", "Music", "05/29/2026", NA)))  # no detail page read
+  expect_identical(wsba_vacancy_key("Platte County School District 1", "Para", "11/03/2026"),
+                   wsba_vacancy_key("platte county school district 1", "para ", "2026-11-03"))
+  expect_equal(presence_occurrence_keys(c("a", "b", "a")), c("a#1", "b#1", "a#2"))
+  expect_equal(presence_occurrence_keys(character(0)), character(0))
+})
+
+test_that("a feed is one board: its postings keep their own districts, and an error is the feed's error", {
+  dir <- withr::local_tempdir()
+  reg <- data.frame(District = "Good SD", Platform = "Good", Slug = "good")
+  env <- new.env(); env$fetch_good <- function(tenant) data.frame(title = "Teacher", job_id = "1")
+  sources <- list(scraper_registry(reg, "District", "test registry", specs = list(Good = scraper_spec("fetch_good", "Slug"))))
+  got_known <- NULL
+  feed <- presence_feed("Statewide", "FEED", function(known) {
+    got_known <<- known
+    data.frame(District = c("North SD", "South SD", "South SD"), title = c("Cook", "Aide", "Aide"),
+               url = "https://feed", Link_Key = c("f:1#1", "f:2#1", NA), List_Key = c("cook", "aide", "aide"))
+  })
+  refresh_presence(dir, "Good", feeds = list(feed), today = day, sources = sources, delay = 0, envir = env)
+  checks <- read.csv(file.path(dir, "presence_checks.csv"))
+  expect_equal(checks$Board, c("Good SD", "Statewide"))
+  expect_equal(checks$N_Postings[checks$Board == "Statewide"], 3)
+  expect_equal(checks$N_Keyed[checks$Board == "Statewide"], 2)
+  s <- read.csv(file.path(dir, "presence_sightings.csv"))
+  expect_equal(s$District[s$Board == "Statewide"], c("North SD", "South SD"))
+  expect_equal(s$List_Key[s$Board == "Statewide"], c("cook", "aide"))
+  expect_equal(nrow(got_known), 0)
+  # The next day the feed is handed its own stretches, and only those.
+  refresh_presence(dir, "Good", feeds = list(feed), today = day + 1, sources = sources, delay = 0, envir = env)
+  expect_equal(sort(got_known$Link_Key), c("f:1#1", "f:2#1"))
+  bad <- presence_feed("Statewide", "FEED", function(known) stop("HTTP 500"))
+  refresh_presence(dir, "Good", feeds = list(bad), today = day + 2, sources = sources, delay = 0, envir = env)
+  checks <- read.csv(file.path(dir, "presence_checks.csv"))
+  expect_equal(checks$Status[checks$Date == format(day + 2) & checks$Board == "Statewide"], "error")
 })

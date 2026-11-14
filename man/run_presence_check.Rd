@@ -2,12 +2,14 @@
 % Please edit documentation in R/presence_check.R
 \name{run_presence_check}
 \alias{run_presence_check}
-\title{Read every board on the given platforms once}
+\title{Read every board on the given platforms, and every feed, once}
 \usage{
 run_presence_check(
   platforms,
+  feeds = list(),
   today = presence_today(),
   sources = state_scraper_sources(),
+  sightings = PRESENCE_SIGHTINGS_EMPTY,
   delay = 1,
   envir = globalenv()
 )
@@ -16,9 +18,13 @@ run_presence_check(
 \item{platforms}{Registry platform names to check (as the state's registry
 spells them: "AppliTrack" in MT, "Applitrack" in WY).}
 
+\item{feeds}{List of \code{\link[=presence_feed]{presence_feed()}}s.}
+
 \item{today}{The day the check counts for.}
 
 \item{sources}{The state's scraper sources (\code{state_config(scraper_sources = )}).}
+
+\item{sightings}{The stretches so far (each feed gets its own as \code{known}).}
 
 \item{delay}{Seconds between boards.}
 
@@ -26,8 +32,8 @@ spells them: "AppliTrack" in MT, "Applitrack" in WY).}
 }
 \value{
 list(checks = one row per board, seen = one row per keyed posting:
-District, Platform, Link_Key, title, url).
+Board, Platform, District, Link_Key, List_Key, title, url).
 }
 \description{
-Read every board on the given platforms once
+Read every board on the given platforms, and every feed, once
 }

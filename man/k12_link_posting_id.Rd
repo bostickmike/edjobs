@@ -16,7 +16,7 @@ Character vector, NA where the link isn't a per-posting one.
 Keyed by platform and number (plus the tenant where numbers are per tenant),
 so a host or path change keeps the ID: AppliTrack \verb{applitrack:<tenant>:<n>},
 SchoolSpring \verb{schoolspring:<n>}, Red Rover \verb{redrover:<org>:<n>}, TedK12
-\verb{tedk12:<subdomain>:<n>}, Tyler Portico \verb{tylerportico:<tenant>:<id>} (a GUID or a number). A board
-page or any other link is NA. Moved from WY's \code{k12_he_classification.R} in
-0.13.0 (Tyler Portico added).
+\verb{tedk12:<subdomain>:<n>}, Tyler Portico \verb{tylerportico:<tenant>:<id>} (a GUID
+or a number). A board page or any other link is NA. Moved from WY's
+\code{k12_he_classification.R} in 0.13.0 (Tyler Portico added).
 }
