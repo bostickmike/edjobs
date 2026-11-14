@@ -9,6 +9,8 @@ WY's own-page districts on the CMS families (notes: `claude-notes/2026-11-14_wy-
   2's "Music Teacher" (excluded there by a stop rule) and Fromberg's substitute music posting, which was missed.
 * A "Substitute <job> Positions" line with nothing listed under it is a posting, not a section header (WY Sheridan 3's
   "Substitute Custodial Positions"); no other cached page changes.
+* A numbered list item on its own line loses its number ("1. Maintenance/Custodial Supervisor", MT's Helena Flats).
+  On every cached page, the only other change is Wolf Point read without its rules (2 junk lines fewer).
 
 # edjobs 0.23.0
 

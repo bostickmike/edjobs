@@ -227,6 +227,9 @@ apptegy_title_rows <- function(text, start = NA, stop = NA, skip_section = NA) {
       l <- trimws(sub("(\\s+(20)?[0-9]{2}([ -](20)?[0-9]{2})?)+$", "", gsub("_+", " ", l)))
       if (!nzchar(l)) next
     }
+    # A numbered list item on its own line ("1. Maintenance/Custodial Supervisor", Helena Flats): the number goes
+    if (grepl("^[0-9]{1,2}[.)]\\s+[A-Za-z]", l) && !grepl("(?i)^[0-9]{1,2}[.)]\\s+\\S.*\\s[0-9]{1,2}[.)]\\s+\\S", l, perl = TRUE))
+      l <- sub("^[0-9]{1,2}[.)]\\s+", "", l)
     # A card's "Job Title:" label
     l <- trimws(sub("(?i)^(job |position )?title:\\s+", "", l, perl = TRUE))
     # "Elementary Teaching Position(permanent, full time)Beginning August": details glued on after a

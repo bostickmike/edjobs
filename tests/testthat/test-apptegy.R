@@ -156,3 +156,10 @@ test_that("a 'Substitute <job> Positions' line with nothing under it is a postin
   expect_equal(apptegy_title_lines("Substitute Custodial Positions\nNight Custodian"), "Night Custodian")
   expect_equal(apptegy_title_lines("Bus Driver\nSubstitute Teaching Positions"), "Bus Driver")
 })
+
+test_that("a numbered list item on its own line loses its number (MT's Helena Flats)", {
+  expect_equal(apptegy_title_lines("Openings:\n1. Maintenance/Custodial Supervisor\n2. Special Education Paraprofessional"),
+               c("Maintenance/Custodial Supervisor", "Special Education Paraprofessional"))
+  # Several numbered items on one line are still split
+  expect_equal(apptegy_title_lines("Openings:\n1. Bus Driver 2. Custodian"), c("Bus Driver", "Custodian"))
+})
