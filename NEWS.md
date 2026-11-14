@@ -1,3 +1,17 @@
+# edjobs 0.16.0
+
+Drift check: an LLM's reading of a flagged page no longer counts titles the scraper already returned (Mike, 11-13).
+
+* `combine_verdict_with_llm()` gains `current_titles` (this run's titles for the source): only a title the scraper
+  missed promotes to "likely_broken"; if the LLM read nothing else, an inconclusive page becomes
+  "looks_genuinely_empty". New helpers `drop_titles_already_scraped()` and `title_match_key()`.
+* Why: WY's Sublette County SD 1 returned its one item, "Substitutes"; the LLM read the same "Substitutes", which
+  made it "likely_broken" on 11-11 and 11-13 and sent an auto-fix issue (WY issue 7) to Copilot and Claude for a
+  board that is just quiet. Replayed on every past flag with an LLM reading (8: MT 6, WY 2): the 6 MT flags are
+  unchanged (each scraper returned 0), the 2 Sublette flags are no longer filed.
+* States pass `current_titles` from `corroborate_drift.R` (combinedclean.csv / hedata.xlsx); without it, the old
+  behaviour.
+
 # edjobs 0.15.0
 
 Statewide feeds in the daily presence check: MT's OPI and WY's WSBA (notes:
