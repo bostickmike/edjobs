@@ -168,3 +168,39 @@ test_that("Victor-style lists: a slash header, a count of positions, a lowercase
   expect_equal(apptegy_title_lines("Athletics/Coaching\nHead High School Track Coach\nClassified Staff Openings:\n3 Paraprofessional positions\nSubstitutes for the following positions:\nteachers\nkitchen\n2026-27"),
                c("Head High School Track Coach", "Paraprofessional", "Substitutes"))
 })
+
+# ---------------------------------------------------------------------------
+# Passed application deadlines (Mike 11-14: "still open" = a candidate can apply)
+# ---------------------------------------------------------------------------
+
+test_that("a posting past its own application deadline is left out (Weston County SD 7, 2026-11-14)", {
+  # Real rendered page: "School Maintenance Technician ... Applications will be
+  # accepted until 5:00 PM on Thursday October 29, 2026." and "Special Education
+  # Paraprofessional ... will close at 1:00 p.m. on Monday, November 30, 2026."
+  page <- read_fixture("apptegy_weston7_rendered_2026-11-14.txt")
+  skip <- "^(Subs Needed|WCSD #7 is currently accepting applications for:)$"
+  kept <- function(d) parse_apptegy_postings(page, "u", "Upton", "text", NA, NA, skip, deadline_date = d)$Title
+  expect_message(on_run <- kept(as.Date("2026-11-14")), "past their own application deadline.*School Maintenance Technician")
+  expect_equal(on_run, c("Special Education Paraprofessional", "Substitute Teacher", "Substitute Paraprofessional",
+                         "Substitute Custodian", "Substitute Bus Driver (CDL preferred but willing to train)",
+                         "Substitute Lunchroom Cook"))
+  # Before 10-29 both are open; after 11-30 the paraprofessional goes too.
+  expect_true("School Maintenance Technician" %in% kept(as.Date("2026-10-20")))
+  expect_false("Special Education Paraprofessional" %in% suppressMessages(kept(as.Date("2026-12-01"))))
+  # NA turns the check off.
+  expect_true("School Maintenance Technician" %in% kept(NA))
+})
+
+test_that("a deadline needs a cue and a full date with its year", {
+  rows <- function(...) data.frame(Title = c("Cook", "Bus Driver"), Line = c("Cook", "Bus Driver"))
+  passed <- function(block) apptegy_passed_deadline(rows(), paste(c("Cook", block, "Bus Driver"), collapse = "\n"),
+                                                    as.Date("2026-11-14"))
+  expect_equal(passed("Applications due 10/1/2026."), c(TRUE, FALSE))
+  expect_equal(passed("Closing date: Oct. 3rd, 2026"), c(TRUE, FALSE))
+  expect_equal(passed("Deadline 9/30/26"), c(TRUE, FALSE))
+  expect_equal(passed("Open until filled."), c(FALSE, FALSE))
+  expect_equal(passed("Applications due May 20."), c(FALSE, FALSE))          # no year
+  expect_equal(passed("Renewed in April 2021 and on August 17, 2021."), c(FALSE, FALSE))  # no cue
+  expect_equal(passed("Position closes December 4, 2026"), c(FALSE, FALSE))  # still ahead
+  expect_equal(apptegy_passed_deadline(data.frame(Title = character(0), Line = character(0)), "x"), logical(0))
+})

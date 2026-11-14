@@ -2,6 +2,12 @@
 
 WY's own-page districts on the CMS families (notes: `claude-notes/2026-11-14_wy-families/`).
 
+* Apptegy: a posting whose own text gives an application deadline that has passed is left out (a candidate can no
+  longer apply), with a message naming it. New `apptegy_passed_deadline()`; `fetch_apptegy_postings()` and
+  `parse_apptegy_postings()` take `deadline_date` (default today; `NA` keeps every posting). A deadline needs a cue
+  word and a full date with its year. Measured on every MT and WY Apptegy page (228 postings, 50 districts): it drops
+  one, Weston County SD 7's School Maintenance Technician (closed 2026-10-29); no other page states a deadline
+  (`claude-notes/2026-11-14_deadline-check/`).
 * The shared title filter: a posting named by its job-description file keeps the job ("Speech Language Pathologist Job
   Description" -> "Speech Language Pathologist", "Job Description - Music Teacher K12" -> "Music Teacher K12"); a
   camel-case file name reads as words ("AssistantBoysSoccerCoach", "SubsMusicTeachingPosition.pdf"). On every cached

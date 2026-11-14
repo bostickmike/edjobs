@@ -11,7 +11,8 @@ fetch_apptegy_postings(
   mode = "text",
   start = NA,
   stop = NA,
-  skip_section = NA
+  skip_section = NA,
+  deadline_date = Sys.Date()
 )
 }
 \arguments{
@@ -26,6 +27,10 @@ JSON in the HTML).}
 
 \item{start, stop, skip_section}{Optional per-district regexes, see
 \code{\link[=apptegy_title_lines]{apptegy_title_lines()}}.}
+
+\item{deadline_date}{A posting whose own text gives an application deadline
+before this date is left out (a candidate can no longer apply); see
+\code{\link[=apptegy_passed_deadline]{apptegy_passed_deadline()}}. \code{NA} keeps every posting.}
 }
 \value{
 Data frame: \code{Title}, \code{Location}, \code{Posted_Date} (always NA: Apptegy

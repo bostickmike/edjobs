@@ -439,20 +439,23 @@ apptegy_pagebuilder_lines <- function(nodes) {
 #'   JSON in the HTML).
 #' @param start,stop,skip_section Optional per-district regexes, see
 #'   [apptegy_title_lines()].
+#' @param deadline_date A posting whose own text gives an application deadline
+#'   before this date is left out (a candidate can no longer apply); see
+#'   [apptegy_passed_deadline()]. `NA` keeps every posting.
 #' @return Data frame: `Title`, `Location`, `Posted_Date` (always NA: Apptegy
 #'   pages give none), `Link` (the page), and the posted pay columns
 #'   (`Pay_Min`, `Pay_Max`, `Pay_Unit`, `Pay_Text`) when a title's own line
 #'   states pay.
 #' @export
 fetch_apptegy_postings <- function(chromote_session, url, location, mode = "text",
-                                   start = NA, stop = NA, skip_section = NA) {
+                                   start = NA, stop = NA, skip_section = NA, deadline_date = Sys.Date()) {
   mode <- match.arg(mode, c("text", "pagebuilder"))
   chromote_session$Page$navigate(url)
   chromote_session$Page$loadEventFired(wait_ = TRUE, timeout_ = 30)
   Sys.sleep(4)
   js <- if (mode == "text") "document.body.innerText" else "document.documentElement.outerHTML"
   content <- chromote_session$Runtime$evaluate(js)$result$value
-  parse_apptegy_postings(content, url, location, mode, start, stop, skip_section)
+  parse_apptegy_postings(content, url, location, mode, start, stop, skip_section, deadline_date)
 }
 
 #' Parse an Apptegy jobs page
@@ -462,7 +465,7 @@ fetch_apptegy_postings <- function(chromote_session, url, location, mode = "text
 #' @return See [fetch_apptegy_postings()].
 #' @export
 parse_apptegy_postings <- function(content, url, location, mode = "text",
-                                   start = NA, stop = NA, skip_section = NA) {
+                                   start = NA, stop = NA, skip_section = NA, deadline_date = Sys.Date()) {
   mode <- match.arg(mode, c("text", "pagebuilder"))
   start <- na_rule(start); stop <- na_rule(stop); skip_section <- na_rule(skip_section)
   text <- if (mode == "text") {
@@ -472,7 +475,71 @@ parse_apptegy_postings <- function(content, url, location, mode = "text",
     if (is.null(nodes)) NULL else paste(apptegy_pagebuilder_lines(nodes), collapse = "\n")
   }
   rows <- if (is.null(text)) apptegy_title_rows(NULL) else apptegy_title_rows(text, start, stop, skip_section)
+  if (nrow(rows) && length(deadline_date) == 1 && !is.na(deadline_date)) {
+    passed <- apptegy_passed_deadline(rows, text, deadline_date)
+    if (any(passed)) {
+      message("Apptegy: left out ", sum(passed), " posting(s) past their own application deadline at ", url, ": ",
+              paste(rows$Title[passed], collapse = "; "))
+      rows <- rows[!passed, , drop = FALSE]
+    }
+  }
   title_rows_postings(rows, url, location)
+}
+
+#' Which titles' own text gives an application deadline that has passed
+#'
+#' A title's block is its line up to the next title's line (at most 25 lines).
+#' The first line in it with a deadline cue (deadline, close/closing, due,
+#' until, no later than, accepted through, apply/received/submitted by)
+#' followed within 60 characters by a full date with its year ("October 29,
+#' 2026", "10/29/2026") is the deadline. A date without a year, or "until
+#' filled" with no date, is no deadline. Measured 2026-11-14 on every MT and WY
+#' Apptegy page (228 postings at 50 districts): one passed deadline, Weston
+#' County SD 7's School Maintenance Technician (closed 2026-10-29).
+#' @param rows The filter's rows (`Title`, `Line`).
+#' @param text The page text the rows came from.
+#' @param deadline_date The run date: a deadline before it has passed.
+#' @return Logical, one per row.
+#' @export
+apptegy_passed_deadline <- function(rows, text, deadline_date = Sys.Date()) {
+  if (!nrow(rows)) return(logical(0))
+  L <- trimws(gsub("[\u00a0\t ]+", " ", strsplit(paste(text, collapse = "\n"), "\n")[[1]])); L <- L[nzchar(L)]
+  pos <- vapply(rows$Line, function(x) {
+    j <- which(L == trimws(x)); if (!length(j)) j <- which(grepl(trimws(x), L, fixed = TRUE)); if (length(j)) j[1] else NA_integer_
+  }, 1L, USE.NAMES = FALSE)
+  vapply(seq_along(pos), function(k) {
+    p <- pos[k]
+    if (is.na(p)) return(FALSE)
+    later <- pos[!is.na(pos) & pos > p]
+    end <- min(length(L), p + 24, if (length(later)) min(later) - 1 else Inf)
+    d <- apptegy_block_deadline(L[p:end])
+    !is.na(d) && d < as.Date(deadline_date)
+  }, TRUE)
+}
+
+APPTEGY_DEADLINE_CUE <- "(?i)(deadline|clos(e|es|ed|ing)|\\bdue\\b|until|no later than|accepted (through|thru)|(apply|received|submitted) by)"
+APPTEGY_FULL_DATE <- paste0("(?i)((Jan(uary)?|Feb(ruary)?|Mar(ch)?|Apr(il)?|May|June?|July?|Aug(ust)?|Sep(t(ember)?)?|",
+                            "Oct(ober)?|Nov(ember)?|Dec(ember)?)\\.?\\s+\\d{1,2}(st|nd|rd|th)?,?\\s+\\d{4}|",
+                            "\\b\\d{1,2}/\\d{1,2}/(\\d{4}|\\d{2})\\b)")
+
+# The first deadline date in a block of lines, or NA.
+apptegy_block_deadline <- function(block) {
+  for (l in block) {
+    m <- regmatches(l, regexpr(paste0(APPTEGY_DEADLINE_CUE, ".{0,60}?", APPTEGY_FULL_DATE), l, perl = TRUE))
+    if (!length(m)) next
+    ds <- regmatches(m, regexpr(APPTEGY_FULL_DATE, m, perl = TRUE))
+    ds <- gsub("\\.", "", gsub("(\\d)(st|nd|rd|th)\\b", "\\1", ds, perl = TRUE))
+    month <- match(tolower(substr(sub("^\\s+", "", ds), 1, 3)), tolower(month.abb))
+    d <- if (!is.na(month)) {
+      parts <- regmatches(ds, gregexpr("\\d+", ds))[[1]]
+      as.Date(sprintf("%s-%02d-%02d", parts[2], month, as.integer(parts[1])), optional = TRUE)
+    } else {
+      parts <- as.integer(strsplit(ds, "/")[[1]]); y <- if (parts[3] < 100) parts[3] + 2000L else parts[3]
+      as.Date(sprintf("%d-%02d-%02d", y, parts[1], parts[2]), optional = TRUE)
+    }
+    if (!is.na(d)) return(d)
+  }
+  as.Date(NA)
 }
 
 # The family routines' output from the filter's rows: Title, Location,
