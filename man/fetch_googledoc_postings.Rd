@@ -26,8 +26,9 @@ posting's link.}
 \code{\link[=apptegy_title_lines]{apptegy_title_lines()}}), applied to each doc.}
 }
 \value{
-Data frame: \code{Title}, \code{Location}, \code{Posted_Date} (NA), \code{Link}, and the
-posted pay columns.
+Data frame: \code{Title}, \code{Location}, \code{Posted_Date} (the doc's "updated
+M/D/YYYY" date as ISO, as Victor's old scraper read it; else NA), \code{Link},
+and the posted pay columns.
 }
 \description{
 Fetch the job postings listed in one or more Google Docs

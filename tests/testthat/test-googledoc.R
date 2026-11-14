@@ -9,6 +9,7 @@ test_that("an uploaded doc's preview text reads through the filter (Victor)", {
   expect_equal(r$Title, c("HS/MS Special Education Teacher", "Paraprofessional", "Head High School Track Coach", "Substitutes"))
   expect_true(all(r$Link == "https://www.victor.k12.mt.us/page/employment"))
   expect_true(all(r$Location == "Victor"))
+  expect_true(all(r$Posted_Date == "2026-10-01"))  # the doc's "updated 10/1/2026"
   expect_true("Pay_Min" %in% names(r))
 })
 
@@ -19,6 +20,7 @@ test_that("two docs, each with the same list rules (Bainville's certified and cl
                                 "^(CERTIFIED JOB OPENINGS|Current Openings)$", "^(Bainville School is a small|For a complete application)")
   expect_equal(r$Title, c("K-12 Art Teacher", "7-12 History", "Elementary Teacher", "Paraprofessional",
                           "Substitute Teachers", "Custodian Subs", "Substitute Bus Drivers"))
+  expect_true(all(is.na(r$Posted_Date)))
 })
 
 test_that("ids from a registry Slug; empty input gives zero rows with the columns", {

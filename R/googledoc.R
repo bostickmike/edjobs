@@ -17,8 +17,9 @@
 #'   posting's link.
 #' @param start,stop,skip_section Optional per-district rules (see
 #'   [apptegy_title_lines()]), applied to each doc.
-#' @return Data frame: `Title`, `Location`, `Posted_Date` (NA), `Link`, and the
-#'   posted pay columns.
+#' @return Data frame: `Title`, `Location`, `Posted_Date` (the doc's "updated
+#'   M/D/YYYY" date as ISO, as Victor's old scraper read it; else NA), `Link`,
+#'   and the posted pay columns.
 #' @export
 fetch_googledoc_postings <- function(doc_ids, location, link, start = NA, stop = NA, skip_section = NA) {
   ids <- googledoc_ids(doc_ids)
@@ -34,11 +35,24 @@ fetch_googledoc_postings <- function(doc_ids, location, link, start = NA, stop =
 #' @return See [fetch_googledoc_postings()].
 #' @export
 parse_googledoc_postings <- function(texts, location, link, start = NA, stop = NA, skip_section = NA) {
-  rows <- do.call(rbind, c(list(apptegy_title_rows(NULL)), lapply(texts, function(t) {
-    if (is.na(t) || !nzchar(t)) apptegy_title_rows(NULL) else apptegy_title_rows(t, na_rule(start), na_rule(stop), na_rule(skip_section))
-  })))
+  per_doc <- lapply(texts, function(t) {
+    if (is.na(t) || !nzchar(t)) return(cbind(apptegy_title_rows(NULL), Updated = character(0)))
+    rows <- apptegy_title_rows(t, na_rule(start), na_rule(stop), na_rule(skip_section))
+    cbind(rows, Updated = rep(googledoc_updated(t), nrow(rows)))
+  })
+  rows <- do.call(rbind, c(list(cbind(apptegy_title_rows(NULL), Updated = character(0))), per_doc))
   rows <- rows[!duplicated(rows$Title), , drop = FALSE]
-  title_rows_postings(rows, link, location)
+  out <- title_rows_postings(rows[, c("Title", "Line")], link, location)
+  out$Posted_Date <- as.character(rows$Updated)
+  out
+}
+
+# A doc's own "updated 10/1/2026" line, as an ISO date (NA when none).
+googledoc_updated <- function(text) {
+  m <- regmatches(text, regexpr("(?i)\\bupdated:?\\s+[0-9]{1,2}/[0-9]{1,2}/[0-9]{4}", text, perl = TRUE))
+  if (!length(m)) return(NA_character_)
+  d <- as.Date(sub("(?i)^updated:?\\s+", "", m, perl = TRUE), format = "%m/%d/%Y")
+  if (is.na(d)) NA_character_ else format(d)
 }
 
 #' A Google Doc preview page's text
