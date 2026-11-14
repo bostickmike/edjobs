@@ -2,7 +2,9 @@
 # plan: claude-notes/2026-11-09_daily-presence-check-plan.md).
 #
 # Reads every board on the given registry platforms once (list pages only,
-# the weekly run's own fetch_* call for each district) and commits
+# the weekly run's own fetch_* call for each district), and each statewide
+# feed the state's setup files define in PRESENCE_FEEDS (edjobs::presence_feed();
+# MT's OPI, WY's WSBA), and commits
 # presence_checks.csv and presence_sightings.csv to a side branch (`presence`),
 # never main: a push to main redeploys the dashboard. The branch is created on
 # the first run. A second run the same day (Mountain time) changes nothing.
@@ -13,9 +15,10 @@
 #   jobs:
 #     presence:
 #       permissions: { contents: write }
-#       uses: bostickmike/edjobs/.github/workflows/presence.yml@v0.13.0
+#       uses: bostickmike/edjobs/.github/workflows/presence.yml@v0.15.0
 #       with:
-#         platforms: AppliTrack,SchoolSpring,TedK12,TylerPortico
+#         platforms: AppliTrack,SchoolSpring,TedK12,TylerPortico,RedRoverK12
+#         setup_files: state_config.R direct_api_scrapers.R presence_feeds.R
 name: Presence check (reusable)
 
 on:
@@ -26,9 +29,17 @@ on:
         type: string
         required: true
       setup_files:
-        description: State files to source first (space-separated); they define the state config and its fetch_* functions
+        description: State files to source first (space-separated); they define the state config, its fetch_* functions and any PRESENCE_FEEDS
         type: string
         default: state_config.R direct_api_scrapers.R
+      packages:
+        description: CRAN packages the setup files load, besides edjobs's own (space-separated)
+        type: string
+        default: here purrr stringr
+      checkout_ref:
+        description: State repo ref the setup files are read from (main; another ref only to test a change before it merges)
+        type: string
+        default: main
       branch:
         description: Side branch the files are committed to
         type: string
@@ -49,7 +60,7 @@ concurrency:
 jobs:
   presence:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     env:
       BRANCH: ${{ inputs.branch }}
       PLATFORMS: ${{ inputs.platforms }}
@@ -57,7 +68,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: main
+          ref: ${{ inputs.checkout_ref }}
 
       - name: Check out the presence branch into presence/
         run: |
@@ -78,15 +89,18 @@ jobs:
       - name: Install edjobs at the pinned version
         env:
           EDJOBS_REF: ${{ inputs.edjobs_ref }}
+          PACKAGES: ${{ inputs.packages }}
         run: |
           Rscript -e 'ref <- Sys.getenv("EDJOBS_REF"); if (!nzchar(ref)) ref <- paste0("v", trimws(readLines("EDJOBS_VERSION")))' \
-                  -e 'install.packages("pak"); pak::pak(c(paste0("bostickmike/edjobs@", ref), "here", "purrr"), ask = FALSE)'
+                  -e 'pkgs <- strsplit(trimws(Sys.getenv("PACKAGES")), " +")[[1]]' \
+                  -e 'install.packages("pak"); pak::pak(c(paste0("bostickmike/edjobs@", ref), pkgs[nzchar(pkgs)]), ask = FALSE)'
 
       - name: Check every board once
         run: |
           Rscript -e 'suppressMessages(for (f in strsplit(Sys.getenv("SETUP_FILES"), " +")[[1]]) source(f))' \
+                  -e 'feeds <- if (exists("PRESENCE_FEEDS")) PRESENCE_FEEDS else list()' \
                   -e 'edjobs::refresh_presence("presence", trimws(strsplit(Sys.getenv("PLATFORMS"), ",")[[1]]),' \
-                  -e '                         summary_path = Sys.getenv("GITHUB_STEP_SUMMARY"))'
+                  -e '                         feeds = feeds, summary_path = Sys.getenv("GITHUB_STEP_SUMMARY"))'
 
       - name: Commit to the presence branch
         if: ${{ !inputs.dry_run }}

@@ -7,6 +7,7 @@
 refresh_presence(
   dir,
   platforms,
+  feeds = list(),
   today = presence_today(),
   sources = state_scraper_sources(),
   delay = 1,
@@ -17,7 +18,7 @@ refresh_presence(
 \arguments{
 \item{dir}{The folder holding the files (the \code{presence} branch's checkout).}
 
-\item{platforms, sources, delay, envir}{As for \code{\link[=run_presence_check]{run_presence_check()}}.}
+\item{platforms, feeds, sources, delay, envir}{As for \code{\link[=run_presence_check]{run_presence_check()}}.}
 
 \item{today}{The day the check counts for.}
 
@@ -29,6 +30,6 @@ Invisibly, the summary lines (NULL when today was already checked).
 }
 \description{
 Reads \code{presence_checks.csv} and \code{presence_sightings.csv} in \code{dir} (absent
-on the first day), checks every board once, and writes both back, plus a
-README the first time. A second run on the same day does nothing.
+on the first day), checks every board and feed once, and writes both back,
+plus a README the first time. A second run on the same day does nothing.
 }

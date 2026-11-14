@@ -1,3 +1,26 @@
+# edjobs 0.15.0
+
+Statewide feeds in the daily presence check: MT's OPI and WY's WSBA (notes:
+`claude-notes/2026-11-13_presence-redrover-opi-wsba.md`). Mike, 11-13: "look a bit harder at OPI and WSBA".
+
+* `presence_feed(board, platform, fetch)`: a feed a state passes to `refresh_presence(feeds = )`; `fetch(known)` gets
+  the feed's own stretches so far (to reuse keys without reading detail pages). The reusable workflow passes the
+  setup files' `PRESENCE_FEEDS`, and installs the packages named in its new `packages` input. A new `checkout_ref` input (default `main`) lets a
+  state test new setup files from a branch before they merge.
+* The presence files gain `Board` (the board or feed a posting was seen on; for a district's own board, the
+  district) and, in the sightings, `List_Key` (what a feed's list shows of the posting). `District` is the
+  posting's district. Phase 0 had not started, so no file is converted.
+* Fingerprints for feeds without posting IDs: `opi_posting_key()` (OPI detail page's district and school, title,
+  posted date, the archived description excerpt) and `wsba_vacancy_key()` (district, title, WSBA's posted date),
+  with `presence_occurrence_keys()` for repeats in one day's list, `presence_iso_date()` and `presence_norm()`. The
+  weekly archives' columns give the same keys. Measured: OPI repeats within a week are only true double listings,
+  and no description changed for the 324 postings listed both 11-03 and 11-10; WSBA repeats 2 in 47.
+* Live, from the Mac (2026-11-13): MT's OPI feed read 353 detail pages on its first day (270 s) and 1 on a second
+  (4 s; the other 353 keys reused); 336 of the 346 fingerprints in MT's 11-10 weekly archive were among the day's.
+  WY with Red Rover and WSBA: 39 boards, all answered, 701 postings, all keyed; 46 of the 47 WSBA rows in WY's 11-13
+  archive had the same key.
+* Needs R 4.5 (`tools::md5sum(bytes = )`).
+
 # edjobs 0.14.0
 
 Red Rover through its API in both states (notes: `claude-notes/2026-11-13_presence-redrover-opi-wsba.md`).
