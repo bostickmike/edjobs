@@ -53,7 +53,9 @@ APPTEGY_BOILER <- paste(c(
   "holidays off", "\\b(position|job) descriptions?\\b", "^no (positions?|openings?|vacancies) (are |is )?(currently )?(available|open)",
   "veterans'? preference", ",? [A-Z]{2} [0-9]{5}(-[0-9]{4})?$", "^[0-9]+ [A-Za-z]+ (street|st|avenue|ave|road|rd|drive|dr|lane|ln|boulevard|blvd|highway|hwy)\\b",
   "school district #? ?[0-9]+$", "^dear\\b", "\\binformation$", "salary schedule", "responsibilities", "^following\\b",
-  "\\bcontact$", "\\bdocuments?$", "and more$", "\\bresources$", "^jobs?$", "^load more$", "^(hours|job duties|experience|closing date|education)$", "^varies\\b", "^attn\\b", "cooperative$",
+  "\\bcontact$", "\\bdocuments?$", "and more$", "\\bresources$", "^jobs?$", "^load more$", "handbook", "\\bcba\\b", "^opportunities\\b", "^(more about|follow|learn more)\\b", "\\bwages?$",
+  "^(prep|use|responsible|wash|clean|maintain|perform|provide|supervise|help|ensure|operate|monitor|prepare|serve|deliver|manage|work with)\\b",
+  "school district no\\.? ?[0-9]+$", "^(hours|job duties|experience|closing date|education)$", "^varies\\b", "^attn\\b", "cooperative$",
   "jobs[- ]for[- ]teachers", "^updated\\b", "slideshow", "brochure", "^search\\b", "^history$", "^location:", "^job summary$", "^\\("),
   collapse = "|")
 
@@ -219,7 +221,10 @@ apptegy_title_rows <- function(text, start = NA, stop = NA, skip_section = NA) {
     parts <- apptegy_split_line(l)
     if (length(parts) > 1) { keep(parts[has_role(parts)], src); next }
     l <- parts
-    l <- trimws(sub("(?i)^(now )?(seeking|hiring|looking for)( an?)?\\s+", "", l, perl = TRUE))
+    l <- trimws(sub("(?i)^((we are|we.re|now) )?(now )?(seeking|hiring|looking for)( an?)?\\s+", "", l, perl = TRUE))
+    # "Foundations Hiring for Literacy Tutors": who is hiring goes, the job stays
+    if (grepl("(?i)^.{1,40}?\\bhiring for\\s+", l, perl = TRUE) &&
+        has_role(sub("(?i)^.{1,40}?\\bhiring for\\s+", "", l, perl = TRUE))) l <- trimws(sub("(?i)^.{1,40}?\\bhiring for\\s+(an?\\s+)?", "", l, perl = TRUE))
     l <- trimws(sub("(?i)\\s*(for|in) the 20[0-9]{2}\\s*[-\u2013]\\s*(20)?[0-9]{2} school year\\.?$", "", l, perl = TRUE))
     # A linked document's name ("Part-time Bus Driver.pdf"); a trailing aside that states pay
     # ("Substitute Teachers (Certified sub=$120.00/day; ...)": the pay is still read from the line).
@@ -229,7 +234,7 @@ apptegy_title_rows <- function(text, start = NA, stop = NA, skip_section = NA) {
     l <- trimws(sub("(?i)\\s+click here\\b.*$", "", l, perl = TRUE))
     l <- trimws(sub("(?i)(\\s+link|\\s*-)$", "", l, perl = TRUE))
     l <- trimws(sub("(?i)\\s*\\([^()]*\\b(open|until filled|posted)\\b[^()]*\\)\\s*$", "", l, perl = TRUE))
-    l <- trimws(sub("(?i)\\.(pdf|docx?)$", "", l, perl = TRUE))
+    l <- trimws(sub("(?i)(\\.(pdf|docx?)|\\s*\\((pdf|docx?)\\))$", "", l, perl = TRUE))
     l <- trimws(sub("(?i)(?<=\\S)\\s+(job\\s+)?opening$", "", l, perl = TRUE))
     l <- trimws(sub("\\s*\\([^()]*\\$[^()]*\\)$", "", l, perl = TRUE))
     # "Substitute Certified Teachers $160/day": pay after the title
@@ -276,7 +281,9 @@ apptegy_title_rows <- function(text, start = NA, stop = NA, skip_section = NA) {
     # "Superintendent / Principal: Christy Bortz": a contact, not a posting
     if (grepl("^[^:]{3,60}:\\s*[A-Z][a-z]+( [A-Z]\\.)? [A-Z][a-z'-]+$", l) && !has_role(sub("^[^:]*:", "", l))) next
     # "Penny Benner, Superintendent": a contact, not a posting
-    if (grepl("^[A-Z][a-z]+ [A-Z][a-z]+,\\s", l) && !has_role(sub(",.*$", "", l))) next
+    if (grepl("^[A-Z][a-z]+ [A-Z][A-Za-z'-]+,\\s", l) && !has_role(sub(",.*$", "", l))) next
+    # A question ("Why Choose Our School?")
+    if (grepl("\\?$", l) && words > 2) next
     if (grepl("(?i)^20[0-9]{2}\\s*[-\u2013]\\s*(20)?[0-9]{2} school year$", l, perl = TRUE)) next
     if (grepl("application", l, ignore.case = TRUE) && !has_role(sub("(?i)application.*$", "", l, perl = TRUE))) next
     under_jobs <- words <= 5 && !is.na(header) &&
