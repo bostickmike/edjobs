@@ -53,10 +53,11 @@ APPTEGY_BOILER <- paste(c(
   "holidays off", "\\b(position|job) descriptions?\\b", "^no (positions?|openings?|vacancies) (are |is )?(currently )?(available|open)",
   "veterans'? preference", ",? [A-Z]{2} [0-9]{5}(-[0-9]{4})?$", "^[0-9]+ [A-Za-z]+ (street|st|avenue|ave|road|rd|drive|dr|lane|ln|boulevard|blvd|highway|hwy)\\b",
   "school district #? ?[0-9]+$", "^dear\\b", "\\binformation$", "salary schedule", "responsibilities", "^following\\b",
-  "\\bcontact$", "\\bdocuments?$", "and more$", "\\bresources$", "^jobs?$", "^load more$", "\\b(w-?4|i-?9)\\b", "\\bagreement\\b", "handbook", "\\bcba\\b", "^opportunities\\b", "^(more about|follow|learn more)\\b", "\\bwages?$",
+  "\\bcontact$", "\\bdocuments?$", "and more$", "\\bresources$", "^jobs?$", "^load more$", "\\b(w-?4|i-?9)\\b", "\\bagreement\\b", "\\bmenus?$", "handbook", "\\bcba\\b", "^opportunities\\b", "^(more about|follow|learn more)\\b", "\\bwages?$",
   "^(prep|use|responsible|wash|clean|maintain|perform|provide|supervise|help|ensure|operate|monitor|prepare|serve|deliver|manage|work with)\\b",
   "school district no\\.? ?[0-9]+$", "^(hours|job duties|experience|closing date|education)$", "^varies\\b", "^attn\\b", "cooperative$",
-  "jobs[- ]for[- ]teachers", "^updated\\b", "slideshow", "brochure", "^search\\b", "^history$", "^location:", "^job summary$", "^\\("),
+  "jobs[- ]for[- ]teachers", "^updated\\b", "slideshow", "brochure", "^search\\b", "^history$", "^location:", "^job summary$", "^\\(",
+  "^online$", "\\bfree ?(/ ?|and |& ?)reduced\\b"),
   collapse = "|")
 
 #' Split one Apptegy line into its title part(s)
@@ -90,6 +91,8 @@ apptegy_split_line <- function(l) {
       # abbreviation ("Assistant H.S. Boys Basketball Coach").
       if (grepl("^\\.", m[3])) {
         if (grepl("(?i)(\\b[a-z]|\\b(asst|jr|sr|st|no|elem|dept|ed|esp))$", left, perl = TRUE)) return(l)
+        # "Subs are NEEDED. Please ..." / "Custodial Position open. Please ...": a clause, not a title
+        if (grepl("(?i)\\b(is|are|will|must|may|can|open|available|needed|wanted)\\b", left, perl = TRUE)) return(l)
         return(left)
       }
       # Otherwise cut only when the rest is details, not part of the title
@@ -205,7 +208,7 @@ apptegy_title_rows <- function(text, start = NA, stop = NA, skip_section = NA) {
                                  grepl("(?i)(openings|positions|vacancies|opportunities)$", l, perl = TRUE) &&
                                  !has_role(gsub("(?i)\\b(jh|hs|ms|k-?12|7-12|special education|sped|music|art|math(ematics)?|science|english|ela|reading|history|social studies|spanish|physical education|pe|health|kindergarten|preschool|ag(riculture)?|fcs|cte)\\b", " ", l, perl = TRUE)))
     # A "Job Descriptions" section lists every kind of job the district has, not openings.
-    jd <- grepl("(?i)^job descriptions:?$", l, perl = TRUE)
+    jd <- grepl("(?i)^job descriptions\\b[^.]*:?$", l, perl = TRUE)
     if (is_header || jd) { header <- l; skipping <- jd || (ok(skip_section) && grepl(skip_section, l, perl = TRUE)); next }
     if (skipping) next
     # An all-caps title wrapped onto a second line ("SEEKING TWO (2) EVENING SHIFT SCHOOL CUSTODIANS" /
@@ -237,8 +240,11 @@ apptegy_title_rows <- function(text, start = NA, stop = NA, skip_section = NA) {
     # Link decorations and status asides: "(opens in new window/tab)", "Click Here, for job description",
     # "(6/4/26 open until filled)" (the posting is open: the aside goes, the title stays)
     l <- trimws(sub("(?i)\\s*\\(opens in (a )?new (window|tab)[^)]*\\)\\s*$", "", l, perl = TRUE))
-    l <- trimws(sub("(?i)\\s+click here\\b.*$", "", l, perl = TRUE))
+    l <- trimws(sub("(?i)(\\s+|(?<=[A-Z]))click here\\b.*$", "", l, perl = TRUE))
     l <- trimws(sub("(?i)(\\s+link|\\s*-)$", "", l, perl = TRUE))
+    # An all-caps plea heading, "BUS DRIVER NEEDED" (Roy): the heading names the job; the plea goes.
+    # Mixed-case titles keep theirs ("Substitutes Wanted", "Substitute Teachers Needed"), as their old parsers had them.
+    if (!grepl("[a-z]", l)) l <- trimws(sub("\\s+(NEEDED|WANTED)( NOW| IMMEDIATELY)?!*$", "", l, perl = TRUE))
     l <- trimws(sub("(?i)\\s*\\([^()]*\\b(open|until filled|posted)\\b[^()]*\\)\\s*$", "", l, perl = TRUE))
     l <- trimws(sub("(?i)(\\.(pdf|docx?)|\\s*\\((pdf|docx?)\\))$", "", l, perl = TRUE))
     l <- trimws(sub("(?i)(?<=\\S)\\s+(job\\s+)?opening$", "", l, perl = TRUE))
@@ -465,7 +471,7 @@ title_links <- function(rows, doc, url) {
   a <- rvest::html_elements(doc, "a[href]")
   if (!length(a)) return(links)
   nm <- function(x) tolower(gsub("[[:space:]\u00a0]+", " ", trimws(sub("(?i)\\.(pdf|docx?)$", "", trimws(x), perl = TRUE))))
-  at <- nm(rvest::html_text2(a)); href <- rvest::html_attr(a, "href")
+  at <- nm(gsub("\u241e", " ", rvest::html_text2(a))); href <- rvest::html_attr(a, "href")
   ok <- nzchar(at) & !is.na(href) & !grepl("^(#|javascript:|mailto:|tel:)", href)
   at <- at[ok]; href <- href[ok]
   for (i in seq_len(nrow(rows))) {
