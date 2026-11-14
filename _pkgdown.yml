@@ -58,6 +58,17 @@ reference:
   - schoolspring_job_id
   - schoolspring_sightings
   - update_schoolspring_endings
+- title: "CMS-family routines (CyberSchool, Apptegy)"
+  contents:
+  - fetch_cyberschool_postings
+  - parse_cyberschool_postings
+  - fetch_apptegy_postings
+  - parse_apptegy_postings
+  - apptegy_title_lines
+  - apptegy_split_line
+  - apptegy_pagebuilder_lines
+  - decode_apptegy_pagebuilder_nodes
+  - apptegy_html_fragment_to_lines
 - title: "LLM extraction tier (shadow pilot)"
   contents:
   - LLM_EXTRACT_MAX_CHARS
