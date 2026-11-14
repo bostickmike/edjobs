@@ -22,7 +22,7 @@ fetch_googlesites_postings(
 }
 \value{
 Data frame: \code{Title}, \code{Location}, \code{Posted_Date} (NA), \code{Link} (the
-page), and the posted pay columns when a title's own line states pay.
+title's own link when the title is a link on the page, else the page), and the posted pay columns when a title's own line states pay.
 }
 \description{
 Fetch a Google Sites district page's job postings

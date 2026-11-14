@@ -200,7 +200,7 @@ apptegy_title_rows <- function(text, start = NA, stop = NA, skip_section = NA) {
     # A short "... Openings" / "Positions" line with no role word is a section header ("Other Employment Openings")
     is_header <- is_header || (lengths(strsplit(l, "\\s+")) <= 5 &&
                                  grepl("(?i)(openings|positions|vacancies|opportunities)$", l, perl = TRUE) &&
-                                 !has_role(gsub("(?i)\\b(jh|hs|ms|k-?12|7-12)\\b", " ", l, perl = TRUE)))
+                                 !has_role(gsub("(?i)\\b(jh|hs|ms|k-?12|7-12|special education|sped|music|art|math(ematics)?|science|english|ela|reading|history|social studies|spanish|physical education|pe|health|kindergarten|preschool|ag(riculture)?|fcs|cte)\\b", " ", l, perl = TRUE)))
     # A "Job Descriptions" section lists every kind of job the district has, not openings.
     jd <- grepl("(?i)^job descriptions:?$", l, perl = TRUE)
     if (is_header || jd) { header <- l; skipping <- jd || (ok(skip_section) && grepl(skip_section, l, perl = TRUE)); next }
@@ -292,7 +292,14 @@ apptegy_title_rows <- function(text, start = NA, stop = NA, skip_section = NA) {
     if (has_role(l) || under_jobs) keep(l, src)
   }
   out <- data.frame(Title = titles, Line = lines, stringsAsFactors = FALSE)
-  out[!duplicated(out$Title), , drop = FALSE]
+  out <- out[!duplicated(out$Title), , drop = FALSE]
+  # A line that only strings other kept titles together ("Substitute Teachers Kitchen Helper Substitutes ...")
+  if (nrow(out) > 2) {
+    nm <- tolower(gsub("[[:space:]\u00a0]+", " ", out$Title))
+    joined <- vapply(seq_along(nm), function(i) sum(vapply(nm[-i], function(o) grepl(o, nm[i], fixed = TRUE), TRUE)) >= 2, TRUE)
+    out <- out[!joined, , drop = FALSE]
+  }
+  out
 }
 
 #' Decode an Apptegy page-builder page's content tree
@@ -428,13 +435,31 @@ parse_apptegy_postings <- function(content, url, location, mode = "text",
 # Posted_Date (NA), Link (the page), and posted pay read from each title's own
 # line, only when that line gave one title (a "1. Cook 2. Driver" line's pay
 # belongs to no single item).
-title_rows_postings <- function(rows, url, location) {
+title_rows_postings <- function(rows, url, location, doc = NULL) {
   out <- data.frame(Title = rows$Title, Location = rep(location, nrow(rows)), Posted_Date = rep(NA_character_, nrow(rows)),
-                    Link = rep(url, nrow(rows)), stringsAsFactors = FALSE)
+                    Link = title_links(rows, doc, url), stringsAsFactors = FALSE)
   if (nrow(out) == 0) return(ensure_posted_pay_columns(out))
   shared <- rows$Line %in% rows$Line[duplicated(rows$Line)]
   pay <- extract_posted_pay(ifelse(shared, NA_character_, rows$Line))
   cbind(out, pay)
+}
+
+# A title's own link: the page's anchor whose text is the title or its line
+# (the posting's document or page, a stable per-posting link), else the page.
+title_links <- function(rows, doc, url) {
+  links <- rep(url, nrow(rows))
+  if (is.null(doc) || !nrow(rows)) return(links)
+  a <- rvest::html_elements(doc, "a[href]")
+  if (!length(a)) return(links)
+  nm <- function(x) tolower(gsub("[[:space:]\u00a0]+", " ", trimws(sub("(?i)\\.(pdf|docx?)$", "", trimws(x), perl = TRUE))))
+  at <- nm(rvest::html_text2(a)); href <- rvest::html_attr(a, "href")
+  ok <- nzchar(at) & !is.na(href) & !grepl("^(#|javascript:|mailto:|tel:)", href)
+  at <- at[ok]; href <- href[ok]
+  for (i in seq_len(nrow(rows))) {
+    hit <- which(at == nm(rows$Title[i]) | at == nm(rows$Line[i]))
+    if (length(hit)) links[i] <- tryCatch(xml2::url_absolute(href[hit[1]], url), error = function(e) url)
+  }
+  links
 }
 
 # Optional per-district rule: NA for NULL, NA or "".
