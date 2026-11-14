@@ -1,3 +1,16 @@
+# edjobs 0.14.0
+
+Red Rover through its API in both states (notes: `claude-notes/2026-11-13_presence-redrover-opi-wsba.md`).
+
+* `fetch_redrover_postings(org_id, org_slug)`, `parse_redrover_json()`, `redrover_org_slug()` moved here from WY:
+  the unauthenticated GraphQL API Red Rover's own board calls. MT switches from rendering its three boards in Chrome
+  to this, which gives every posting its own `/opening/<n>` link (MT's Chrome scrape got one for 8 of Columbia
+  Falls's 23 postings on 2026-11-10) and its posted pay.
+* `parse_redrover_json()` drops the standing application forms (`REDROVER_PLACEHOLDER_TITLES`: "Classified
+  Application", "Certified Application", "Volunteer Application"), as MT's Chrome parser did. St. Ignatius lists two;
+  no WY archive has ever carried one.
+* Tests and a real captured response (St. Ignatius, 2026-11-13) for the parser.
+
 # edjobs 0.13.0
 
 The daily presence check, phase 0 (shadow: written, read by nothing yet). Plan and scope:
