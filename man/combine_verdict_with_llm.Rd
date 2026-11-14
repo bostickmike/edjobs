@@ -4,7 +4,12 @@
 \alias{combine_verdict_with_llm}
 \title{Combine verdict with llm}
 \usage{
-combine_verdict_with_llm(verdict, llm_titles, history_titles = NULL)
+combine_verdict_with_llm(
+  verdict,
+  llm_titles,
+  history_titles = NULL,
+  current_titles = NULL
+)
 }
 \arguments{
 \item{verdict}{See the description.}
@@ -12,7 +17,12 @@ combine_verdict_with_llm(verdict, llm_titles, history_titles = NULL)
 \item{llm_titles}{See the description.}
 
 \item{history_titles}{See the description.}
+
+\item{current_titles}{See the description.}
 }
 \description{
-Combine verdict with llm
+Folds the LLM's reading of a flagged page into the text-signal verdict (see
+\code{STANDING_POOL_PATTERN} for the rules). Titles the scraper already returned
+this run (current_titles; edjobs 0.16.0) don't count as found: only a title
+the scraper missed promotes to "likely_broken".
 }

@@ -219,6 +219,34 @@ test_that("combine_verdict_with_llm does not touch looks_genuinely_empty or a co
   expect_equal(combine_verdict_with_llm("confirmed_broken", c("Bus Driver"))$verdict, "confirmed_broken")
 })
 
+test_that("combine_verdict_with_llm doesn't count titles the scraper already returned (Sublette 1, 2026-11-13)", {
+  # The scraper returned its one item; the LLM read the same one off the page.
+  out <- combine_verdict_with_llm("inconclusive", "Substitutes", history_titles = c("Substitutes", "Substitute School Nurse"),
+                                  current_titles = "Substitutes")
+  expect_equal(out$verdict, "looks_genuinely_empty")
+  expect_match(out$note, "only what the scraper returned \\(1 title")
+  # Without current titles, the old behaviour.
+  expect_equal(combine_verdict_with_llm("inconclusive", "Substitutes", c("Substitutes"))$verdict, "likely_broken")
+  # A title the scraper missed still promotes, and the note says how many it did return.
+  out <- combine_verdict_with_llm("inconclusive", c("Substitutes", "Bus Driver"), c("Substitutes"),
+                                  current_titles = "Substitutes")
+  expect_equal(out$verdict, "likely_broken")
+  expect_match(out$note, "1 posting\\(s\\) off the live page that the scraper didn't return \\(1 more it did\\): Bus Driver$")
+  # A scraper that returned nothing (every real break so far) is unaffected.
+  expect_equal(combine_verdict_with_llm("inconclusive", "Route Bus Drivers", current_titles = character(0))$verdict,
+               "likely_broken")
+})
+
+test_that("drop_titles_already_scraped matches loosely but not on short words", {
+  cur <- c("High School Girls Assistant Basketball Coach 8/7/2026.docx", "Substitutes", "Para")
+  expect_equal(drop_titles_already_scraped(c("High School Girls Assistant Basketball Coach", "substitutes "), cur),
+               character(0))
+  # "Para" (under 8 characters) doesn't cover a longer title that contains it.
+  expect_equal(drop_titles_already_scraped("Special Education Paraprofessional", cur), "Special Education Paraprofessional")
+  expect_equal(drop_titles_already_scraped("Bus Driver", NULL), "Bus Driver")
+  expect_equal(title_match_key(c("Coach 24-25.docx", NA)), c("coach 24 25", ""))
+})
+
 test_that("combine_verdict_with_llm keeps an already-likely_broken verdict and still lists what the LLM found", {
   out <- combine_verdict_with_llm("likely_broken", c("Custodian"))
   expect_equal(out$verdict, "likely_broken")

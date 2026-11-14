@@ -347,29 +347,80 @@ recent_source_titles <- function(name, type = "K-12", weeks = 8, k12_dir = "Arch
   }, error = function(e) character(0))))
 }
 
+#' Title match key
+#'
+#' A title reduced for comparing an LLM's reading of a page with what a scraper
+#' returned: lower case, a trailing file extension (".docx", ".pdf") dropped,
+#' runs of anything but letters and digits made one space.
+#' @param x See the description.
+#' @export
+title_match_key <- function(x) {
+  x <- tolower(as.character(x))
+  x[is.na(x)] <- ""
+  x <- sub("\\.(docx?|pdf|html?)$", "", trimws(x))
+  trimws(gsub("[^a-z0-9]+", " ", x))
+}
+
+#' Drop titles already scraped
+#'
+#' llm_titles minus those the scraper returned this run (current_titles): equal
+#' after title_match_key(), or one containing the other when the shorter key has
+#' at least 8 characters (a scraped "Coach 8/7/2026.docx" suffix, an LLM's extra
+#' words). Sublette County SD 1 (WY issue 7, 2026-11-11/13): the scraper returned
+#' its one item, "Substitutes", the LLM read the same "Substitutes" off the page,
+#' and that alone made it "likely_broken" two weeks running. NULL or empty
+#' current_titles keeps everything.
+#' @param llm_titles See the description.
+#' @param current_titles See the description.
+#' @export
+drop_titles_already_scraped <- function(llm_titles, current_titles = NULL) {
+  if (!length(llm_titles) || !length(current_titles)) return(llm_titles)
+  cur <- unique(title_match_key(current_titles))
+  cur <- cur[nzchar(cur)]
+  if (!length(cur)) return(llm_titles)
+  covered <- vapply(title_match_key(llm_titles), function(k) {
+    if (!nzchar(k)) return(FALSE)
+    if (k %in% cur) return(TRUE)
+    long <- pmin(nchar(k), nchar(cur)) >= 8
+    any(long & (grepl(k, cur, fixed = TRUE) | vapply(cur, function(c) grepl(c, k, fixed = TRUE), logical(1))))
+  }, logical(1), USE.NAMES = FALSE)
+  llm_titles[!covered]
+}
+
 #' Combine verdict with llm
+#'
+#' Folds the LLM's reading of a flagged page into the text-signal verdict (see
+#' `STANDING_POOL_PATTERN` for the rules). Titles the scraper already returned
+#' this run (current_titles; edjobs 0.16.0) don't count as found: only a title
+#' the scraper missed promotes to "likely_broken".
 #' @param verdict See the description.
 #' @param llm_titles See the description.
 #' @param history_titles See the description.
+#' @param current_titles See the description.
 #' @export
-combine_verdict_with_llm <- function(verdict, llm_titles, history_titles = NULL) {
+combine_verdict_with_llm <- function(verdict, llm_titles, history_titles = NULL, current_titles = NULL) {
   kept <- drop_standing_pool_titles(llm_titles, history_titles)
   pooled <- length(llm_titles) - length(kept)
-  llm_titles <- kept
+  unscraped <- drop_titles_already_scraped(kept, current_titles)
+  scraped <- length(kept) - length(unscraped)
+  llm_titles <- unscraped
   n <- length(llm_titles)
 
   if (n > 0 && !identical(verdict, "confirmed_broken")) {
     shown <- paste(utils::head(llm_titles, 8L), collapse = "; ")
     return(list(
       verdict = "likely_broken",
-      note = paste0("an LLM read ", n, " posting(s) off the live page: ",
+      note = paste0("an LLM read ", n, " posting(s) off the live page",
+                    if (scraped > 0) paste0(" that the scraper didn't return (", scraped, " more it did)"), ": ",
                     shown, if (n > 8L) ", ..." else "")
     ))
   }
 
   if (n == 0 && identical(verdict, "inconclusive")) {
     return(list(verdict = "looks_genuinely_empty",
-                note = if (pooled > 0) paste0("an LLM read only a standing substitute list (", pooled,
+                note = if (scraped > 0) paste0("an LLM read only what the scraper returned (", scraped,
+                                               " title(s)) off the live page")
+                       else if (pooled > 0) paste0("an LLM read only a standing substitute list (", pooled,
                                               " line(s)) off the live page, and this source never posts substitute jobs")
                        else "an LLM read no postings off the live page either"))
   }
