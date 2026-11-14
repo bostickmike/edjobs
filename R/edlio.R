@@ -33,8 +33,9 @@ parse_edlio_postings <- function(html_text, url, location, start = NA, stop = NA
 
 #' A district page's text, without the site's chrome
 #'
-#' The body without navigation, header, footer, sidebars, menus, widgets,
-#' breadcrumbs and scripts. The page text the Edlio routine reads.
+#' The body without navigation, header, footer, sidebars, menus (WordPress,
+#' Joomla, UIkit), widgets, breadcrumbs and scripts, each table cell on its own
+#' line. The page text the Edlio and Joomla routines read.
 #' @param html_text The page's HTML.
 #' @return One string, or NA when the HTML can't be read.
 #' @export
@@ -43,16 +44,22 @@ district_page_text <- function(html_text) {
   if (is.null(doc)) NA_character_ else district_page_doc_text(doc)
 }
 
+CELL_END <- "\u241e"
+
 district_page_doc <- function(html_text) {
   if (is.null(html_text) || length(html_text) == 0 || is.na(html_text[1]) || !nzchar(trimws(html_text[1]))) return(NULL)
+  # Block ends (table cells, list items, paragraphs, divs, headings, <br>) get a marker that becomes a line
+  # break after html_text2(), which can run them together ("CustodianFull Time Custodial ...", Roberts, Joliet).
+  html_text <- gsub("(?i)(</(t[dh]|li|p|div|h[1-6])>|<br\\s*/?>|<li[\\s>])", paste0(CELL_END, "\\1"), html_text[1], perl = TRUE)
   doc <- tryCatch(rvest::read_html(html_text), error = function(e) NULL)
   if (is.null(doc)) return(NULL)
   xml2::xml_remove(rvest::html_elements(doc, paste("nav, header, footer, aside, script, style, noscript, [role=navigation],",
-                                                   ".widget, .sidebar, .menu, .breadcrumbs, .breadcrumb")))
+                                                   ".widget, .sidebar, .menu, .breadcrumbs, .breadcrumb, .moduletable, .mod-menu,",
+                                                   ".uk-nav, .uk-navbar, .uk-offcanvas, .tm-header, .tm-toolbar, .tm-footer")))
   doc
 }
 
 district_page_doc_text <- function(doc) {
   body <- rvest::html_element(doc, "body")
-  if (inherits(body, "xml_missing")) NA_character_ else rvest::html_text2(body)
+  if (inherits(body, "xml_missing")) NA_character_ else gsub(paste0("[ \\t]*", CELL_END, "[ \\t]*"), "\n", rvest::html_text2(body))
 }
