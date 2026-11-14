@@ -56,7 +56,8 @@ APPTEGY_BOILER <- paste(c(
   "\\bcontact$", "\\bdocuments?$", "and more$", "\\bresources$", "^jobs?$", "^load more$", "\\b(w-?4|i-?9)\\b", "\\bagreement\\b", "\\bmenus?$", "handbook", "\\bcba\\b", "^opportunities\\b", "^(more about|follow|learn more)\\b", "\\bwages?$",
   "^(prep|use|responsible|wash|clean|maintain|perform|provide|supervise|help|ensure|operate|monitor|prepare|serve|deliver|manage|work with)\\b",
   "school district no\\.? ?[0-9]+$", "^(hours|job duties|experience|closing date|education)$", "^varies\\b", "^attn\\b", "cooperative$",
-  "jobs[- ]for[- ]teachers", "^updated\\b", "slideshow", "brochure", "^search\\b", "^history$", "^location:", "^job summary$", "^\\("),
+  "jobs[- ]for[- ]teachers", "^updated\\b", "slideshow", "brochure", "^search\\b", "^history$", "^location:", "^job summary$", "^\\(",
+  "^online$", "\\bfree ?(/ ?|and |& ?)reduced\\b"),
   collapse = "|")
 
 #' Split one Apptegy line into its title part(s)
@@ -241,6 +242,9 @@ apptegy_title_rows <- function(text, start = NA, stop = NA, skip_section = NA) {
     l <- trimws(sub("(?i)\\s*\\(opens in (a )?new (window|tab)[^)]*\\)\\s*$", "", l, perl = TRUE))
     l <- trimws(sub("(?i)(\\s+|(?<=[A-Z]))click here\\b.*$", "", l, perl = TRUE))
     l <- trimws(sub("(?i)(\\s+link|\\s*-)$", "", l, perl = TRUE))
+    # An all-caps plea heading, "BUS DRIVER NEEDED" (Roy): the heading names the job; the plea goes.
+    # Mixed-case titles keep theirs ("Substitutes Wanted", "Substitute Teachers Needed"), as their old parsers had them.
+    if (!grepl("[a-z]", l)) l <- trimws(sub("\\s+(NEEDED|WANTED)( NOW| IMMEDIATELY)?!*$", "", l, perl = TRUE))
     l <- trimws(sub("(?i)\\s*\\([^()]*\\b(open|until filled|posted)\\b[^()]*\\)\\s*$", "", l, perl = TRUE))
     l <- trimws(sub("(?i)(\\.(pdf|docx?)|\\s*\\((pdf|docx?)\\))$", "", l, perl = TRUE))
     l <- trimws(sub("(?i)(?<=\\S)\\s+(job\\s+)?opening$", "", l, perl = TRUE))

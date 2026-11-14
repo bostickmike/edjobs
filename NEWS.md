@@ -1,3 +1,17 @@
+# edjobs 0.23.0
+
+Joomla district pages (notes: `claude-notes/2026-11-14_small-families/joomla/`).
+
+* `fetch_joomla_postings()` / `parse_joomla_postings()`: the Edlio reading, on Joomla pages (5 MT districts).
+* `district_page_text()`: each block end (table cell, list item, paragraph, div, heading, `<br>`) is a line break, so
+  cells no longer run together ("CustodianFull Time Custodial ...", Roberts, Joliet); Joomla module menus and the
+  UIkit/YOOtheme navigation, toolbar and footer are chrome. A body with no HTML ("site under maintenance") is an
+  error, not zero postings.
+* The shared title filter: an all-caps "X NEEDED" / "X WANTED" heading keeps the job ("BUS DRIVER NEEDED" -> "BUS DRIVER"); a
+  sentence ending in "are NEEDED." is not cut to a title; lone "Online" link text, free/reduced-lunch headings and
+  menus are not titles; "Job Descriptions (* requires a license):" opens a job-description section; "Click here"
+  run onto a title is cut.
+
 # edjobs 0.22.0
 
 Edlio district pages (notes: `claude-notes/2026-11-14_small-families/edlio/`).

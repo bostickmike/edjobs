@@ -48,6 +48,10 @@ CELL_END <- "\u241e"
 
 district_page_doc <- function(html_text) {
   if (is.null(html_text) || length(html_text) == 0 || is.na(html_text[1]) || !nzchar(trimws(html_text[1]))) return(NULL)
+  # A 200 body with no HTML ("site under maintenance", Roberts 2026-11-04) is a failed fetch, not an empty
+  # page; read_html() would take it for a file path and the page would read as zero postings.
+  if (!grepl("<", html_text[1], fixed = TRUE))
+    stop("page returned no HTML: \"", substr(trimws(html_text[1]), 1, 80), "\"", call. = FALSE)
   # Block ends (table cells, list items, paragraphs, divs, headings, <br>) get a marker that becomes a line
   # break after html_text2(), which can run them together ("CustodianFull Time Custodial ...", Roberts, Joliet).
   html_text <- gsub("(?i)(</(t[dh]|li|p|div|h[1-6])>|<br\\s*/?>|<li[\\s>])", paste0(CELL_END, "\\1"), html_text[1], perl = TRUE)
@@ -61,5 +65,5 @@ district_page_doc <- function(html_text) {
 
 district_page_doc_text <- function(doc) {
   body <- rvest::html_element(doc, "body")
-  if (inherits(body, "xml_missing")) NA_character_ else gsub(paste0("[ \\t]*", CELL_END, "[ \\t]*"), "\n", rvest::html_text2(body))
+  if (inherits(body, "xml_missing")) NA_character_ else gsub(paste0("[ \\t]*", CELL_END, "[ \\t]*"), "\n", rvest::html_text2(body), perl = TRUE)
 }
