@@ -1,3 +1,13 @@
+# edjobs 0.24.0
+
+WY's own-page districts on the CMS families (notes: `claude-notes/2026-11-14_wy-families/`).
+
+* The shared title filter: a posting named by its job-description file keeps the job ("Speech Language Pathologist Job
+  Description" -> "Speech Language Pathologist", "Job Description - Music Teacher K12" -> "Music Teacher K12"); a
+  camel-case file name reads as words ("AssistantBoysSoccerCoach", "SubsMusicTeachingPosition.pdf"). On every cached
+  live page (MT and WY, all families) this changes 4 titles: Weston 1's two (same postings, cleaner titles), Washakie
+  2's "Music Teacher" (excluded there by a stop rule) and Fromberg's substitute music posting, which was missed.
+
 # edjobs 0.23.0
 
 Joomla district pages (notes: `claude-notes/2026-11-14_small-families/joomla/`).

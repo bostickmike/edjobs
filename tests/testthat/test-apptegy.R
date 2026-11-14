@@ -140,3 +140,11 @@ test_that("Google Sites-style lines: contacts, document links, pay asides, glued
   expect_equal(apptegy_title_lines("Openings:\nSPED Case Manager Opening\nCOACHES\nNo positions are currently available\nMS/HS Positions"),
                "SPED Case Manager")
 })
+
+test_that("job-description file names and camel-case file names keep the job (WY's Weston 1, MT's Fromberg)", {
+  expect_equal(apptegy_title_lines("Open Positions\nSpeech Language Pathologist Job Description\nJob Description - Music Teacher K12\nAssistantBoysSoccerCoach"),
+               c("Speech Language Pathologist", "Music Teacher K12", "Assistant Boys Soccer Coach"))
+  expect_equal(apptegy_title_lines("Current Postings\nSubsMusicTeachingPosition.pdf"), "Subs Music Teaching Position")
+  # A job-description heading alone, or one naming no role, is still not a title
+  expect_equal(apptegy_title_lines("Openings:\nJob Description\nBoard Policy Job Description"), character(0))
+})

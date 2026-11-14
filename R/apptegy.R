@@ -247,6 +247,12 @@ apptegy_title_rows <- function(text, start = NA, stop = NA, skip_section = NA) {
     if (!grepl("[a-z]", l)) l <- trimws(sub("\\s+(NEEDED|WANTED)( NOW| IMMEDIATELY)?!*$", "", l, perl = TRUE))
     l <- trimws(sub("(?i)\\s*\\([^()]*\\b(open|until filled|posted)\\b[^()]*\\)\\s*$", "", l, perl = TRUE))
     l <- trimws(sub("(?i)(\\.(pdf|docx?)|\\s*\\((pdf|docx?)\\))$", "", l, perl = TRUE))
+    # A posting named by its job-description file ("Speech Language Pathologist Job Description",
+    # "Job Description - Music Teacher K12"; WY's Weston 1): the job stays, the file label goes.
+    jd_strip <- trimws(sub("(?i)^job description\\s*[-\u2013:]\\s*|\\s*[-\u2013]?\\s*\\bjob description$", "", l, perl = TRUE))
+    if (jd_strip != l && nzchar(jd_strip) && has_role(jd_strip)) l <- jd_strip
+    # A file name written in camel case ("AssistantBoysSoccerCoach"): words
+    if (grepl("^([A-Z][a-z]+){3,}$", l)) l <- gsub("(?<=[a-z])(?=[A-Z])", " ", l, perl = TRUE)
     l <- trimws(sub("(?i)(?<=\\S)\\s+(job\\s+)?opening$", "", l, perl = TRUE))
     l <- trimws(sub("\\s*\\([^()]*\\$[^()]*\\)$", "", l, perl = TRUE))
     # "Substitute Certified Teachers $160/day": pay after the title
