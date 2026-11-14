@@ -1,3 +1,19 @@
+# edjobs 0.17.0
+
+The first CMS-family routine: CyberSchool (IES) district sites (notes: `claude-notes/2026-11-14_cyberschool-family/`;
+plan: `2026-11-12_cms-families.md`). Mike, 11-14: grouping the district scrapers by site family is to be done "asap".
+
+* `fetch_cyberschool_postings(url, location)` / `parse_cyberschool_postings()`: one routine for every district on
+  IES's CyberSchool CMS, replacing a scraper per district. Reads both generations of the platform: classic
+  CyberSchool 2.0 (`.listItem_holder` items with "Posted on" and "Deadline:") and IES's newer platform, which
+  Vaughn moved to in 2026-11 (its `/District/Jobs/` now redirects to `/jobs`; each job is a list item linking to
+  `/jobs/<slug>` with "Published: MM/DD/YYYY"). Returns `Title`, `Location`, `Posted_Date` and `Closing_Date` (ISO,
+  or NA; "until filled" is NA) and `Link`. Links resolve against the page actually served (after a redirect).
+* On the same pages it returns the same titles, links and locations as MT's Highwood, Power and Vaughn scrapers
+  (fixtures and 11-14 live pages), adds posted dates for Power and Vaughn, and reads Vaughn's moved page, where the
+  old scraper finds nothing. Pages that hold the whole list as text in one item (Nashua, Frazer, Lavina, Hinsdale)
+  are not read here: they need the shared title line filter.
+
 # edjobs 0.16.0
 
 Drift check: an LLM's reading of a flagged page no longer counts titles the scraper already returned (Mike, 11-13).
