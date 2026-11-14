@@ -257,11 +257,15 @@ scraper_fetch_fn <- function(call, scraper_lines) {
 #' fixtures whose names don't carry the source.
 #' @param fetch_fn A `fetch_*` function name, or NA.
 #' @param test_files Named list of test-file lines (name = file name).
+#' @param source_name Optional source name: when some of the parser's test
+#'   blocks name it in their description (a family routine's per-district
+#'   tests, "parse_apptegy_postings: Melstone Public Schools"), only those
+#'   blocks' fixtures.
 #' @export
-fixtures_used_by_tests <- function(fetch_fn, test_files) {
+fixtures_used_by_tests <- function(fetch_fn, test_files, source_name = NULL) {
   if (is.na(fetch_fn)) return(character(0))
   fns <- c(fetch_fn, sub("^fetch_", "parse_", fetch_fn))
-  found <- character(0)
+  found <- character(0); named <- character(0)
   for (lines in test_files) {
     starts <- grep("^\\s*test_that\\(", lines)
     ends <- c(starts[-1] - 1, length(lines))
@@ -269,9 +273,13 @@ fixtures_used_by_tests <- function(fetch_fn, test_files) {
       if (!any(vapply(fns, grepl, logical(1), x = lines[starts[i]], fixed = TRUE))) next
       block <- lines[starts[i]:ends[i]]
       refs <- unlist(regmatches(block, gregexpr('test_path\\("fixtures", "[^"]+"\\)', block)))
-      found <- c(found, sub('.*"([^"]+)"\\)$', "\\1", refs))
+      refs <- sub('.*"([^"]+)"\\)$', "\\1", refs)
+      found <- c(found, refs)
+      if (!is.null(source_name) && grepl(source_name, lines[starts[i]], fixed = TRUE)) named <- c(named, refs)
     }
   }
+  # A family routine's tests cover many sources: blocks naming this source win.
+  if (length(named)) found <- named
   found <- unique(found)
   dates <- ifelse(grepl("[0-9]{4}-[0-9]{2}-[0-9]{2}", found),
                   sub(".*([0-9]{4}-[0-9]{2}-[0-9]{2}).*", "\\1", found), "")
@@ -347,7 +355,7 @@ gather_autofix_evidence <- function(call, source_name, page_text, repo_root = ".
   } else {
     test_paths <- list.files(file.path(repo_root, "tests", "testthat"), pattern = "^test-.*[.]R$", full.names = TRUE)
     test_files <- stats::setNames(lapply(test_paths, readLines, warn = FALSE), basename(test_paths))
-    fx <- list(platform = character(0), own = fixtures_used_by_tests(fetch_fn, test_files))
+    fx <- list(platform = character(0), own = fixtures_used_by_tests(fetch_fn, test_files, source_name))
   }
   inner_text <- scraper_reads_inner_text(fetch_fn, scraper_lines)
   has_text <- length(page_text) == 1 && !is.na(page_text) && nzchar(trimws(page_text))
