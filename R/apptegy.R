@@ -20,11 +20,11 @@ APPTEGY_ROLE_WORDS <- paste0("\\b(", paste(c(
   "nurses?", "substitutes?", "subs", "librarians?", "specialists?", "directors?", "coordinators?", "technicians?",
   "maintenance", "cashiers?", "dish(washers?)?", "grounds ?keepers?", "snow removal", "food service", "food program", "support staff", "kitchen", "cafeteria", "lunch", "advisors?",
   "instructors?", "interventionist", "psychologist", "therapist", "pathologist", "speech", "business manager",
-  "bookkeeper", "assistants?", "tutors?", "transportation", "mechanic", "groundskeeper", "supervisors?", "dean",
+  "bookkeeper", "(day|child) ?care", "assistants?", "tutors?", "transportation", "mechanic", "groundskeeper", "supervisors?", "dean",
   "athletic", "receptionist", "registrar", "officer", "office manager", "concessions?", "music", "band", "choir",
-  "art", "math(ematics)?", "science", "english", "ela", "reading", "history", "social studies", "spanish",
+  "art", "math(ematics)?", "sciences?", "english", "ela", "reading", "history", "social studies", "spanish",
   "physical education", "pe", "health", "special education", "sped", "kindergarten", "preschool", "k-?12", "7-12",
-  "jh", "hs", "ag(riculture)?", "fcs", "industrial arts", "shop", "cte", "volleyball", "basketball", "football",
+  "jh", "hs", "ag(riculture)?", "fcs", "business education", "world languages?", "industrial arts", "shop", "cte", "volleyball", "basketball", "football",
   "wrestling", "track", "cross country", "golf", "softball", "baseball", "cheer(leading)?", "speech and drama",
   "drama"), collapse = "|"), ")\\b")
 
@@ -57,7 +57,9 @@ APPTEGY_BOILER <- paste(c(
   "^(prep|use|responsible|wash|clean|maintain|perform|provide|supervise|help|ensure|operate|monitor|prepare|serve|deliver|manage|work with)\\b",
   "school district no\\.? ?[0-9]+$", "^(hours|job duties|experience|closing date|education)$", "^varies\\b", "^attn\\b", "cooperative$",
   "jobs[- ]for[- ]teachers", "^updated\\b", "slideshow", "brochure", "^search\\b", "^history$", "^location:", "^job summary$", "^\\(",
-  "^online$", "\\bfree ?(/ ?|and |& ?)reduced\\b"),
+  "^online$", "\\bfree ?(/ ?|and |& ?)reduced\\b",
+  # A coach's required trainings ("Fundamentals of Coaching course", "CPR/First Aid certification"); "are hired pending ..."
+  "\\b(course|certification|clinic)( \\([^)]*\\))?$", "\\bare (hired|filled)\\b"),
   collapse = "|")
 
 #' Split one Apptegy line into its title part(s)
@@ -198,7 +200,7 @@ apptegy_title_rows <- function(text, start = NA, stop = NA, skip_section = NA) {
                  grepl("^[A-Z]{3,}$", l) || (grepl("^[A-Z][A-Z0-9 .,'&/-]{3,}$", l) && !has_role(l) && !grepl(APPTEGY_BOILER, l, ignore.case = TRUE)) ||
                  grepl("(?i)\\bpositions?\\(s\\)$", l, perl = TRUE) || (l == toupper(l) && grepl(", AND ", l, fixed = TRUE)) ||
       grepl("^(certified|certificated|classified|coaching|teaching|extra ?curricular|district staff|support staff|certified teachers|athletics?)( (positions|openings|staff|employees))?$", l, ignore.case = TRUE) ||
-      (l == toupper(l) && grepl("(OPENINGS|POSITIONS|SUBSTITUTES|EMPLOYEES|OPPORTUNITIES)$", l)) ||
+      (l == toupper(l) && grepl("(OPENINGS|POSITIONS|SUBSTITUTES|EMPLOYEES|OPPORTUNITIES|VACANCIES)$", l)) ||
       grepl("^(job title|job type|job description|employment opportunities)$", l, ignore.case = TRUE) ||
       grepl("^(open|current|available|certified|classified|substitute|coaching|teaching|support)\\b.*\\b(positions|openings|staff)$", l, ignore.case = TRUE) ||
       grepl("^current openings$|^openings$|^vacancies$|^all other positions$|^(internal|external) openings$|^various .* positions open$|positions and substitutes$|^substitute positions opened?$", l, ignore.case = TRUE) ||
@@ -293,7 +295,7 @@ apptegy_title_rows <- function(text, start = NA, stop = NA, skip_section = NA) {
     # "5th Grade Teacher Filled": no longer open
     if (grepl("(?i)\\bfilled\\b", l, perl = TRUE) && !grepl("(?i)until filled", l, perl = TRUE)) next
     # A contact: a name above, an email below ("Sam Hoff" / "K-12 Principal" / "SamHoff@...")
-    if (li > 1 && li < length(L) && grepl("@", L[li + 1]) && grepl("^[A-Z][a-z]+ [A-Z][a-z'-]+$", L[li - 1]) &&
+    if (li > 1 && li < length(L) && grepl("@|^\\(?[0-9]{3}\\)?[-. ]?[0-9]{3}-[0-9]{4}$", L[li + 1]) && grepl("^[A-Z][a-z]+ [A-Z][a-z'-]+$", L[li - 1]) &&
         !has_role(L[li - 1])) next
     # A sentence fragment wrapped from the line above starts in lower case
     if (grepl("^[a-z]", l)) next

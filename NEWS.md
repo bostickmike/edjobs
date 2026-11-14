@@ -11,6 +11,13 @@ WY's own-page districts on the CMS families (notes: `claude-notes/2026-11-14_wy-
   "Substitute Custodial Positions"); no other cached page changes.
 * A numbered list item on its own line loses its number ("1. Maintenance/Custodial Supervisor", MT's Helena Flats).
   On every cached page, the only other change is Wolf Point read without its rules (2 junk lines fewer).
+* `fetch/parse_cyberschool_postings(mode = "text", start, stop, skip_section)`: a CyberSchool page whose list is
+  written as text in the item body (MT's Nashua, Frazer, Lavina, Hinsdale) is read with the shared title line filter;
+  links come from the body only. Same titles as those districts' old parsers on fixtures and live pages.
+* The shared title filter: childcare/daycare, "sciences", business education and world languages are job words; a
+  coach's required trainings ("... course", "... certification", "... Clinic") and "are hired pending ..." are not
+  titles; an all-caps "... VACANCIES" line is a header; a role line between a contact's name and phone is a contact.
+  On every cached page these change only the four CyberSchool text pages above.
 
 # edjobs 0.23.0
 
