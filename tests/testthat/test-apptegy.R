@@ -163,3 +163,8 @@ test_that("a numbered list item on its own line loses its number (MT's Helena Fl
   # Several numbered items on one line are still split
   expect_equal(apptegy_title_lines("Openings:\n1. Bus Driver 2. Custodian"), c("Bus Driver", "Custodian"))
 })
+
+test_that("Victor-style lists: a slash header, a count of positions, a lowercase substitute list", {
+  expect_equal(apptegy_title_lines("Athletics/Coaching\nHead High School Track Coach\nClassified Staff Openings:\n3 Paraprofessional positions\nSubstitutes for the following positions:\nteachers\nkitchen\n2026-27"),
+               c("Head High School Track Coach", "Paraprofessional", "Substitutes"))
+})

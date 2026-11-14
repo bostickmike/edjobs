@@ -19,6 +19,12 @@ WY's own-page districts on the CMS families (notes: `claude-notes/2026-11-14_wy-
   coach's required trainings ("... course", "... certification", "... Clinic") and "are hired pending ..." are not
   titles; an all-caps "... VACANCIES" line is a header; a role line between a contact's name and phone is a contact.
   On every cached page these change only the four CyberSchool text pages above.
+* `fetch/parse_googledoc_postings(doc_ids, location, link, start, stop, skip_section)` and `googledoc_preview_text()`:
+  job lists kept in published Google Docs (MT's Victor, Superior, Bainville, Creston), read from the plain-text export
+  or, for an uploaded file, the preview page; ids from the registry `Slug` (";" between docs).
+* The shared title filter: "Athletics/Coaching" is a header; "Substitutes for the following positions:" over a
+  lowercase list is one "Substitutes" posting; "3 Paraprofessional positions" is "Paraprofessional"; "2026-27" alone is
+  not a title. No other cached page changes.
 
 # edjobs 0.23.0
 

@@ -40,7 +40,7 @@ APPTEGY_BOILER <- paste(c(
          "no (current )?openings)"),
   "^[\u00b7\u2022*\u25aa\u25e6\u25cf\ufffd\uf0b7\uf0a7-]", "^city of\\b", "county$", "forms?\\b.*\\b(here|located)", "\\(fillable\\)",
   "sign-on bonus", "housing", "collective bargaining", "title ix", "^bp [0-9]+", "^copy of\\b", "\\bpolicy\\b",
-  "^questions\\??$", "^[0-9]{4}\\s*[-\u2013]\\s*[0-9]{4}$", "applicants$", "jobs for teachers",
+  "^questions\\??$", "^[0-9]{4}\\s*[-\u2013]\\s*([0-9]{2}|[0-9]{4})$", "applicants$", "jobs for teachers",
   "office of public instruction", "\\bor be\\b|\\bable to\\b", "\\bpositions? (are|is) (available|open)",
   "[0-9]{1,2}(:[0-9]{2})? ?(am|pm)\\b", "pay (scale|range)", "negotiated agreement", "video", "website", "\\bforms?$",
   "^\\$", "^(read more|back to top|google maps|tags:)", "^resume$", "^transcripts$", "licenses and credentials",
@@ -199,7 +199,7 @@ apptegy_title_rows <- function(text, start = NA, stop = NA, skip_section = NA) {
     is_header <- (ok(skip_section) && grepl(skip_section, l, perl = TRUE)) || (grepl(":$", l) && lengths(strsplit(l, "\\s+")) <= 10) ||
                  grepl("^[A-Z]{3,}$", l) || (grepl("^[A-Z][A-Z0-9 .,'&/-]{3,}$", l) && !has_role(l) && !grepl(APPTEGY_BOILER, l, ignore.case = TRUE)) ||
                  grepl("(?i)\\bpositions?\\(s\\)$", l, perl = TRUE) || (l == toupper(l) && grepl(", AND ", l, fixed = TRUE)) ||
-      grepl("^(certified|certificated|classified|coaching|teaching|extra ?curricular|district staff|support staff|certified teachers|athletics?)( (positions|openings|staff|employees))?$", l, ignore.case = TRUE) ||
+      grepl("^(certified|certificated|classified|coaching|teaching|extra ?curricular|district staff|support staff|certified teachers|athletics?|athletics?/coaching|coaching/athletics?)( (positions|openings|staff|employees))?$", l, ignore.case = TRUE) ||
       (l == toupper(l) && grepl("(OPENINGS|POSITIONS|SUBSTITUTES|EMPLOYEES|OPPORTUNITIES|VACANCIES)$", l)) ||
       grepl("^(job title|job type|job description|employment opportunities)$", l, ignore.case = TRUE) ||
       grepl("^(open|current|available|certified|classified|substitute|coaching|teaching|support)\\b.*\\b(positions|openings|staff)$", l, ignore.case = TRUE) ||
@@ -217,6 +217,11 @@ apptegy_title_rows <- function(text, start = NA, stop = NA, skip_section = NA) {
     if (is_header && grepl("(?i)^substitute\\s+(.+?)\\s+positions?$", l, perl = TRUE) &&
         !grepl("(?i)^substitute\\s+(teaching|classified|certified|certificated|coaching|support|all|other|various)\\b", l, perl = TRUE) &&
         (li == length(L) || lengths(strsplit(L[li + 1], "\\s+")) > 12)) { keep(l, src); next }
+    # "Substitutes for the following positions:" over a lowercase list ("teachers", "kitchen"): one standing
+    # substitute posting (Victor's doc), the list itself skipped until the next header.
+    if (grepl("(?i)^substitutes? (are needed )?for the following( positions| areas)?:?$", l, perl = TRUE)) {
+      keep("Substitutes", src); header <- l; skipping <- TRUE; next
+    }
     if (is_header || jd) { header <- l; skipping <- jd || (ok(skip_section) && grepl(skip_section, l, perl = TRUE)); next }
     if (skipping) next
     # An all-caps title wrapped onto a second line ("SEEKING TWO (2) EVENING SHIFT SCHOOL CUSTODIANS" /
@@ -232,6 +237,9 @@ apptegy_title_rows <- function(text, start = NA, stop = NA, skip_section = NA) {
     # A numbered list item on its own line ("1. Maintenance/Custodial Supervisor", Helena Flats): the number goes
     if (grepl("^[0-9]{1,2}[.)]\\s+[A-Za-z]", l) && !grepl("(?i)^[0-9]{1,2}[.)]\\s+\\S.*\\s[0-9]{1,2}[.)]\\s+\\S", l, perl = TRUE))
       l <- sub("^[0-9]{1,2}[.)]\\s+", "", l)
+    # "3 Paraprofessional positions": a count of openings of one kind; the kind is the title
+    if (grepl("(?i)^[0-9]{1,2} (.+?) positions?$", l, perl = TRUE) && has_role(sub("(?i)^[0-9]{1,2} (.+?) positions?$", "\\1", l, perl = TRUE)))
+      l <- sub("(?i)^[0-9]{1,2} (.+?) positions?$", "\\1", l, perl = TRUE)
     # A card's "Job Title:" label
     l <- trimws(sub("(?i)^(job |position )?title:\\s+", "", l, perl = TRUE))
     # "Elementary Teaching Position(permanent, full time)Beginning August": details glued on after a
