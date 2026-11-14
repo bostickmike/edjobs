@@ -15,7 +15,7 @@
 #' @param start,stop,skip_section Optional per-district regexes, see
 #'   [apptegy_title_lines()].
 #' @return Data frame: `Title`, `Location`, `Posted_Date` (NA), `Link` (the
-#'   page), and the posted pay columns when a title's own line states pay.
+#'   title's own link when the title is a link on the page, else the page), and the posted pay columns when a title's own line states pay.
 #' @export
 fetch_googlesites_postings <- function(url, location, start = NA, stop = NA, skip_section = NA) {
   resp <- httr2::request(url) %>%
@@ -33,7 +33,8 @@ fetch_googlesites_postings <- function(url, location, start = NA, stop = NA, ski
 parse_googlesites_postings <- function(html_text, url, location, start = NA, stop = NA, skip_section = NA) {
   text <- googlesites_page_text(html_text)
   rows <- if (is.na(text)) apptegy_title_rows(NULL) else apptegy_title_rows(text, na_rule(start), na_rule(stop), na_rule(skip_section))
-  title_rows_postings(rows, url, location)
+  doc <- if (is.na(text)) NULL else tryCatch(rvest::read_html(html_text), error = function(e) NULL)
+  title_rows_postings(rows, url, location, doc)
 }
 
 #' A Google Sites page's text
