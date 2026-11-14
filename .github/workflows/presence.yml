@@ -36,6 +36,10 @@ on:
         description: CRAN packages the setup files load, besides edjobs's own (space-separated)
         type: string
         default: here purrr stringr
+      checkout_ref:
+        description: State repo ref the setup files are read from (main; another ref only to test a change before it merges)
+        type: string
+        default: main
       branch:
         description: Side branch the files are committed to
         type: string
@@ -64,7 +68,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: main
+          ref: ${{ inputs.checkout_ref }}
 
       - name: Check out the presence branch into presence/
         run: |

@@ -5,7 +5,8 @@ Statewide feeds in the daily presence check: MT's OPI and WY's WSBA (notes:
 
 * `presence_feed(board, platform, fetch)`: a feed a state passes to `refresh_presence(feeds = )`; `fetch(known)` gets
   the feed's own stretches so far (to reuse keys without reading detail pages). The reusable workflow passes the
-  setup files' `PRESENCE_FEEDS`, and installs the packages named in its new `packages` input.
+  setup files' `PRESENCE_FEEDS`, and installs the packages named in its new `packages` input. A new `checkout_ref` input (default `main`) lets a
+  state test new setup files from a branch before they merge.
 * The presence files gain `Board` (the board or feed a posting was seen on; for a district's own board, the
   district) and, in the sightings, `List_Key` (what a feed's list shows of the posting). `District` is the
   posting's district. Phase 0 had not started, so no file is converted.
