@@ -1,3 +1,19 @@
+# edjobs 0.19.0
+
+The third CMS-family routine: Google Sites district pages (notes: `claude-notes/2026-11-14_googlesites-family/`).
+
+* `fetch_googlesites_postings(url, location, start, stop, skip_section)` / `parse_googlesites_postings()`: a plain
+  request, the page text without the site's menu, header, footer and Google's "Report abuse" footer
+  (`googlesites_page_text()`), and the shared title line filter with the same optional per-district rules. Output
+  as `parse_apptegy_postings()` (posted pay from each title's line).
+* The shared title filter, measured on MT's Google Sites pages and WY's Apptegy pages with MT's Apptegy parity
+  unchanged: titles inside a sentence ("... is accepting applications for a SPED Teacher."), unless the sentence
+  restates a heading title just above; a long line ending in ":" is a sentence, not a header; "Role: First Last"
+  and a bare name beside a contact line are contacts; ".pdf" names, a pay-stating aside and pay after the title
+  come off a title; glued "<Word> Positions:" headers are split; single all-caps words and "X, Y, AND Z" lines
+  are labels; state-neutral boilerplate (addresses, greetings, document and resource links). On WY's Apptegy
+  pages this now matches WY's own parser on Niobrara 1 and Platte 2 and finds Weston 7's two postings it misses.
+
 # edjobs 0.18.0
 
 The second CMS-family routine: Apptegy district sites (notes: `claude-notes/2026-11-14_apptegy-family/`). Mike's
