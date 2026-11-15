@@ -22,7 +22,12 @@
 # high school pairs, e.g. Billings Elementary + Billings High School) gets the
 # pooled rate: children in poverty over all relevant children, summed across
 # its districts -- the share of the combined area's relevant children who are
-# in poverty. Census allocates school-age children between separate
+# in poverty. The ACS handbook forms a proportion for combined areas the same
+# way, summing the numerators and the denominators before dividing (U.S.
+# Census Bureau, "Understanding and Using American Community Survey Data: What
+# All Data Users Need to Know", 2020, p. 64:
+# https://www.census.gov/content/dam/Census/library/publications/2020/acs/acs_general_handbook_2020.pdf).
+# Census allocates school-age children between separate
 # elementary and secondary districts "on the basis of the grade range of the
 # district" (SAIPE "2010 - 2024 Overview of School District Estimates",
 # https://www.census.gov/programs-surveys/saipe/technical-documentation/methodology/school-districts/overview-school-district.html,
@@ -34,8 +39,11 @@
 # cover more ground than the one elementary district it is paired with, so a
 # combined rate still counts some children from outside the dashboard
 # district. The same page cautions that "a true poverty 'rate' for children
-# cannot be determined from these figures" (the estimates are model-based, for
-# related children in families).
+# cannot be determined from these figures, because the numerator and
+# denominator refer to slightly different universes": the poverty count is
+# related children in families (no foster children or group quarters), the
+# child count all relevant children. Census's API calls the figure a "Poverty
+# Ratio Estimate".
 
 #' `SAIPE_SCHDIST_ENDPOINT`
 #' @export
