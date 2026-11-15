@@ -21,15 +21,21 @@
 # A dashboard district made of two SAIPE districts (Montana's elementary +
 # high school pairs, e.g. Billings Elementary + Billings High School) gets the
 # pooled rate: children in poverty over all relevant children, summed across
-# its districts. That is how a rate for a combined area is formed (and how
-# Census and NCES combine these estimates); before 2026-11-15 Montana averaged
-# the two rates equally, which overweights the smaller high school age group
-# (Mike's decision 11-15; on 2024 data the 90 combined districts move by a
-# median 0.4 and at most 2.5 percentage points). One SAIPE district keeps its
-# published rate. The high school district often covers more ground than the
-# one elementary district it is paired with, so a combined rate still counts
-# some children from outside the dashboard district; the data dictionary says
-# so.
+# its districts -- the share of the combined area's relevant children who are
+# in poverty. Census allocates school-age children between separate
+# elementary and secondary districts "on the basis of the grade range of the
+# district" (SAIPE "2010 - 2024 Overview of School District Estimates",
+# https://www.census.gov/programs-surveys/saipe/technical-documentation/methodology/school-districts/overview-school-district.html,
+# revised 2026-01-12), so an equal average of the two rates, Montana's rule
+# before 2026-11-15, gave the high school grades (9-12) the same weight as the
+# elementary grades (K-8). Mike's decision 11-15; on 2024 data the 90
+# combined districts move by a median 0.4 and at most 2.5 percentage points.
+# One SAIPE district keeps its published rate. The high school district can
+# cover more ground than the one elementary district it is paired with, so a
+# combined rate still counts some children from outside the dashboard
+# district. The same page cautions that "a true poverty 'rate' for children
+# cannot be determined from these figures" (the estimates are model-based, for
+# related children in families).
 
 #' `SAIPE_SCHDIST_ENDPOINT`
 #' @export

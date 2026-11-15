@@ -10,8 +10,10 @@ Package phase 5, second slice: CCD staffing and SAIPE child poverty move from bo
 * `district_ids` replaces the states' name matching (MT's hand-written pairs, WY's name rewrites). On the 2024 data
   the figures are the same by id as by name for every district in both states.
 * **Combined districts pool the counts** (Mike's decision 2026-11-15): a district made of an elementary and a high
-  school district gets children in poverty / relevant children summed over both, the way rates for a combined area
-  are formed, instead of MT's equal average of the two rates. On 2024 data MT's 90 combined districts move by a
+  school district gets children in poverty / relevant children summed over both (the combined area's share),
+  instead of MT's equal average of the two rates, which weighted the high school grades the same as K-8 (Census
+  splits school-age children between such districts by grade range: SAIPE "2010 - 2024 Overview of School District
+  Estimates"). On 2024 data MT's 90 combined districts move by a
   median 0.4 and at most 2.5 percentage points (Billings 7.5% -> 7.9%); single districts keep SAIPE's published rate.
   `surrounding_district_poverty()` pools a split town's districts the same way.
 
