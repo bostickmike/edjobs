@@ -159,7 +159,7 @@ pool_child_poverty <- function(rows) {
 #' Child poverty per dashboard district
 #'
 #' District, Child_Poverty_Rate ([pool_child_poverty()] over the district's
-#' LEAIDs; NA when none is in `saipe`), SAIPE_Year.
+#' LEAIDs; NA when none is in `saipe`), SAIPE_Year (NA where the rate is).
 #' @param saipe Output of [fetch_saipe_by_leaid()].
 #' @param district_ids Named list, district -> LEAIDs.
 #' @export
@@ -169,10 +169,11 @@ parse_census_saipe_child_poverty <- function(saipe, district_ids) {
                       stringsAsFactors = FALSE))
   }
   year <- if ("SAIPE_Year" %in% names(saipe)) saipe$SAIPE_Year[1] else NA_integer_
-  data.frame(District = names(district_ids),
-             Child_Poverty_Rate = vapply(district_ids, function(ids)
-               pool_child_poverty(saipe[saipe$LEAID %in% as.character(ids), , drop = FALSE]), numeric(1), USE.NAMES = FALSE),
-             SAIPE_Year = rep(as.integer(year), length(district_ids)), stringsAsFactors = FALSE)
+  rate <- vapply(district_ids, function(ids) pool_child_poverty(saipe[saipe$LEAID %in% as.character(ids), , drop = FALSE]),
+                 numeric(1), USE.NAMES = FALSE)
+  # No year for a district with no rate (WY's Northeast Wyoming BOCES has an NCES id but no SAIPE geography).
+  data.frame(District = names(district_ids), Child_Poverty_Rate = rate,
+             SAIPE_Year = ifelse(is.na(rate), NA_integer_, as.integer(year)), stringsAsFactors = FALSE)
 }
 
 #' Fetch child poverty per dashboard district

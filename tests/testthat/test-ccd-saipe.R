@@ -86,6 +86,7 @@ test_that("a combined district's rate pools the counts, not an equal average of 
 test_that("a single SAIPE district keeps its published rate; a missing one is NA", {
   r <- parse_census_saipe_child_poverty(mt_saipe(), list("East Helena" = "3000655", Lewistown_HS = "3010530", None = "3099999"))
   expect_equal(r$Child_Poverty_Rate, c(0.044, 0.104, NA))
+  expect_equal(r$SAIPE_Year, c(2024L, 2024L, NA))   # no year without a rate
 })
 
 test_that("pool_child_poverty falls back to the mean of rates when no counts are known", {

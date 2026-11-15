@@ -13,5 +13,5 @@ parse_census_saipe_child_poverty(saipe, district_ids)
 }
 \description{
 District, Child_Poverty_Rate (\code{\link[=pool_child_poverty]{pool_child_poverty()}} over the district's
-LEAIDs; NA when none is in \code{saipe}), SAIPE_Year.
+LEAIDs; NA when none is in \code{saipe}), SAIPE_Year (NA where the rate is).
 }
