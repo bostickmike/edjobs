@@ -295,7 +295,7 @@ reference:
   - qcew_county_key
   - read_qcew_csv
   - refresh_oews_wages
-- title: "Federal context (IPEDS, FSA Pell, Census ACS)"
+- title: "Federal context (IPEDS, FSA Pell, Census ACS and SAIPE, NCES CCD)"
   contents:
   - ACS_DETAIL_ENDPOINT
   - ACS_SUBJECT_ENDPOINT
@@ -335,6 +335,28 @@ reference:
   - parse_ipeds_he_salaries
   - parse_ipeds_salary_trend_year
   - state_fips
+  - CCD_DISTRICT_DIRECTORY_ENDPOINT
+  - CCD_SCHOOL_DIRECTORY_ENDPOINT
+  - FRL_MIN_REPORTED_SHARE
+  - find_latest_ccd_directory_year
+  - parse_ccd_teacher_fte
+  - fetch_ccd_teacher_fte
+  - fetch_ccd_school_directory
+  - parse_ccd_frl_share
+  - fetch_ccd_frl_share
+  - parse_ccd_school_staffing
+  - geocode_school_district
+  - SAIPE_SCHDIST_ENDPOINT
+  - SAIPE_GEOGRAPHIES
+  - parse_saipe_json
+  - fetch_saipe_geography
+  - latest_saipe_year
+  - saipe_rows_by_leaid
+  - fetch_saipe_by_leaid
+  - pool_child_poverty
+  - parse_census_saipe_child_poverty
+  - fetch_census_saipe_child_poverty
+  - surrounding_district_poverty
 - title: "Package"
   contents:
   - 'edjobs-package'

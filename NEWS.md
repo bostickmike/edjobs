@@ -1,3 +1,20 @@
+# edjobs 0.26.0
+
+Package phase 5, second slice: CCD staffing and SAIPE child poverty move from both states, matched by NCES id.
+
+* New `R/ccd.R`: `fetch_ccd_teacher_fte(district_ids)` / `parse_ccd_teacher_fte()` (a district's LEAIDs summed),
+  `find_latest_ccd_directory_year()`, and the functions both states already shared (free/reduced-price lunch share,
+  school-level staffing, `geocode_school_district()`).
+* New `R/saipe.R`: `fetch_saipe_by_leaid()` (every SAIPE district with its rate and both counts),
+  `fetch_census_saipe_child_poverty(district_ids)`, `pool_child_poverty()` and `surrounding_district_poverty()`.
+* `district_ids` replaces the states' name matching (MT's hand-written pairs, WY's name rewrites). On the 2024 data
+  the figures are the same by id as by name for every district in both states.
+* **Combined districts pool the counts** (Mike's decision 2026-11-15): a district made of an elementary and a high
+  school district gets children in poverty / relevant children summed over both, the way rates for a combined area
+  are formed, instead of MT's equal average of the two rates. On 2024 data MT's 90 combined districts move by a
+  median 0.4 and at most 2.5 percentage points (Billings 7.5% -> 7.9%); single districts keep SAIPE's published rate.
+  `surrounding_district_poverty()` pools a split town's districts the same way.
+
 # edjobs 0.25.0
 
 Package phase 5, first slice: the federal higher-ed and county context fetchers move from both states.
