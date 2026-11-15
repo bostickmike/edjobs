@@ -1,3 +1,20 @@
+# edjobs 0.20.0
+
+The fourth CMS-family routine: Finalsite district pages (notes: `claude-notes/2026-11-14_finalsite-family/`).
+
+* `fetch_finalsite_postings()` / `parse_finalsite_postings()` (same arguments and output as the Google Sites
+  routine): Finalsite's page content without the site chrome, tab navigation and hidden copies, element headers
+  kept, resource links read by their `data-resource-title` (`finalsite_page_text()`).
+* Both page-text routines now keep a title's own link when the title is a link on the page (a posting's document:
+  Manhattan's and Hellgate's links as their old scrapers had them; new stable links at Shields Valley, Thompson
+  Falls, Lincoln and Big Timber).
+* The shared title filter, measured on Finalsite with every earlier measure unchanged: titles marked "Filled" go
+  (open = a candidate can apply); closed notices ("We currently have NO ... positions") go; "(opens in new
+  window/tab)", "Click Here ...", "(... open until filled)" and trailing "link"/"-" come off a title; a "Job
+  Descriptions" section is skipped; a short "... Openings" line naming only a subject is a header; a line that only
+  strings other titles together goes; more boilerplate (Load More, job-description field labels, Attn:, document
+  file names, "Updated ..."), and "Role: Dr. Name" contacts.
+
 # edjobs 0.19.0
 
 The third CMS-family routine: Google Sites district pages (notes: `claude-notes/2026-11-14_googlesites-family/`).
