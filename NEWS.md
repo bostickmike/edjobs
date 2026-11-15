@@ -1,3 +1,17 @@
+# edjobs 0.25.0
+
+Package phase 5, first slice: the federal higher-ed and county context fetchers move from both states.
+
+* New `R/ipeds_he.R`: IPEDS instructional staff salaries (`fetch_ipeds_he_salaries()`, `fetch_ipeds_he_salary_trend()`),
+  fall enrollment FTE (`fetch_ipeds_he_enrollment()`, `fetch_ipeds_he_enrollment_trend()`), the FSA Pell recipient share
+  (`fetch_ipeds_he_pell_share()`) and `find_latest_ipeds_directory_year()`, with their parse functions. Each takes the
+  state's `unitid_map` (`unitid`, `Name`, optional `Salary_Note`, carried into the salary output) and `fips`.
+* New `R/census_acs.R`: the ACS 5-year county context (`fetch_census_county_context()` and its parts). `county_suffix`
+  strips text from Census's county name (MT passes ", Montana"; WY keeps "Albany County, Wyoming").
+* New `state_fips()`: the current state config's FIPS code, the default `fips` for these fetchers.
+* The states' copies differed only in the FIPS code, the map and the county suffix; on every state fixture the package
+  output is identical to the old state functions' (18 comparisons). Tests and fixtures moved with the code.
+
 # edjobs 0.24.0
 
 WY's own-page districts on the CMS families (notes: `claude-notes/2026-11-14_wy-families/`).
