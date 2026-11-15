@@ -13,6 +13,7 @@ district_page_text(html_text)
 One string, or NA when the HTML can't be read.
 }
 \description{
-The body without navigation, header, footer, sidebars, menus, widgets,
-breadcrumbs and scripts. The page text the Edlio routine reads.
+The body without navigation, header, footer, sidebars, menus (WordPress,
+Joomla, UIkit), widgets, breadcrumbs and scripts, each table cell on its own
+line. The page text the Edlio and Joomla routines read.
 }
