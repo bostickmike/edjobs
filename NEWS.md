@@ -1,3 +1,15 @@
+# edjobs 0.22.0
+
+Edlio district pages (notes: `claude-notes/2026-11-14_small-families/edlio/`).
+
+* `fetch_edlio_postings()` / `parse_edlio_postings()` (same arguments and output as the other page-text routines),
+  on `district_page_text()`: the body without navigation, header, footer, sidebars, menus and scripts. Per-posting
+  document links as the old scrapers had them.
+* The shared title filter, with every earlier measure unchanged: an all-caps line naming no role is a section
+  header (Livingston's school names); W-4 / I-9 forms and agreements are not titles; a document's file name reads
+  as words without the school year ("Baker_Cook 2026 27" -> "Baker Cook"); cashier and dish(washer) are roles;
+  "Position(s)" closes a header.
+
 # edjobs 0.21.0
 
 The fifth CMS-family routine: WordPress district pages (notes: `claude-notes/2026-11-14_wordpress-family/`).

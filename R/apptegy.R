@@ -18,7 +18,7 @@ APPTEGY_ROLE_WORDS <- paste0("\\b(", paste(c(
   "teachers?", "aides?", "para(professional|educator)?s?", "coach(es|ing)?", "custodians?", "custodial", "janitor(ial)?",
   "cooks?", "drivers?", "bus", "secretar(y|ies)", "clerks?", "principals?", "superintendent", "counsel(or|ors|ing)",
   "nurses?", "substitutes?", "subs", "librarians?", "specialists?", "directors?", "coordinators?", "technicians?",
-  "maintenance", "grounds ?keepers?", "snow removal", "food service", "food program", "support staff", "kitchen", "cafeteria", "lunch", "advisors?",
+  "maintenance", "cashiers?", "dish(washers?)?", "grounds ?keepers?", "snow removal", "food service", "food program", "support staff", "kitchen", "cafeteria", "lunch", "advisors?",
   "instructors?", "interventionist", "psychologist", "therapist", "pathologist", "speech", "business manager",
   "bookkeeper", "assistants?", "tutors?", "transportation", "mechanic", "groundskeeper", "supervisors?", "dean",
   "athletic", "receptionist", "registrar", "officer", "office manager", "concessions?", "music", "band", "choir",
@@ -53,7 +53,7 @@ APPTEGY_BOILER <- paste(c(
   "holidays off", "\\b(position|job) descriptions?\\b", "^no (positions?|openings?|vacancies) (are |is )?(currently )?(available|open)",
   "veterans'? preference", ",? [A-Z]{2} [0-9]{5}(-[0-9]{4})?$", "^[0-9]+ [A-Za-z]+ (street|st|avenue|ave|road|rd|drive|dr|lane|ln|boulevard|blvd|highway|hwy)\\b",
   "school district #? ?[0-9]+$", "^dear\\b", "\\binformation$", "salary schedule", "responsibilities", "^following\\b",
-  "\\bcontact$", "\\bdocuments?$", "and more$", "\\bresources$", "^jobs?$", "^load more$", "handbook", "\\bcba\\b", "^opportunities\\b", "^(more about|follow|learn more)\\b", "\\bwages?$",
+  "\\bcontact$", "\\bdocuments?$", "and more$", "\\bresources$", "^jobs?$", "^load more$", "\\b(w-?4|i-?9)\\b", "\\bagreement\\b", "handbook", "\\bcba\\b", "^opportunities\\b", "^(more about|follow|learn more)\\b", "\\bwages?$",
   "^(prep|use|responsible|wash|clean|maintain|perform|provide|supervise|help|ensure|operate|monitor|prepare|serve|deliver|manage|work with)\\b",
   "school district no\\.? ?[0-9]+$", "^(hours|job duties|experience|closing date|education)$", "^varies\\b", "^attn\\b", "cooperative$",
   "jobs[- ]for[- ]teachers", "^updated\\b", "slideshow", "brochure", "^search\\b", "^history$", "^location:", "^job summary$", "^\\("),
@@ -192,7 +192,8 @@ apptegy_title_rows <- function(text, start = NA, stop = NA, skip_section = NA) {
     # A header is short: a long sentence ending in ":" ("... is looking to hire ... Teachers. Ashland Public Offers:")
     # is read as a sentence.
     is_header <- (ok(skip_section) && grepl(skip_section, l, perl = TRUE)) || (grepl(":$", l) && lengths(strsplit(l, "\\s+")) <= 10) ||
-                 grepl("^[A-Z]{3,}$", l) || (l == toupper(l) && grepl(", AND ", l, fixed = TRUE)) ||
+                 grepl("^[A-Z]{3,}$", l) || (grepl("^[A-Z][A-Z0-9 .,'&/-]{3,}$", l) && !has_role(l) && !grepl(APPTEGY_BOILER, l, ignore.case = TRUE)) ||
+                 grepl("(?i)\\bpositions?\\(s\\)$", l, perl = TRUE) || (l == toupper(l) && grepl(", AND ", l, fixed = TRUE)) ||
       grepl("^(certified|certificated|classified|coaching|teaching|extra ?curricular|district staff|support staff|certified teachers|athletics?)( (positions|openings|staff|employees))?$", l, ignore.case = TRUE) ||
       (l == toupper(l) && grepl("(OPENINGS|POSITIONS|SUBSTITUTES|EMPLOYEES|OPPORTUNITIES)$", l)) ||
       grepl("^(job title|job type|job description|employment opportunities)$", l, ignore.case = TRUE) ||
@@ -211,6 +212,11 @@ apptegy_title_rows <- function(text, start = NA, stop = NA, skip_section = NA) {
     # "AND ONE (1) MID SHIFT SCHOOL CUSTODIAN") continues the title kept from the line above.
     if (grepl("^AND\\s", l) && length(titles) && li > 1 && lines[length(lines)] == L[li - 1]) {
       titles[length(titles)] <- paste(titles[length(titles)], l); next
+    }
+    # A document's file name ("Baker_Cook 2026 27", "Dish_Server_Cashiers 26"): words, without the school year
+    if (grepl("_", l, fixed = TRUE) && !grepl("@", l, fixed = TRUE)) {
+      l <- trimws(sub("(\\s+(20)?[0-9]{2}([ -](20)?[0-9]{2})?)+$", "", gsub("_+", " ", l)))
+      if (!nzchar(l)) next
     }
     # A card's "Job Title:" label
     l <- trimws(sub("(?i)^(job |position )?title:\\s+", "", l, perl = TRUE))
