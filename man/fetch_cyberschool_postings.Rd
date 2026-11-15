@@ -4,16 +4,30 @@
 \alias{fetch_cyberschool_postings}
 \title{Fetch a CyberSchool district's job postings}
 \usage{
-fetch_cyberschool_postings(url, location)
+fetch_cyberschool_postings(
+  url,
+  location,
+  mode = "items",
+  start = NA,
+  stop = NA,
+  skip_section = NA
+)
 }
 \arguments{
 \item{url}{The district's jobs page (registry \code{Job_Link}).}
 
 \item{location}{The posting location to record (registry \code{City}).}
+
+\item{mode}{"items" (one list item per job) or "text" (the whole list as
+text in the items' bodies, read with the shared title line filter).}
+
+\item{start, stop, skip_section}{Optional per-district rules for mode "text"
+(see \code{\link[=apptegy_title_lines]{apptegy_title_lines()}}).}
 }
 \value{
 Data frame: \code{Title}, \code{Location}, \code{Posted_Date} (ISO date or NA),
-\code{Closing_Date} (ISO date or NA; "until filled" is NA), \code{Link}.
+\code{Closing_Date} (ISO date or NA; "until filled" is NA), \code{Link}; mode "text"
+adds the posted pay columns.
 }
 \description{
 Fetch a CyberSchool district's job postings

@@ -20,11 +20,11 @@ APPTEGY_ROLE_WORDS <- paste0("\\b(", paste(c(
   "nurses?", "substitutes?", "subs", "librarians?", "specialists?", "directors?", "coordinators?", "technicians?",
   "maintenance", "cashiers?", "dish(washers?)?", "grounds ?keepers?", "snow removal", "food service", "food program", "support staff", "kitchen", "cafeteria", "lunch", "advisors?",
   "instructors?", "interventionist", "psychologist", "therapist", "pathologist", "speech", "business manager",
-  "bookkeeper", "assistants?", "tutors?", "transportation", "mechanic", "groundskeeper", "supervisors?", "dean",
+  "bookkeeper", "(day|child) ?care", "assistants?", "tutors?", "transportation", "mechanic", "groundskeeper", "supervisors?", "dean",
   "athletic", "receptionist", "registrar", "officer", "office manager", "concessions?", "music", "band", "choir",
-  "art", "math(ematics)?", "science", "english", "ela", "reading", "history", "social studies", "spanish",
+  "art", "math(ematics)?", "sciences?", "english", "ela", "reading", "history", "social studies", "spanish",
   "physical education", "pe", "health", "special education", "sped", "kindergarten", "preschool", "k-?12", "7-12",
-  "jh", "hs", "ag(riculture)?", "fcs", "industrial arts", "shop", "cte", "volleyball", "basketball", "football",
+  "jh", "hs", "ag(riculture)?", "fcs", "business education", "world languages?", "industrial arts", "shop", "cte", "volleyball", "basketball", "football",
   "wrestling", "track", "cross country", "golf", "softball", "baseball", "cheer(leading)?", "speech and drama",
   "drama"), collapse = "|"), ")\\b")
 
@@ -40,7 +40,7 @@ APPTEGY_BOILER <- paste(c(
          "no (current )?openings)"),
   "^[\u00b7\u2022*\u25aa\u25e6\u25cf\ufffd\uf0b7\uf0a7-]", "^city of\\b", "county$", "forms?\\b.*\\b(here|located)", "\\(fillable\\)",
   "sign-on bonus", "housing", "collective bargaining", "title ix", "^bp [0-9]+", "^copy of\\b", "\\bpolicy\\b",
-  "^questions\\??$", "^[0-9]{4}\\s*[-\u2013]\\s*[0-9]{4}$", "applicants$", "jobs for teachers",
+  "^questions\\??$", "^[0-9]{4}\\s*[-\u2013]\\s*([0-9]{2}|[0-9]{4})$", "applicants$", "jobs for teachers",
   "office of public instruction", "\\bor be\\b|\\bable to\\b", "\\bpositions? (are|is) (available|open)",
   "[0-9]{1,2}(:[0-9]{2})? ?(am|pm)\\b", "pay (scale|range)", "negotiated agreement", "video", "website", "\\bforms?$",
   "^\\$", "^(read more|back to top|google maps|tags:)", "^resume$", "^transcripts$", "licenses and credentials",
@@ -57,7 +57,9 @@ APPTEGY_BOILER <- paste(c(
   "^(prep|use|responsible|wash|clean|maintain|perform|provide|supervise|help|ensure|operate|monitor|prepare|serve|deliver|manage|work with)\\b",
   "school district no\\.? ?[0-9]+$", "^(hours|job duties|experience|closing date|education)$", "^varies\\b", "^attn\\b", "cooperative$",
   "jobs[- ]for[- ]teachers", "^updated\\b", "slideshow", "brochure", "^search\\b", "^history$", "^location:", "^job summary$", "^\\(",
-  "^online$", "\\bfree ?(/ ?|and |& ?)reduced\\b"),
+  "^online$", "\\bfree ?(/ ?|and |& ?)reduced\\b",
+  # A coach's required trainings ("Fundamentals of Coaching course", "CPR/First Aid certification"); "are hired pending ..."
+  "\\b(course|certification|clinic)( \\([^)]*\\))?$", "\\bare (hired|filled)\\b"),
   collapse = "|")
 
 #' Split one Apptegy line into its title part(s)
@@ -197,8 +199,8 @@ apptegy_title_rows <- function(text, start = NA, stop = NA, skip_section = NA) {
     is_header <- (ok(skip_section) && grepl(skip_section, l, perl = TRUE)) || (grepl(":$", l) && lengths(strsplit(l, "\\s+")) <= 10) ||
                  grepl("^[A-Z]{3,}$", l) || (grepl("^[A-Z][A-Z0-9 .,'&/-]{3,}$", l) && !has_role(l) && !grepl(APPTEGY_BOILER, l, ignore.case = TRUE)) ||
                  grepl("(?i)\\bpositions?\\(s\\)$", l, perl = TRUE) || (l == toupper(l) && grepl(", AND ", l, fixed = TRUE)) ||
-      grepl("^(certified|certificated|classified|coaching|teaching|extra ?curricular|district staff|support staff|certified teachers|athletics?)( (positions|openings|staff|employees))?$", l, ignore.case = TRUE) ||
-      (l == toupper(l) && grepl("(OPENINGS|POSITIONS|SUBSTITUTES|EMPLOYEES|OPPORTUNITIES)$", l)) ||
+      grepl("^(certified|certificated|classified|coaching|teaching|extra ?curricular|district staff|support staff|certified teachers|athletics?|athletics?/coaching|coaching/athletics?)( (positions|openings|staff|employees))?$", l, ignore.case = TRUE) ||
+      (l == toupper(l) && grepl("(OPENINGS|POSITIONS|SUBSTITUTES|EMPLOYEES|OPPORTUNITIES|VACANCIES)$", l)) ||
       grepl("^(job title|job type|job description|employment opportunities)$", l, ignore.case = TRUE) ||
       grepl("^(open|current|available|certified|classified|substitute|coaching|teaching|support)\\b.*\\b(positions|openings|staff)$", l, ignore.case = TRUE) ||
       grepl("^current openings$|^openings$|^vacancies$|^all other positions$|^(internal|external) openings$|^various .* positions open$|positions and substitutes$|^substitute positions opened?$", l, ignore.case = TRUE) ||
@@ -209,6 +211,17 @@ apptegy_title_rows <- function(text, start = NA, stop = NA, skip_section = NA) {
                                  !has_role(gsub("(?i)\\b(jh|hs|ms|k-?12|7-12|special education|sped|music|art|math(ematics)?|science|english|ela|reading|history|social studies|spanish|physical education|pe|health|kindergarten|preschool|ag(riculture)?|fcs|cte)\\b", " ", l, perl = TRUE)))
     # A "Job Descriptions" section lists every kind of job the district has, not openings.
     jd <- grepl("(?i)^job descriptions\\b[^.]*:?$", l, perl = TRUE)
+    # "Substitute Custodial Positions" with nothing listed under it (the next line ends the list or is a sentence):
+    # a standing posting named like a header (WY's Sheridan 3), not a section. Generic kinds ("Substitute
+    # Teaching/Classified Positions") stay headers.
+    if (is_header && grepl("(?i)^substitute\\s+(.+?)\\s+positions?$", l, perl = TRUE) &&
+        !grepl("(?i)^substitute\\s+(teaching|classified|certified|certificated|coaching|support|all|other|various)\\b", l, perl = TRUE) &&
+        (li == length(L) || lengths(strsplit(L[li + 1], "\\s+")) > 12)) { keep(l, src); next }
+    # "Substitutes for the following positions:" over a lowercase list ("teachers", "kitchen"): one standing
+    # substitute posting (Victor's doc), the list itself skipped until the next header.
+    if (grepl("(?i)^substitutes? (are needed )?for the following( positions| areas)?:?$", l, perl = TRUE)) {
+      keep("Substitutes", src); header <- l; skipping <- TRUE; next
+    }
     if (is_header || jd) { header <- l; skipping <- jd || (ok(skip_section) && grepl(skip_section, l, perl = TRUE)); next }
     if (skipping) next
     # An all-caps title wrapped onto a second line ("SEEKING TWO (2) EVENING SHIFT SCHOOL CUSTODIANS" /
@@ -221,6 +234,12 @@ apptegy_title_rows <- function(text, start = NA, stop = NA, skip_section = NA) {
       l <- trimws(sub("(\\s+(20)?[0-9]{2}([ -](20)?[0-9]{2})?)+$", "", gsub("_+", " ", l)))
       if (!nzchar(l)) next
     }
+    # A numbered list item on its own line ("1. Maintenance/Custodial Supervisor", Helena Flats): the number goes
+    if (grepl("^[0-9]{1,2}[.)]\\s+[A-Za-z]", l) && !grepl("(?i)^[0-9]{1,2}[.)]\\s+\\S.*\\s[0-9]{1,2}[.)]\\s+\\S", l, perl = TRUE))
+      l <- sub("^[0-9]{1,2}[.)]\\s+", "", l)
+    # "3 Paraprofessional positions": a count of openings of one kind; the kind is the title
+    if (grepl("(?i)^[0-9]{1,2} (.+?) positions?$", l, perl = TRUE) && has_role(sub("(?i)^[0-9]{1,2} (.+?) positions?$", "\\1", l, perl = TRUE)))
+      l <- sub("(?i)^[0-9]{1,2} (.+?) positions?$", "\\1", l, perl = TRUE)
     # A card's "Job Title:" label
     l <- trimws(sub("(?i)^(job |position )?title:\\s+", "", l, perl = TRUE))
     # "Elementary Teaching Position(permanent, full time)Beginning August": details glued on after a
@@ -247,6 +266,12 @@ apptegy_title_rows <- function(text, start = NA, stop = NA, skip_section = NA) {
     if (!grepl("[a-z]", l)) l <- trimws(sub("\\s+(NEEDED|WANTED)( NOW| IMMEDIATELY)?!*$", "", l, perl = TRUE))
     l <- trimws(sub("(?i)\\s*\\([^()]*\\b(open|until filled|posted)\\b[^()]*\\)\\s*$", "", l, perl = TRUE))
     l <- trimws(sub("(?i)(\\.(pdf|docx?)|\\s*\\((pdf|docx?)\\))$", "", l, perl = TRUE))
+    # A posting named by its job-description file ("Speech Language Pathologist Job Description",
+    # "Job Description - Music Teacher K12"; WY's Weston 1): the job stays, the file label goes.
+    jd_strip <- trimws(sub("(?i)^job description\\s*[-\u2013:]\\s*|\\s*[-\u2013]?\\s*\\bjob description$", "", l, perl = TRUE))
+    if (jd_strip != l && nzchar(jd_strip) && has_role(jd_strip)) l <- jd_strip
+    # A file name written in camel case ("AssistantBoysSoccerCoach"): words
+    if (grepl("^([A-Z][a-z]+){3,}$", l)) l <- gsub("(?<=[a-z])(?=[A-Z])", " ", l, perl = TRUE)
     l <- trimws(sub("(?i)(?<=\\S)\\s+(job\\s+)?opening$", "", l, perl = TRUE))
     l <- trimws(sub("\\s*\\([^()]*\\$[^()]*\\)$", "", l, perl = TRUE))
     # "Substitute Certified Teachers $160/day": pay after the title
@@ -278,7 +303,7 @@ apptegy_title_rows <- function(text, start = NA, stop = NA, skip_section = NA) {
     # "5th Grade Teacher Filled": no longer open
     if (grepl("(?i)\\bfilled\\b", l, perl = TRUE) && !grepl("(?i)until filled", l, perl = TRUE)) next
     # A contact: a name above, an email below ("Sam Hoff" / "K-12 Principal" / "SamHoff@...")
-    if (li > 1 && li < length(L) && grepl("@", L[li + 1]) && grepl("^[A-Z][a-z]+ [A-Z][a-z'-]+$", L[li - 1]) &&
+    if (li > 1 && li < length(L) && grepl("@|^\\(?[0-9]{3}\\)?[-. ]?[0-9]{3}-[0-9]{4}$", L[li + 1]) && grepl("^[A-Z][a-z]+ [A-Z][a-z'-]+$", L[li - 1]) &&
         !has_role(L[li - 1])) next
     # A sentence fragment wrapped from the line above starts in lower case
     if (grepl("^[a-z]", l)) next
@@ -414,20 +439,23 @@ apptegy_pagebuilder_lines <- function(nodes) {
 #'   JSON in the HTML).
 #' @param start,stop,skip_section Optional per-district regexes, see
 #'   [apptegy_title_lines()].
+#' @param deadline_date A posting whose own text gives an application deadline
+#'   before this date is left out (a candidate can no longer apply); see
+#'   [apptegy_passed_deadline()]. `NA` keeps every posting.
 #' @return Data frame: `Title`, `Location`, `Posted_Date` (always NA: Apptegy
 #'   pages give none), `Link` (the page), and the posted pay columns
 #'   (`Pay_Min`, `Pay_Max`, `Pay_Unit`, `Pay_Text`) when a title's own line
 #'   states pay.
 #' @export
 fetch_apptegy_postings <- function(chromote_session, url, location, mode = "text",
-                                   start = NA, stop = NA, skip_section = NA) {
+                                   start = NA, stop = NA, skip_section = NA, deadline_date = Sys.Date()) {
   mode <- match.arg(mode, c("text", "pagebuilder"))
   chromote_session$Page$navigate(url)
   chromote_session$Page$loadEventFired(wait_ = TRUE, timeout_ = 30)
   Sys.sleep(4)
   js <- if (mode == "text") "document.body.innerText" else "document.documentElement.outerHTML"
   content <- chromote_session$Runtime$evaluate(js)$result$value
-  parse_apptegy_postings(content, url, location, mode, start, stop, skip_section)
+  parse_apptegy_postings(content, url, location, mode, start, stop, skip_section, deadline_date)
 }
 
 #' Parse an Apptegy jobs page
@@ -437,7 +465,7 @@ fetch_apptegy_postings <- function(chromote_session, url, location, mode = "text
 #' @return See [fetch_apptegy_postings()].
 #' @export
 parse_apptegy_postings <- function(content, url, location, mode = "text",
-                                   start = NA, stop = NA, skip_section = NA) {
+                                   start = NA, stop = NA, skip_section = NA, deadline_date = Sys.Date()) {
   mode <- match.arg(mode, c("text", "pagebuilder"))
   start <- na_rule(start); stop <- na_rule(stop); skip_section <- na_rule(skip_section)
   text <- if (mode == "text") {
@@ -447,7 +475,71 @@ parse_apptegy_postings <- function(content, url, location, mode = "text",
     if (is.null(nodes)) NULL else paste(apptegy_pagebuilder_lines(nodes), collapse = "\n")
   }
   rows <- if (is.null(text)) apptegy_title_rows(NULL) else apptegy_title_rows(text, start, stop, skip_section)
+  if (nrow(rows) && length(deadline_date) == 1 && !is.na(deadline_date)) {
+    passed <- apptegy_passed_deadline(rows, text, deadline_date)
+    if (any(passed)) {
+      message("Apptegy: left out ", sum(passed), " posting(s) past their own application deadline at ", url, ": ",
+              paste(rows$Title[passed], collapse = "; "))
+      rows <- rows[!passed, , drop = FALSE]
+    }
+  }
   title_rows_postings(rows, url, location)
+}
+
+#' Which titles' own text gives an application deadline that has passed
+#'
+#' A title's block is its line up to the next title's line (at most 25 lines).
+#' The first line in it with a deadline cue (deadline, close/closing, due,
+#' until, no later than, accepted through, apply/received/submitted by)
+#' followed within 60 characters by a full date with its year ("October 29,
+#' 2026", "10/29/2026") is the deadline. A date without a year, or "until
+#' filled" with no date, is no deadline. Measured 2026-11-14 on every MT and WY
+#' Apptegy page (228 postings at 50 districts): one passed deadline, Weston
+#' County SD 7's School Maintenance Technician (closed 2026-10-29).
+#' @param rows The filter's rows (`Title`, `Line`).
+#' @param text The page text the rows came from.
+#' @param deadline_date The run date: a deadline before it has passed.
+#' @return Logical, one per row.
+#' @export
+apptegy_passed_deadline <- function(rows, text, deadline_date = Sys.Date()) {
+  if (!nrow(rows)) return(logical(0))
+  L <- trimws(gsub("[\u00a0\t ]+", " ", strsplit(paste(text, collapse = "\n"), "\n")[[1]])); L <- L[nzchar(L)]
+  pos <- vapply(rows$Line, function(x) {
+    j <- which(L == trimws(x)); if (!length(j)) j <- which(grepl(trimws(x), L, fixed = TRUE)); if (length(j)) j[1] else NA_integer_
+  }, 1L, USE.NAMES = FALSE)
+  vapply(seq_along(pos), function(k) {
+    p <- pos[k]
+    if (is.na(p)) return(FALSE)
+    later <- pos[!is.na(pos) & pos > p]
+    end <- min(length(L), p + 24, if (length(later)) min(later) - 1 else Inf)
+    d <- apptegy_block_deadline(L[p:end])
+    !is.na(d) && d < as.Date(deadline_date)
+  }, TRUE)
+}
+
+APPTEGY_DEADLINE_CUE <- "(?i)(deadline|clos(e|es|ed|ing)|\\bdue\\b|until|no later than|accepted (through|thru)|(apply|received|submitted) by)"
+APPTEGY_FULL_DATE <- paste0("(?i)((Jan(uary)?|Feb(ruary)?|Mar(ch)?|Apr(il)?|May|June?|July?|Aug(ust)?|Sep(t(ember)?)?|",
+                            "Oct(ober)?|Nov(ember)?|Dec(ember)?)\\.?\\s+\\d{1,2}(st|nd|rd|th)?,?\\s+\\d{4}|",
+                            "\\b\\d{1,2}/\\d{1,2}/(\\d{4}|\\d{2})\\b)")
+
+# The first deadline date in a block of lines, or NA.
+apptegy_block_deadline <- function(block) {
+  for (l in block) {
+    m <- regmatches(l, regexpr(paste0(APPTEGY_DEADLINE_CUE, ".{0,60}?", APPTEGY_FULL_DATE), l, perl = TRUE))
+    if (!length(m)) next
+    ds <- regmatches(m, regexpr(APPTEGY_FULL_DATE, m, perl = TRUE))
+    ds <- gsub("\\.", "", gsub("(\\d)(st|nd|rd|th)\\b", "\\1", ds, perl = TRUE))
+    month <- match(tolower(substr(sub("^\\s+", "", ds), 1, 3)), tolower(month.abb))
+    d <- if (!is.na(month)) {
+      parts <- regmatches(ds, gregexpr("\\d+", ds))[[1]]
+      as.Date(sprintf("%s-%02d-%02d", parts[2], month, as.integer(parts[1])), optional = TRUE)
+    } else {
+      parts <- as.integer(strsplit(ds, "/")[[1]]); y <- if (parts[3] < 100) parts[3] + 2000L else parts[3]
+      as.Date(sprintf("%d-%02d-%02d", y, parts[1], parts[2]), optional = TRUE)
+    }
+    if (!is.na(d)) return(d)
+  }
+  as.Date(NA)
 }
 
 # The family routines' output from the filter's rows: Title, Location,

@@ -1,3 +1,38 @@
+# edjobs 0.24.0
+
+WY's own-page districts on the CMS families (notes: `claude-notes/2026-11-14_wy-families/`).
+
+* Apptegy: a posting whose own text gives an application deadline that has passed is left out (a candidate can no
+  longer apply), with a message naming it. New `apptegy_passed_deadline()`; `fetch_apptegy_postings()` and
+  `parse_apptegy_postings()` take `deadline_date` (default today; `NA` keeps every posting). A deadline needs a cue
+  word and a full date with its year. Measured on every MT and WY Apptegy page (228 postings, 50 districts): it drops
+  one, Weston County SD 7's School Maintenance Technician (closed 2026-10-29); no other page states a deadline
+  (`claude-notes/2026-11-14_deadline-check/`).
+* The shared title filter: a posting named by its job-description file keeps the job ("Speech Language Pathologist Job
+  Description" -> "Speech Language Pathologist", "Job Description - Music Teacher K12" -> "Music Teacher K12"); a
+  camel-case file name reads as words ("AssistantBoysSoccerCoach", "SubsMusicTeachingPosition.pdf"). On every cached
+  live page (MT and WY, all families) this changes 4 titles: Weston 1's two (same postings, cleaner titles), Washakie
+  2's "Music Teacher" (excluded there by a stop rule) and Fromberg's substitute music posting, which the Finalsite
+  routine missed (Fromberg's own scraper reads it; with this fix the routine matches it).
+* A "Substitute <job> Positions" line with nothing listed under it is a posting, not a section header (WY Sheridan 3's
+  "Substitute Custodial Positions"); no other cached page changes.
+* A numbered list item on its own line loses its number ("1. Maintenance/Custodial Supervisor", MT's Helena Flats).
+  On every cached page, the only other change is Wolf Point read without its rules (2 junk lines fewer).
+* `fetch/parse_cyberschool_postings(mode = "text", start, stop, skip_section)`: a CyberSchool page whose list is
+  written as text in the item body (MT's Nashua, Frazer, Lavina, Hinsdale) is read with the shared title line filter;
+  links come from the body only. Same titles as those districts' old parsers on fixtures and live pages.
+* The shared title filter: childcare/daycare, "sciences", business education and world languages are job words; a
+  coach's required trainings ("... course", "... certification", "... Clinic") and "are hired pending ..." are not
+  titles; an all-caps "... VACANCIES" line is a header; a role line between a contact's name and phone is a contact.
+  On every cached page these change only the four CyberSchool text pages above.
+* `fetch/parse_googledoc_postings(doc_ids, location, link, start, stop, skip_section)` and `googledoc_preview_text()`:
+  job lists kept in published Google Docs (MT's Victor, Superior, Bainville, Creston), read from the plain-text export
+  or, for an uploaded file, the preview page; ids from the registry `Slug` (";" between docs). A doc's "updated
+  M/D/YYYY" line is each posting's Posted_Date, as Victor's old scraper read it.
+* The shared title filter: "Athletics/Coaching" is a header; "Substitutes for the following positions:" over a
+  lowercase list is one "Substitutes" posting; "3 Paraprofessional positions" is "Paraprofessional"; "2026-27" alone is
+  not a title. No other cached page changes.
+
 # edjobs 0.23.0
 
 Joomla district pages (notes: `claude-notes/2026-11-14_small-families/joomla/`).

@@ -62,3 +62,22 @@ test_that("fetch_cyberschool_postings follows a redirect and resolves links agai
   expect_equal(nrow(r), 4)
   expect_true(all(grepl("^https://www.highwood.k12.mt.us/District/Jobs/", r$Link)))
 })
+
+test_that("mode 'text': a list written as text in the item body (Nashua, Hinsdale), links from the body only", {
+  nashua_url <- "https://www.nashua.k12.mt.us/District/Jobs/"
+  r <- parse_cyberschool_postings(rd_fixture("cyberschool_nashua_text_2026-10-20.html"), nashua_url, "Nashua", "text")
+  expect_equal(r$Title, c("Part-Time Custodian", "K-12 Librarian (full or part-time)", "Music (full or part-time)",
+                          "Special Education", "Concessions", "Substitute Teacher",
+                          "Substitute Bus Driver/Activity Bus Driver"))
+  # "Special Education" is also a site-menu page: not this posting's link
+  expect_true(all(r$Link == nashua_url))
+  expect_true(all(c("Closing_Date", "Pay_Min") %in% names(r)))
+  expect_true(all(r$Location == "Nashua"))
+  # The default mode reads the item heading only
+  expect_equal(parse_cyberschool_postings(rd_fixture("cyberschool_nashua_text_2026-10-20.html"), nashua_url, "Nashua")$Title, "Employment")
+
+  h <- parse_cyberschool_postings(rd_fixture("cyberschool_hinsdale_text.html"), "https://hinsdale.k12.mt.us/District/1557-Untitled.html",
+                                  "Hinsdale", "text")
+  expect_equal(h$Title, c("Daycare Manager", "Childcare Worker at Little Raiders Daycare", "Route Bus Drivers"))
+  expect_match(h$Link[1], "^https://ucarecdn.com/")  # the posting's own document
+})

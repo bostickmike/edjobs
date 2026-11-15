@@ -10,21 +10,27 @@
 #     redirects to /jobs): each job is a list item whose heading links to
 #     /jobs/<slug>, with a "Published: MM/DD/YYYY" line.
 # A page that holds its whole list as free text in one item (Nashua, Frazer,
-# Lavina, Hinsdale) is not read here: it needs the shared title line filter.
+# Lavina, Hinsdale) is read in mode "text": the list items' body text through
+# the shared title line filter (edjobs 0.24.0).
 
 #' Fetch a CyberSchool district's job postings
 #'
 #' @param url The district's jobs page (registry `Job_Link`).
 #' @param location The posting location to record (registry `City`).
+#' @param mode "items" (one list item per job) or "text" (the whole list as
+#'   text in the items' bodies, read with the shared title line filter).
+#' @param start,stop,skip_section Optional per-district rules for mode "text"
+#'   (see [apptegy_title_lines()]).
 #' @return Data frame: `Title`, `Location`, `Posted_Date` (ISO date or NA),
-#'   `Closing_Date` (ISO date or NA; "until filled" is NA), `Link`.
+#'   `Closing_Date` (ISO date or NA; "until filled" is NA), `Link`; mode "text"
+#'   adds the posted pay columns.
 #' @export
-fetch_cyberschool_postings <- function(url, location) {
+fetch_cyberschool_postings <- function(url, location, mode = "items", start = NA, stop = NA, skip_section = NA) {
   resp <- httr2::request(url) %>%
     httr2::req_user_agent(POSTING_STATUS_UA) %>%
     perform_with_retry(is_transient = is_transient_gateway_error)
   # A moved site redirects; links resolve against the page actually served.
-  parse_cyberschool_postings(httr2::resp_body_string(resp), resp$url %||% url, location)
+  parse_cyberschool_postings(httr2::resp_body_string(resp), resp$url %||% url, location, mode, start, stop, skip_section)
 }
 
 #' Parse a CyberSchool jobs page
@@ -32,13 +38,16 @@ fetch_cyberschool_postings <- function(url, location) {
 #' @param html_text The page's HTML.
 #' @param url The page's URL (relative links resolve against it).
 #' @param location The posting location to record.
+#' @inheritParams fetch_cyberschool_postings
 #' @return See [fetch_cyberschool_postings()].
 #' @export
-parse_cyberschool_postings <- function(html_text, url, location) {
+parse_cyberschool_postings <- function(html_text, url, location, mode = "items", start = NA, stop = NA, skip_section = NA) {
+  mode <- match.arg(mode, c("items", "text"))
   empty <- cyberschool_empty()
   if (is.null(html_text) || !nzchar(trimws(html_text))) return(empty)
   doc <- tryCatch(rvest::read_html(html_text), error = function(e) NULL)
   if (is.null(doc)) return(empty)
+  if (mode == "text") return(cyberschool_text_postings(doc, url, location, start, stop, skip_section))
 
   out <- cyberschool_classic_items(doc, url, location)
   if (nrow(out) == 0) out <- cyberschool_ies_items(doc, url, location)
@@ -123,4 +132,19 @@ cyberschool_date <- function(x) {
     if (!is.na(d)) out[i] <- format(d, "%Y-%m-%d")
   }
   out
+}
+
+# Mode "text": the items' body text (headings and the site's chrome left out),
+# one line per block, through the shared title line filter.
+cyberschool_text_postings <- function(doc, url, location, start, stop, skip_section) {
+  bodies <- rvest::html_elements(doc, ".listItem_bodyContent, .listItem_body")
+  # A body nested in another body is read once, with its parent.
+  bodies <- bodies[!vapply(bodies, function(b) length(xml2::xml_find_all(b, "ancestor::*[contains(@class, 'listItem_body')]")) > 0, TRUE)]
+  text <- if (length(bodies)) paste(vapply(bodies, function(b) district_page_text(as.character(b)), ""), collapse = "\n") else NA_character_
+  rows <- if (is.na(text)) apptegy_title_rows(NULL) else apptegy_title_rows(text, na_rule(start), na_rule(stop), na_rule(skip_section))
+  # Links come from the bodies only, not the site menu ("Special Education" is also a menu page).
+  body_doc <- if (length(bodies)) rvest::read_html(paste(vapply(bodies, as.character, ""), collapse = "\n")) else NULL
+  out <- title_rows_postings(rows, url, location, body_doc)
+  out$Closing_Date <- rep(NA_character_, nrow(out))
+  out[, c("Title", "Location", "Posted_Date", "Closing_Date", "Link", setdiff(names(out), c("Title", "Location", "Posted_Date", "Closing_Date", "Link")))]
 }
