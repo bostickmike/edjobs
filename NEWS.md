@@ -1,3 +1,15 @@
+# edjobs 0.21.0
+
+The fifth CMS-family routine: WordPress district pages (notes: `claude-notes/2026-11-14_wordpress-family/`).
+
+* `fetch_wordpress_postings()` / `parse_wordpress_postings()` (same arguments and output as the Google Sites
+  routine): the post/page content (`.entry-content`, else Divi's main area, `main`, `article`, `#content`) without
+  navigation, header, footer, sidebars and widgets (`wordpress_page_text()`).
+* The shared title filter, with every earlier measure unchanged: handbooks, CBAs, questions, job-duty lines
+  ("Prep, cook and deliver breakfast"), "... wage" lines and "School District No. 38" names are not titles; "We are
+  hiring X" and "Foundations Hiring for X" give X; "(PDF)" suffixes and "Name, Role" contacts with names like
+  McAllister.
+
 # edjobs 0.20.0
 
 The fourth CMS-family routine: Finalsite district pages (notes: `claude-notes/2026-11-14_finalsite-family/`).
