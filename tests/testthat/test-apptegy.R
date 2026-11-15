@@ -119,3 +119,24 @@ test_that("auto-fix evidence: the routine reads innerText, and a family's per-di
   expect_length(fixtures_used_by_tests("fetch_apptegy_postings", tests, "Elsewhere"), 3)
   expect_length(fixtures_used_by_tests("fetch_apptegy_postings", tests), 3)
 })
+
+test_that("titles inside a sentence, unless the sentence restates the title above it", {
+  expect_equal(apptegy_title_lines("Openings:\nBig Timber Grade School is accepting applications for a SPED Teacher.\nBig Timber Grade School is also accepting applicants for Substitute Teachers."),
+               c("SPED Teacher", "Substitute Teachers"))
+  expect_equal(apptegy_title_lines("Assistant Cook\nAlberton School is seeking a dependable and enthusiastic Assistant Cook to join our team!"),
+               "Assistant Cook")
+  # Not a role, or about the reader
+  expect_equal(apptegy_title_lines("Cut Bank Schools is looking for talented educators like YOU who want to make a difference."), character(0))
+})
+
+test_that("Google Sites-style lines: contacts, document links, pay asides, glued headers, labels", {
+  expect_equal(apptegy_title_lines("Superintendent / Principal: Christy Bortz\nJH Football: Head Coach"), "JH Football: Head Coach")
+  expect_equal(apptegy_title_lines("Openings:\nPart-time Bus Driver.pdf\nVeterans' Preference.pdf"), "Part-time Bus Driver")
+  r <- parse_apptegy_postings("Openings:\nSubstitute Bus Drivers (Route sub=$18.10/hr. Activity trips=$18.10/hr.)", "u", "x")
+  expect_equal(r$Title, "Substitute Bus Drivers")
+  expect_equal(r$Pay_Min, 18.1)
+  expect_equal(apptegy_title_lines("Certified Positions:No positions open at this time.Aide Positions:Paraprofessional (Full Time)"),
+               "Paraprofessional (Full Time)")
+  expect_equal(apptegy_title_lines("Openings:\nSPED Case Manager Opening\nCOACHES\nNo positions are currently available\nMS/HS Positions"),
+               "SPED Case Manager")
+})
