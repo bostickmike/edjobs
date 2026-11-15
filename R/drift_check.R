@@ -544,14 +544,21 @@ AUTOFIX_DIFF_MAX_LINES <- 200
 #' Scraper reads inner text
 #'
 #' Whether fetch_fn's parser consumes document.body.innerText -- the form the
-#' drift check captured, so the capture can be the new fixture verbatim.
+#' drift check captured, so the capture can be the new fixture verbatim. A
+#' function not in `scraper_lines` is read from edjobs itself when it is
+#' one of the package's routines (`fetch_apptegy_postings`).
 #' @param fetch_fn See the description.
 #' @param scraper_lines See the description.
 #' @export
 scraper_reads_inner_text <- function(fetch_fn, scraper_lines) {
   if (is.na(fetch_fn)) return(FALSE)
   start <- grep(sprintf("^%s <- function", fetch_fn), scraper_lines)
-  if (length(start) == 0) return(FALSE)
+  if (length(start) == 0) {
+    # A routine edjobs hosts (fetch_apptegy_postings): read its own body.
+    ns <- asNamespace("edjobs")
+    if (!exists(fetch_fn, envir = ns, inherits = FALSE)) return(FALSE)
+    return(any(grepl("document.body.innerText", deparse(get(fetch_fn, envir = ns)), fixed = TRUE)))
+  }
   later <- grep("^[A-Za-z_.][A-Za-z0-9_.]* <- ", scraper_lines)
   end <- c(later[later > start[1]], length(scraper_lines) + 1)[1] - 1
   any(grepl("document.body.innerText", scraper_lines[start[1]:end], fixed = TRUE))

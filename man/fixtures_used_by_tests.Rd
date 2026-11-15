@@ -4,12 +4,17 @@
 \alias{fixtures_used_by_tests}
 \title{Fixtures a scraper's tests use}
 \usage{
-fixtures_used_by_tests(fetch_fn, test_files)
+fixtures_used_by_tests(fetch_fn, test_files, source_name = NULL)
 }
 \arguments{
 \item{fetch_fn}{A \verb{fetch_*} function name, or NA.}
 
 \item{test_files}{Named list of test-file lines (name = file name).}
+
+\item{source_name}{Optional source name: when some of the parser's test
+blocks name it in their description (a family routine's per-district
+tests, "parse_apptegy_postings: Melstone Public Schools"), only those
+blocks' fixtures.}
 }
 \description{
 Fixture files referenced by the tests of \code{fetch_fn} or its \verb{parse_*} twin,

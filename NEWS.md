@@ -1,3 +1,29 @@
+# edjobs 0.18.0
+
+The second CMS-family routine: Apptegy district sites (notes: `claude-notes/2026-11-14_apptegy-family/`). Mike's
+decision (11-13): the shared title line filter wins where it disagrees with a district's old parser; substitute
+lines are kept; Shelby stays bespoke.
+
+* `fetch_apptegy_postings(session, url, location, mode, start, stop, skip_section)` /
+  `parse_apptegy_postings()`: one routine for the Apptegy district sites, through a chromote session. Mode "text"
+  reads the rendered text; "pagebuilder" reads the page-builder JSON for pages whose jobs sit in collapsed
+  accordions, buttons or cards. Returns `Title`, `Location`, `Posted_Date` (NA: Apptegy pages give none), `Link`
+  and the posted pay columns, read from a title's own line ("Substitute Route Drivers (CDL): $23.00/hour").
+* `apptegy_title_lines()`: the shared title line filter (filter_v14 as measured, plus title-keeping fixes found
+  in the build's exact-title parity: a "Title - rest" line is cut only when the rest is details, never inside
+  parentheses, so "Music - Instrumental" and "Music - Vocal", or "JH Football: Head Coach" and "...: Asst. Coach",
+  stay separate postings; a "Job Title:" label is dropped; an all-caps title wrapped onto an "AND ..." line is
+  joined; a line naming no role under a header that does takes the header's role, "Track Coach - High School -
+  Head"). Optional per-district `start`, `stop` and `skip_section` regexes.
+* `decode_apptegy_pagebuilder_nodes()`, `apptegy_html_fragment_to_lines()` (moved from MT) and
+  `apptegy_pagebuilder_lines()`; `apptegy_split_line()`.
+* Auto-fix evidence for a routine edjobs hosts: `scraper_reads_inner_text()` reads the package's own function when
+  the state's scraper files don't define it, and `fixtures_used_by_tests(fetch_fn, test_files, source_name)` keeps
+  only the test blocks that name the source when a family's per-district tests do ("parse_apptegy_postings: Lone
+  Rock School District"), so the issue hands the agent that district's fixtures, not the whole family's.
+* WY's own Apptegy parser is renamed `fetch/parse_wy_apptegy_postings()` in WY's pin-bump change (no output
+  change); moving WY's three Apptegy districts onto this routine is a separate, measured decision.
+
 # edjobs 0.17.0
 
 The first CMS-family routine: CyberSchool (IES) district sites (notes: `claude-notes/2026-11-14_cyberschool-family/`;

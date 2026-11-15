@@ -13,5 +13,7 @@ scraper_reads_inner_text(fetch_fn, scraper_lines)
 }
 \description{
 Whether fetch_fn's parser consumes document.body.innerText -- the form the
-drift check captured, so the capture can be the new fixture verbatim.
+drift check captured, so the capture can be the new fixture verbatim. A
+function not in \code{scraper_lines} is read from edjobs itself when it is
+one of the package's routines (\code{fetch_apptegy_postings}).
 }
