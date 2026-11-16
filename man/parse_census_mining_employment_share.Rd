@@ -7,12 +7,13 @@
 parse_census_mining_employment_share(raw, county_suffix = NULL)
 }
 \arguments{
-\item{raw}{Output of \code{\link[=fetch_acs_counties]{fetch_acs_counties()}} for S2403_C01_001E, S2403_C01_004E.}
+\item{raw}{Output of \code{\link[=fetch_acs_counties]{fetch_acs_counties()}} for S2403_C01_001E, S2403_C01_004E (and their _M MOEs).}
 
 \item{county_suffix}{Text removed from the end of Census's county NAME
 (", Montana"); NULL keeps the full name.}
 }
 \description{
 County, Mining_Employment_Share (S2403 line 4, mining, quarrying, and oil and
-gas extraction, over all civilian employed 16 and over).
+gas extraction, over all civilian employed 16 and over) and its 90\% margin of
+error Mining_Employment_Share_MOE (\code{\link[=acs_proportion_moe]{acs_proportion_moe()}}; NA without the _M columns).
 }

@@ -1,3 +1,15 @@
+# edjobs 0.28.0
+
+Margins of error for the ACS county context (Mike's decision 2026-11-16, option B).
+
+* `parse_census_income_rent_population()` adds Median_Household_Income_MOE and Median_Gross_Rent_MOE (Census's 90%
+  MOEs, B19013_001M / B25064_001M); `parse_census_mining_employment_share()` adds Mining_Employment_Share_MOE from
+  the new `acs_proportion_moe()` (ACS handbook 2020 formula (6), with its plus-sign fallback). The fetchers request
+  the `_M` variables; an estimates-only response gives NA MOEs.
+* No CV tiers: a figure whose MOE is at least its estimate is "not distinguishable from zero" (Census's CV > 0.61
+  line). On 2024 data that is 19 of Montana's 56 county mining shares and nothing else in either state. County
+  population totals are controlled to the population estimates, so the population change has no MOE.
+
 # edjobs 0.27.0
 
 Census's error band beside SAIPE child poverty (Mike's decision 2026-11-15, option A).
