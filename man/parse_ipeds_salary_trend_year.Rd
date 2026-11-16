@@ -14,5 +14,5 @@ parse_ipeds_salary_trend_year(df, year, unitid_map)
 \item{unitid_map}{See the file header.}
 }
 \description{
-Name, Year, Faculty_Avg_Salary (the all-ranks figure) per map row.
+Name, Year, Faculty_Avg_Salary (the all-ranks, 9-12-month-contract figure) per map row.
 }

@@ -14,7 +14,7 @@ parse_ipeds_he_salaries(df, year, unitid_map)
 \item{unitid_map}{See the file header.}
 }
 \description{
-One row per \code{unitid_map} row: Name, Faculty_Avg_Salary (all ranks),
+One row per \code{unitid_map} row: Name, Faculty_Avg_Salary (all ranks, full-time staff on 9-12-month contracts),
 Faculty_Avg_Salary_Professor, Faculty_Count, Salary_Year, and Salary_Note
 when the map has that column. An institution missing from \code{df} keeps its
 row with NA figures.

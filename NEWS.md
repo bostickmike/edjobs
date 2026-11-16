@@ -1,3 +1,12 @@
+# edjobs 0.33.0
+
+IPEDS faculty salary: the average over full-time instructional staff on 9- to 12-month contracts (Mike
+2026-11-16), from `ipeds_avg_salary_9to12()`, for `Faculty_Avg_Salary`, `Faculty_Avg_Salary_Professor` and the
+salary trend. The contract_length 99 "Total" row it replaces counts staff on contracts under 9 months, whose salaries
+IPEDS doesn't collect, so it divided the others' pay by too many people: Blackfeet CC 2024 $25,621 -> $54,317 (28 of
+53 under 9 months), University of Montana $93,938 -> $95,013 (5 of 442); the other 27 MT/WY colleges are unchanged.
+`Faculty_Count` stays the Total row's count (all full-time instructional staff).
+
 # edjobs 0.32.0
 
 College postings at branch campuses and outreach sites (Mike 2026-11-16: "we need the locations to be accurate on
