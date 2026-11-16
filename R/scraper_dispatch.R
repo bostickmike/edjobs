@@ -27,14 +27,21 @@
 #' @param map See `fn`.
 #' @param defined_in For `map = TRUE`, the file holding the map (shown to the
 #'   auto-fix agent).
+#' @param fixture_prefix For states whose fixtures are named
+#'   `<prefix>_<district>...` (`fixtures_named_for_source()`): the prefix,
+#'   when it isn't the lower-cased platform name (WY's `EducationalNetworks`
+#'   fixtures start `educational_networks_`).
 #' @return A list of class `edjobs_scraper_spec`.
 #' @export
-scraper_spec <- function(fn, args = character(0), session = FALSE, map = FALSE, defined_in = NULL) {
+scraper_spec <- function(fn, args = character(0), session = FALSE, map = FALSE, defined_in = NULL,
+                         fixture_prefix = NULL) {
   stopifnot(is.character(fn), length(fn) == 1, nzchar(fn))
   if (!is.list(args)) args <- as.list(args)
   ok <- vapply(args, function(a) is.function(a) || (is.character(a) && length(a) == 1), logical(1))
   if (!all(ok)) stop("scraper_spec(args = ) entries must be column names or functions of the registry row")
-  structure(list(fn = fn, args = args, session = isTRUE(session), map = isTRUE(map), defined_in = defined_in),
+  stopifnot(is.null(fixture_prefix) || (is.character(fixture_prefix) && length(fixture_prefix) == 1))
+  structure(list(fn = fn, args = args, session = isTRUE(session), map = isTRUE(map), defined_in = defined_in,
+                 fixture_prefix = fixture_prefix),
             class = "edjobs_scraper_spec")
 }
 
@@ -104,7 +111,7 @@ scraper_source_table <- function(source) {
 #' @param name A drift-check source name (district or institution).
 #' @param sources List of `scraper_registry()` / `scraper_calls()`; defaults
 #'   to the session's `state_config(scraper_sources = )`.
-#' @return `list(fn, args, session, map, defined_in, platform, where)` with
+#' @return `list(fn, args, session, map, defined_in, platform, where, fixture_prefix)` with
 #'   `args` as actual values, or NULL when the source has no single-source
 #'   scraper call (unknown name, or a platform with no spec).
 #' @export
@@ -127,7 +134,7 @@ resolve_scraper_call <- function(name, sources = state_scraper_sources()) {
     if (is.null(spec)) return(NULL)
     args <- lapply(spec$args, function(a) if (is.function(a)) a(row) else row[[a]])
     return(list(fn = spec$fn, args = args, session = spec$session, map = spec$map, defined_in = spec$defined_in,
-                platform = platform, where = source$where))
+                platform = platform, where = source$where, fixture_prefix = spec$fixture_prefix))
   }
   NULL
 }
@@ -300,7 +307,8 @@ district_fixture_tokens <- function(name) {
 
 #' Fixtures named for a source
 #'
-#' For fixtures named `<platform>_<district>...` where several districts
+#' For fixtures named `<platform>_<district>...` (or the spec's
+#' `fixture_prefix`) where several districts
 #' share one parser: every fixture for the call's platform, and the ones for
 #' this source (by the district's place name and number, best match first).
 #' A place-only match never takes another numbered district of the same
@@ -312,7 +320,7 @@ district_fixture_tokens <- function(name) {
 #' @export
 fixtures_named_for_source <- function(call, source_name, fixture_files) {
   if (is.null(call)) return(list(platform = character(0), own = character(0)))
-  prefix <- paste0("^", tolower(call$platform), "_")
+  prefix <- paste0("^", tolower(if (is.null(call$fixture_prefix)) call$platform else call$fixture_prefix), "_")
   platform <- fixture_files[grepl(prefix, tolower(basename(fixture_files)))]
   tok <- district_fixture_tokens(source_name)
   base <- tolower(basename(platform))
@@ -427,7 +435,8 @@ autofix_evidence_markdown <- function(evidence, captured_on) {
 #' @param captured_on The capture date, as text.
 #' @param config The state's `state_config()`: its `app_dir`, its registries'
 #'   names and `autofix$fixture_example` (a path pattern for the new fixture,
-#'   with `{platform}` and `{date}` filled in) go into the instructions.
+#'   with `{platform}` (the fixtures' prefix: the spec's `fixture_prefix`, else the lower-cased platform) and
+#'   `{date}` filled in) go into the instructions.
 #' @return Markdown lines.
 #' @export
 build_autofix_issue_body <- function(row, call = NULL, run_url = NULL, evidence = NULL,
@@ -443,7 +452,10 @@ build_autofix_issue_body <- function(row, call = NULL, run_url = NULL, evidence 
   example <- config$autofix$fixture_example
   if (is.null(example)) example <- "tests/testthat/fixtures/<source>_rendered_{date}.txt"
   example <- gsub("{date}", captured_on, example, fixed = TRUE)
-  example <- gsub("{platform}", if (is.null(call)) "<platform>" else call$platform, example, fixed = TRUE)
+  # The fixtures' own prefix (the spec's fixture_prefix, else the lower-cased platform), as
+  # fixtures_named_for_source() looks them up.
+  prefix <- if (is.null(call)) "<platform>" else if (!is.null(call$fixture_prefix)) call$fixture_prefix else tolower(call$platform)
+  example <- gsub("{platform}", prefix, example, fixed = TRUE)
 
   registries <- unlist(lapply(config$scraper_sources, function(s) if (identical(s$kind, "registry")) s$where))
   keep_out <- c(if (length(registries) > 0) sprintf("the registries (%s)", paste(registries, collapse = ", ")) else "the registries",

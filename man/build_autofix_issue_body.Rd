@@ -27,7 +27,8 @@ build_autofix_issue_body(
 
 \item{config}{The state's \code{state_config()}: its \code{app_dir}, its registries'
 names and \code{autofix$fixture_example} (a path pattern for the new fixture,
-with \code{{platform}} and \code{{date}} filled in) go into the instructions.}
+with \code{{platform}} (the fixtures' prefix: the spec's \code{fixture_prefix}, else the lower-cased platform) and
+\code{{date}} filled in) go into the instructions.}
 }
 \value{
 Markdown lines.
