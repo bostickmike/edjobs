@@ -356,6 +356,10 @@ reference:
   - pool_child_poverty
   - parse_census_saipe_child_poverty
   - fetch_census_saipe_child_poverty
+  - pool_saipe_population
+  - SAIPE_RELATIVE_ERROR
+  - saipe_relative_error
+  - add_saipe_range
   - surrounding_district_poverty
 - title: "Package"
   contents:

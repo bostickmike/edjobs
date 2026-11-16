@@ -125,3 +125,33 @@ test_that("parse_saipe_json returns an empty data frame for an empty or header-o
   expect_equal(nrow(parse_saipe_json("")), 0)
   expect_equal(nrow(parse_saipe_json('[["SD_NAME","SAEPOVRAT5_17RV_PT"]]')), 0)
 })
+
+# ---- SAIPE error range -----------------------------------------------------------
+
+test_that("SAIPE_Population comes from SAEPOVALL_PT and a pair takes the larger district's (Billings, Butte)", {
+  s <- mt_saipe()
+  expect_equal(s$SAIPE_Population[s$LEAID == "3000655"], 10809)
+  r <- parse_census_saipe_child_poverty(s, list(Billings = c("3003870", "3003900"), Butte = c("3005280", "3005310"),
+                                                None = "3099999"))
+  expect_equal(r$SAIPE_Population, c(139403, 36095, NA))
+})
+
+test_that("saipe_relative_error follows Census's bands, lower bound inclusive", {
+  expect_equal(saipe_relative_error(c(0, 2499, 2500, 4999, 5000, 10000, 20000, 64999, 65000, 139403)),
+               c(0.67, 0.67, 0.42, 0.42, 0.35, 0.28, 0.23, 0.23, 0.15, 0.15))
+  expect_true(all(is.na(saipe_relative_error(c(NA, -1)))))
+})
+
+test_that("add_saipe_range gives rate x (1 -/+ 1.645 x CV), floored at 0 and capped at 1", {
+  df <- add_saipe_range(data.frame(Child_Poverty_Rate = c(0.15, 0.15, 0.8, NA, 0.2),
+                                   SAIPE_Population = c(1000, 70000, 1000, 1000, NA)))
+  expect_equal(df$Child_Poverty_Low, c(0, 0.15 * (1 - 1.645 * 0.15), 0, NA, NA))
+  expect_equal(df$Child_Poverty_High, c(0.15 * (1 + 1.645 * 0.67), 0.15 * (1 + 1.645 * 0.15), 1, NA, NA))
+})
+
+test_that("surrounding_district_poverty also returns the population behind its rate", {
+  p <- surrounding_district_poverty(1, 1, mt_saipe(), geocode = function(lat, lon) c("3005280", "3005310"))
+  expect_equal(p$population, 36095)
+  none <- surrounding_district_poverty(1, 1, mt_saipe(), geocode = function(lat, lon) "3099999")
+  expect_true(is.na(none$population))
+})

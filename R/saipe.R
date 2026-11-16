@@ -70,7 +70,7 @@ parse_saipe_json <- function(json_text) {
 
 #' Fetch one SAIPE school-district geography
 #'
-#' SD_NAME, the rate and both counts for every district of one geography in
+#' SD_NAME, the rate, both counts and the total population for every district of one geography in
 #' the state. A 204 (no districts of that kind) gives an empty data frame.
 #' @param geocat One of [SAIPE_GEOGRAPHIES].
 #' @param year SAIPE year.
@@ -79,7 +79,7 @@ parse_saipe_json <- function(json_text) {
 #' @export
 fetch_saipe_geography <- function(geocat, year, api_key = census_api_key(), fips = state_fips()) {
   resp <- httr2::request(SAIPE_SCHDIST_ENDPOINT) %>%
-    httr2::req_url_query(get = "SD_NAME,SAEPOVRAT5_17RV_PT,SAEPOV5_17RV_PT,SAEPOV5_17V_PT",
+    httr2::req_url_query(get = "SD_NAME,SAEPOVRAT5_17RV_PT,SAEPOV5_17RV_PT,SAEPOV5_17V_PT,SAEPOVALL_PT",
                          `for` = paste0("school district (", geocat, ")"), `in` = paste0("state:", fips),
                          time = year, key = api_key) %>%
     perform_with_retry()
@@ -106,7 +106,8 @@ latest_saipe_year <- function(start_year = as.integer(format(Sys.Date(), "%Y")),
 #' SAIPE rows keyed by NCES id
 #'
 #' One row per SAIPE district: LEAID, SD_NAME, Child_Poverty_Rate (0-1),
-#' SAIPE_Poor_5_17, SAIPE_Children_5_17.
+#' SAIPE_Poor_5_17, SAIPE_Children_5_17, SAIPE_Population (total population,
+#' SAEPOVALL_PT; it sets the estimate's error band, [saipe_relative_error()]).
 #' @param geos A named list of [fetch_saipe_geography()] results (names from [SAIPE_GEOGRAPHIES]).
 #' @param fips State FIPS code, the LEAID prefix.
 #' @export
@@ -119,12 +120,13 @@ saipe_rows_by_leaid <- function(geos, fips) {
     data.frame(LEAID = paste0(fips, df[[code_col]]), SD_NAME = trimws(df$SD_NAME),
                Child_Poverty_Rate = num("SAEPOVRAT5_17RV_PT") / 100,
                SAIPE_Poor_5_17 = num("SAEPOV5_17RV_PT"), SAIPE_Children_5_17 = num("SAEPOV5_17V_PT"),
-               stringsAsFactors = FALSE)
+               SAIPE_Population = num("SAEPOVALL_PT"), stringsAsFactors = FALSE)
   })
   out <- dplyr::bind_rows(rows)
   if (nrow(out) == 0) {
     return(data.frame(LEAID = character(0), SD_NAME = character(0), Child_Poverty_Rate = numeric(0),
-                      SAIPE_Poor_5_17 = numeric(0), SAIPE_Children_5_17 = numeric(0), stringsAsFactors = FALSE))
+                      SAIPE_Poor_5_17 = numeric(0), SAIPE_Children_5_17 = numeric(0), SAIPE_Population = numeric(0),
+                      stringsAsFactors = FALSE))
   }
   out
 }
@@ -164,24 +166,42 @@ pool_child_poverty <- function(rows) {
   mean(ok$Child_Poverty_Rate)
 }
 
+#' Population behind a pooled child poverty estimate
+#'
+#' The largest SAIPE total population among the districts with a rate. A
+#' high school district covers its paired elementary district's territory, so
+#' for a pair this is the combined area's population; it picks the estimate's
+#' error band ([saipe_relative_error()]), an approximation for a pooled rate.
+#' NA when no district with a rate has a population.
+#' @inheritParams pool_child_poverty
+#' @export
+pool_saipe_population <- function(rows) {
+  if (!"SAIPE_Population" %in% names(rows)) return(NA_real_)
+  pop <- rows$SAIPE_Population[!is.na(rows$Child_Poverty_Rate) & !is.na(rows$SAIPE_Population)]
+  if (length(pop) == 0) NA_real_ else max(pop)
+}
+
 #' Child poverty per dashboard district
 #'
 #' District, Child_Poverty_Rate ([pool_child_poverty()] over the district's
-#' LEAIDs; NA when none is in `saipe`), SAIPE_Year (NA where the rate is).
+#' LEAIDs; NA when none is in `saipe`), SAIPE_Year (NA where the rate is),
+#' SAIPE_Population ([pool_saipe_population()]).
 #' @param saipe Output of [fetch_saipe_by_leaid()].
 #' @param district_ids Named list, district -> LEAIDs.
 #' @export
 parse_census_saipe_child_poverty <- function(saipe, district_ids) {
   if (length(district_ids) == 0 || nrow(saipe) == 0) {
     return(data.frame(District = character(0), Child_Poverty_Rate = numeric(0), SAIPE_Year = integer(0),
-                      stringsAsFactors = FALSE))
+                      SAIPE_Population = numeric(0), stringsAsFactors = FALSE))
   }
   year <- if ("SAIPE_Year" %in% names(saipe)) saipe$SAIPE_Year[1] else NA_integer_
-  rate <- vapply(district_ids, function(ids) pool_child_poverty(saipe[saipe$LEAID %in% as.character(ids), , drop = FALSE]),
-                 numeric(1), USE.NAMES = FALSE)
+  rows_for <- function(ids) saipe[saipe$LEAID %in% as.character(ids), , drop = FALSE]
+  rate <- vapply(district_ids, function(ids) pool_child_poverty(rows_for(ids)), numeric(1), USE.NAMES = FALSE)
+  pop <- vapply(district_ids, function(ids) pool_saipe_population(rows_for(ids)), numeric(1), USE.NAMES = FALSE)
   # No year for a district with no rate (WY's Northeast Wyoming BOCES has an NCES id but no SAIPE geography).
   data.frame(District = names(district_ids), Child_Poverty_Rate = rate,
-             SAIPE_Year = ifelse(is.na(rate), NA_integer_, as.integer(year)), stringsAsFactors = FALSE)
+             SAIPE_Year = ifelse(is.na(rate), NA_integer_, as.integer(year)),
+             SAIPE_Population = ifelse(is.na(rate), NA_real_, pop), stringsAsFactors = FALSE)
 }
 
 #' Fetch child poverty per dashboard district
@@ -199,7 +219,7 @@ fetch_census_saipe_child_poverty <- function(district_ids, year = NULL, api_key 
 #' with [pool_child_poverty()] where a town is split into elementary and
 #' secondary districts. `saipe`: LEAID, Child_Poverty_Rate (and SAIPE_Year,
 #' and the counts for pooling). `district_names`: LEAID -> display name.
-#' Returns status "ok", "none" (no district found / no rate) or "failed" (the
+#' `population` is [pool_saipe_population()] of those districts. Returns status "ok", "none" (no district found / no rate) or "failed" (the
 #' geocoder errored: the caller keeps last run's value and logs it).
 #' @param lat,lon The school's coordinates.
 #' @param saipe See the description.
@@ -207,7 +227,7 @@ fetch_census_saipe_child_poverty <- function(district_ids, year = NULL, api_key 
 #' @param geocode The lookup; [geocode_school_district()].
 #' @export
 surrounding_district_poverty <- function(lat, lon, saipe, district_names = NULL, geocode = geocode_school_district) {
-  res <- list(status = "none", rate = NA_real_, year = NA, basis = NA_character_)
+  res <- list(status = "none", rate = NA_real_, year = NA, basis = NA_character_, population = NA_real_)
   host <- tryCatch(geocode(lat, lon), error = function(e) structure(NA_character_, failed = TRUE))
   if (isTRUE(attr(host, "failed"))) { res$status <- "failed"; return(res) }
   h <- match(host, as.character(saipe$LEAID))
@@ -217,7 +237,55 @@ surrounding_district_poverty <- function(lat, lon, saipe, district_names = NULL,
   nm <- if (!is.null(district_names)) unique(ifelse(is.na(district_names[ids]), ids, district_names[ids])) else ids
   res$status <- "ok"
   res$rate <- pool_child_poverty(saipe[h, , drop = FALSE])
+  res$population <- pool_saipe_population(saipe[h, , drop = FALSE])
   if ("SAIPE_Year" %in% names(saipe)) res$year <- saipe$SAIPE_Year[h[1]]
   res$basis <- paste("Surrounding district:", paste(nm, collapse = " / "))
   res
+}
+
+#' @rdname saipe_relative_error
+#' @format `SAIPE_RELATIVE_ERROR`: data frame, one row per size band:
+#'   `min_population` (the band's lower bound) and `median_cv`.
+#' @export
+SAIPE_RELATIVE_ERROR <- data.frame(min_population = c(0, 2500, 5000, 10000, 20000, 65000),
+                                   median_cv = c(0.67, 0.42, 0.35, 0.28, 0.23, 0.15))
+
+#' Median relative error for a SAIPE district of a given size
+#'
+#' Census's relative error table for SAIPE school-district estimates
+#' (`SAIPE_RELATIVE_ERROR`): the median coefficient of variation of the number
+#' of children 5-17 in families in poverty, by the district's total
+#' population ("Relative Uncertainty of SAIPE School District Poverty
+#' Estimates" in "Quantifying Relative Error in the School District
+#' Estimates", https://www.census.gov/programs-surveys/saipe/guidance/district-estimates.html,
+#' revised 2025-12-17). Census publishes no margin of error for a single
+#' district and calls this table "an approximate upper bound on the
+#' uncertainty". `saipe_relative_error()` gives the band's median CV; NA for a
+#' missing or negative population.
+#' @param population SAIPE total population (SAEPOVALL_PT).
+#' @export
+saipe_relative_error <- function(population) {
+  band <- findInterval(population, SAIPE_RELATIVE_ERROR$min_population)
+  out <- rep(NA_real_, length(population))
+  ok <- !is.na(population) & band > 0
+  out[ok] <- SAIPE_RELATIVE_ERROR$median_cv[band[ok]]
+  out
+}
+
+#' Approximate 90% range for SAIPE child poverty estimates
+#'
+#' Census's rule for its relative error table: "For an approximate 90%
+#' confidence interval (under the assumption that the poverty estimate itself
+#' is unbiased), expressed as a proportion of the poverty estimate, multiply
+#' the table value by 1.645" (page cited in [saipe_relative_error()]). So the
+#' range is rate x (1 -/+ 1.645 x CV), the low end floored at 0 and the high
+#' end capped at 1. Adds Child_Poverty_Low and Child_Poverty_High (NA where
+#' the rate or the population is).
+#' @param df A data frame with Child_Poverty_Rate and SAIPE_Population.
+#' @export
+add_saipe_range <- function(df) {
+  half <- 1.645 * saipe_relative_error(df$SAIPE_Population)
+  df$Child_Poverty_Low <- pmax(0, df$Child_Poverty_Rate * (1 - half))
+  df$Child_Poverty_High <- pmin(1, df$Child_Poverty_Rate * (1 + half))
+  df
 }
