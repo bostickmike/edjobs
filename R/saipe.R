@@ -243,24 +243,25 @@ surrounding_district_poverty <- function(lat, lon, saipe, district_names = NULL,
   res
 }
 
-#' Census's relative error table for SAIPE school-district estimates
-#'
-#' Median coefficient of variation of the number of children 5-17 in families
-#' in poverty, by the district's total population: "Relative Uncertainty of
-#' SAIPE School District Poverty Estimates" in "Quantifying Relative Error in
-#' the School District Estimates"
-#' (https://www.census.gov/programs-surveys/saipe/guidance/district-estimates.html,
-#' revised 2025-12-17). Census publishes no margin of error for a single
-#' district and calls this table "an approximate upper bound on the
-#' uncertainty". `min_population` is each band's lower bound.
+#' @rdname saipe_relative_error
+#' @format `SAIPE_RELATIVE_ERROR`: data frame, one row per size band:
+#'   `min_population` (the band's lower bound) and `median_cv`.
 #' @export
 SAIPE_RELATIVE_ERROR <- data.frame(min_population = c(0, 2500, 5000, 10000, 20000, 65000),
                                    median_cv = c(0.67, 0.42, 0.35, 0.28, 0.23, 0.15))
 
 #' Median relative error for a SAIPE district of a given size
 #'
-#' The [SAIPE_RELATIVE_ERROR] band's median CV; NA for a missing or negative
-#' population.
+#' Census's relative error table for SAIPE school-district estimates
+#' (`SAIPE_RELATIVE_ERROR`): the median coefficient of variation of the number
+#' of children 5-17 in families in poverty, by the district's total
+#' population ("Relative Uncertainty of SAIPE School District Poverty
+#' Estimates" in "Quantifying Relative Error in the School District
+#' Estimates", https://www.census.gov/programs-surveys/saipe/guidance/district-estimates.html,
+#' revised 2025-12-17). Census publishes no margin of error for a single
+#' district and calls this table "an approximate upper bound on the
+#' uncertainty". `saipe_relative_error()` gives the band's median CV; NA for a
+#' missing or negative population.
 #' @param population SAIPE total population (SAEPOVALL_PT).
 #' @export
 saipe_relative_error <- function(population) {
@@ -276,7 +277,7 @@ saipe_relative_error <- function(population) {
 #' Census's rule for its relative error table: "For an approximate 90%
 #' confidence interval (under the assumption that the poverty estimate itself
 #' is unbiased), expressed as a proportion of the poverty estimate, multiply
-#' the table value by 1.645" (page cited in [SAIPE_RELATIVE_ERROR]). So the
+#' the table value by 1.645" (page cited in [saipe_relative_error()]). So the
 #' range is rate x (1 -/+ 1.645 x CV), the low end floored at 0 and the high
 #' end capped at 1. Adds Child_Poverty_Low and Child_Poverty_High (NA where
 #' the rate or the population is).

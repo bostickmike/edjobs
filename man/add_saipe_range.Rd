@@ -13,7 +13,7 @@ add_saipe_range(df)
 Census's rule for its relative error table: "For an approximate 90\%
 confidence interval (under the assumption that the poverty estimate itself
 is unbiased), expressed as a proportion of the poverty estimate, multiply
-the table value by 1.645" (page cited in \link{SAIPE_RELATIVE_ERROR}). So the
+the table value by 1.645" (page cited in \code{\link[=saipe_relative_error]{saipe_relative_error()}}). So the
 range is rate x (1 -/+ 1.645 x CV), the low end floored at 0 and the high
 end capped at 1. Adds Child_Poverty_Low and Child_Poverty_High (NA where
 the rate or the population is).
