@@ -195,6 +195,36 @@ test_that("fixtures_named_for_source picks this district's fixture, not another'
   expect_equal(fixtures_named_for_source(NULL, "x", files), list(platform = character(0), own = character(0)))
 })
 
+test_that("a spec's fixture_prefix names the fixtures when the platform name doesn't", {
+  files <- c("misc_districts/educational_networks_cheyenne_classical.html", "misc_districts/edlio_weston1.html")
+  reg <- scraper_registry(data.frame(District = "Cheyenne Classical Academy", Platform = "EducationalNetworks",
+                                     Job_Link = "u", stringsAsFactors = FALSE), "District", "registry",
+                          specs = list(EducationalNetworks = scraper_spec("fetch_x", "Job_Link",
+                                                                          fixture_prefix = "educational_networks")))
+  call <- resolve_scraper_call("Cheyenne Classical Academy", list(reg))
+  expect_equal(call$fixture_prefix, "educational_networks")
+  expect_equal(fixtures_named_for_source(call, "Cheyenne Classical Academy", files)$own,
+               "misc_districts/educational_networks_cheyenne_classical.html")
+  # The issue's new-fixture name uses the same prefix; without one, the lower-cased platform.
+  row <- data.frame(name = "Cheyenne Classical Academy", type = "K-12", mean_count = 5, count = 0, url = "u",
+                    llm_titles = NA, stringsAsFactors = FALSE)
+  # The name is shown when the CI capture is offered as the new fixture.
+  ev <- list(inner_text = TRUE, page_text = "Teacher", fixtures_by = "name", fixtures = character(0),
+             platform_fixtures = character(0), diff = character(0), diff_against = NA_character_, fetch_fn = "fetch_x")
+  cfg <- state_config(state = "Toy", fips = "99", app_dir = "Toy_App",
+                      autofix = list(fixture_example = "fixtures/misc_districts/{platform}_<district>.txt"))
+  expect_match(paste(build_autofix_issue_body(row, call, evidence = ev, config = cfg), collapse = "\n"),
+               "fixtures/misc_districts/educational_networks_<district>.txt", fixed = TRUE)
+  # Without the prefix the lower-cased platform finds nothing.
+  call$fixture_prefix <- NULL
+  call$platform <- "Apptegy"
+  expect_match(paste(build_autofix_issue_body(row, call, evidence = ev, config = cfg), collapse = "\n"),
+               "fixtures/misc_districts/apptegy_<district>.txt", fixed = TRUE)
+  call$platform <- "EducationalNetworks"
+  expect_length(fixtures_named_for_source(call, "Cheyenne Classical Academy", files)$platform, 0)
+  expect_error(scraper_spec("fetch_x", fixture_prefix = c("a", "b")))
+})
+
 # A small state repository on disk: one innerText scraper, one HTTP scraper.
 fake_repo <- function(env = parent.frame()) {
   root <- withr::local_tempdir(.local_envir = env)

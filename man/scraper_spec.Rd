@@ -9,7 +9,8 @@ scraper_spec(
   args = character(0),
   session = FALSE,
   map = FALSE,
-  defined_in = NULL
+  defined_in = NULL,
+  fixture_prefix = NULL
 )
 }
 \arguments{
@@ -27,6 +28,11 @@ character vector of column names is the common case.}
 
 \item{defined_in}{For \code{map = TRUE}, the file holding the map (shown to the
 auto-fix agent).}
+
+\item{fixture_prefix}{For states whose fixtures are named
+\verb{<prefix>_<district>...} (\code{fixtures_named_for_source()}): the prefix,
+when it isn't the lower-cased platform name (WY's \code{EducationalNetworks}
+fixtures start \code{educational_networks_}).}
 }
 \value{
 A list of class \code{edjobs_scraper_spec}.

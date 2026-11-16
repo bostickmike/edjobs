@@ -1,3 +1,14 @@
+# edjobs 0.31.0
+
+One registry schema for both states (plan 2b gap 2; Mike 2026-11-16).
+
+* `scraper_spec(fixture_prefix = )`: for fixtures named `<prefix>_<district>...` when the prefix isn't the
+  lower-cased platform name. WY's own-fetcher platforms take CamelCase names (`EducationalNetworks`,
+  `GoogleSitesBespoke`, ...) while their fixtures keep their names. `resolve_scraper_call()` returns it and
+  `fixtures_named_for_source()` uses it.
+* The auto-fix issue's new-fixture name (`autofix$fixture_example`'s `{platform}`) is that prefix too, else the
+  lower-cased platform, so it names files the lookup finds (WY's `Apptegy` rows: `apptegy_<district>_...`).
+
 # edjobs 0.30.0
 
 Phase 5 close-out: the last pipeline helpers both states defined.

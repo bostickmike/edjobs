@@ -17,7 +17,8 @@ fixtures_named_for_source(call, source_name, fixture_files)
 \code{list(platform = , own = )}.
 }
 \description{
-For fixtures named \verb{<platform>_<district>...} where several districts
+For fixtures named \verb{<platform>_<district>...} (or the spec's
+\code{fixture_prefix}) where several districts
 share one parser: every fixture for the call's platform, and the ones for
 this source (by the district's place name and number, best match first).
 A place-only match never takes another numbered district of the same
