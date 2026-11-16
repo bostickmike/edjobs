@@ -74,7 +74,8 @@ test_that("fetch_census_county_context joins the latest vintage, the mining shar
   expect_equal(unique(out$ACS_Year), latest)
   expect_true((latest - 5L) %in% vapply(calls, `[[`, 0, "year"))
   expect_equal(names(out), c("County", "Median_Household_Income", "Median_Gross_Rent", "Population", "ACS_Year",
-                             "Mining_Employment_Share", "Population_Change_Pct"))
+                             "Median_Household_Income_MOE", "Median_Gross_Rent_MOE",
+                             "Mining_Employment_Share", "Mining_Employment_Share_MOE", "Population_Change_Pct"))
   ys <- out[out$County == "Yellowstone County", ]
   expect_equal(ys$Median_Household_Income, 72300)
   expect_false(is.na(ys$Population_Change_Pct))

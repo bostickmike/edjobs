@@ -7,7 +7,12 @@
 # work in mining, quarrying, and oil and gas extraction (S2403_C01_004E over
 # S2403_C01_001E; the Census API's own labels, checked 2026-11-15 -- line 4 is
 # mining only, not the combined agriculture-and-mining line), and the
-# population change over five years. Joined to K-12
+# population change over five years, with the 90% margins of error of
+# income, rent and the mining share (Mike's decision 2026-11-16, option B:
+# show the MOE, and treat a figure whose MOE is at least the estimate as not
+# distinguishable from zero, Census's CV > 0.61 line; no CV tiers). County
+# totals are controlled to the population estimates, so most counties have no
+# population MOE and the change gets none. Joined to K-12
 # districts and to colleges by county. Moved from the states'
 # census_acs_scraper.R (package phase 5); the copies differed only in the state
 # FIPS code and in Montana stripping ", Montana" from the county name
@@ -67,6 +72,30 @@ parse_acs_json <- function(json_text) {
 #' @export
 clean_acs_value <- function(x) ifelse(is.na(x) | x < 0, NA_real_, x)
 
+# A column of `raw`, cleaned; NA when the response doesn't have it (older
+# fixtures and callers fetched only the estimates).
+acs_col <- function(raw, var) if (var %in% names(raw)) clean_acs_value(raw[[var]]) else rep(NA_real_, nrow(raw))
+
+#' Margin of error of an ACS proportion
+#'
+#' The ACS handbook's formula (6) for a derived proportion p = num / den
+#' (U.S. Census Bureau, "Understanding and Using American Community Survey
+#' Data: What All Data Users Need to Know", 2020, ch. 8, pp. 62-63):
+#' sqrt(MOE_num^2 - p^2 x MOE_den^2) / den, and "if the value under the
+#' square root is negative, then substitute a 'plus' for the 'minus' sign"
+#' (the ratio formula). Same confidence level as the inputs (90% for the API).
+#' NA when any input is missing or `den` is not positive.
+#' @param num,num_moe The numerator estimate and its MOE.
+#' @param den,den_moe The denominator estimate and its MOE.
+#' @export
+acs_proportion_moe <- function(num, num_moe, den, den_moe) {
+  ok <- !is.na(num) & !is.na(num_moe) & !is.na(den) & !is.na(den_moe) & den > 0
+  p <- ifelse(ok, num / den, NA_real_)
+  under <- num_moe^2 - p^2 * den_moe^2
+  under <- ifelse(!is.na(under) & under < 0, num_moe^2 + p^2 * den_moe^2, under)
+  ifelse(ok, sqrt(under) / den, NA_real_)
+}
+
 #' Fetch ACS variables for every county in a state
 #' @param endpoint_template [ACS_DETAIL_ENDPOINT] or [ACS_SUBJECT_ENDPOINT].
 #' @param get_vars Variable names, NAME included.
@@ -91,8 +120,10 @@ county_label <- function(name, county_suffix) {
 
 #' Parse ACS income, rent and population
 #'
-#' County, Median_Household_Income, Median_Gross_Rent, Population, ACS_Year.
-#' @param raw Output of [fetch_acs_counties()] for B19013_001E, B25064_001E, B01003_001E.
+#' County, Median_Household_Income, Median_Gross_Rent, Population, ACS_Year,
+#' and the 90% margins of error Median_Household_Income_MOE and
+#' Median_Gross_Rent_MOE (NA when `raw` has no B19013_001M / B25064_001M).
+#' @param raw Output of [fetch_acs_counties()] for B19013_001E, B25064_001E, B01003_001E (and the _001M MOEs).
 #' @param year ACS vintage.
 #' @param county_suffix Text removed from the end of Census's county NAME
 #'   (", Montana"); NULL keeps the full name.
@@ -101,30 +132,37 @@ parse_census_income_rent_population <- function(raw, year, county_suffix = NULL)
   if (nrow(raw) == 0) {
     return(data.frame(County = character(0), Median_Household_Income = numeric(0),
                       Median_Gross_Rent = numeric(0), Population = numeric(0),
-                      ACS_Year = integer(0), stringsAsFactors = FALSE))
+                      ACS_Year = integer(0), Median_Household_Income_MOE = numeric(0),
+                      Median_Gross_Rent_MOE = numeric(0), stringsAsFactors = FALSE))
   }
   data.frame(County = county_label(raw$NAME, county_suffix),
              Median_Household_Income = clean_acs_value(raw$B19013_001E),
              Median_Gross_Rent = clean_acs_value(raw$B25064_001E),
              Population = clean_acs_value(raw$B01003_001E),
-             ACS_Year = rep(year, nrow(raw)), stringsAsFactors = FALSE)
+             ACS_Year = rep(year, nrow(raw)),
+             Median_Household_Income_MOE = acs_col(raw, "B19013_001M"),
+             Median_Gross_Rent_MOE = acs_col(raw, "B25064_001M"), stringsAsFactors = FALSE)
 }
 
 #' Parse the ACS mining/energy employment share
 #'
 #' County, Mining_Employment_Share (S2403 line 4, mining, quarrying, and oil and
-#' gas extraction, over all civilian employed 16 and over).
-#' @param raw Output of [fetch_acs_counties()] for S2403_C01_001E, S2403_C01_004E.
+#' gas extraction, over all civilian employed 16 and over) and its 90% margin of
+#' error Mining_Employment_Share_MOE ([acs_proportion_moe()]; NA without the _M columns).
+#' @param raw Output of [fetch_acs_counties()] for S2403_C01_001E, S2403_C01_004E (and their _M MOEs).
 #' @inheritParams parse_census_income_rent_population
 #' @export
 parse_census_mining_employment_share <- function(raw, county_suffix = NULL) {
   if (nrow(raw) == 0) {
-    return(data.frame(County = character(0), Mining_Employment_Share = numeric(0), stringsAsFactors = FALSE))
+    return(data.frame(County = character(0), Mining_Employment_Share = numeric(0),
+                      Mining_Employment_Share_MOE = numeric(0), stringsAsFactors = FALSE))
   }
   total <- clean_acs_value(raw$S2403_C01_001E)
   mining <- clean_acs_value(raw$S2403_C01_004E)
   data.frame(County = county_label(raw$NAME, county_suffix),
              Mining_Employment_Share = ifelse(!is.na(total) & total > 0, mining / total, NA_real_),
+             Mining_Employment_Share_MOE = acs_proportion_moe(mining, acs_col(raw, "S2403_C01_004M"),
+                                                              total, acs_col(raw, "S2403_C01_001M")),
              stringsAsFactors = FALSE)
 }
 
@@ -135,8 +173,8 @@ parse_census_mining_employment_share <- function(raw, county_suffix = NULL) {
 fetch_census_income_rent_population <- function(year = NULL, api_key = census_api_key(), fips = state_fips(),
                                                  county_suffix = NULL) {
   year <- year %||% latest_acs5_year(api_key = api_key, fips = fips)
-  raw <- fetch_acs_counties(ACS_DETAIL_ENDPOINT, c("NAME", "B19013_001E", "B25064_001E", "B01003_001E"),
-                            year, api_key, fips)
+  raw <- fetch_acs_counties(ACS_DETAIL_ENDPOINT, c("NAME", "B19013_001E", "B25064_001E", "B01003_001E",
+                                                  "B19013_001M", "B25064_001M"), year, api_key, fips)
   parse_census_income_rent_population(raw, year, county_suffix)
 }
 
@@ -146,7 +184,8 @@ fetch_census_income_rent_population <- function(year = NULL, api_key = census_ap
 fetch_census_mining_employment_share <- function(year = NULL, api_key = census_api_key(), fips = state_fips(),
                                                  county_suffix = NULL) {
   year <- year %||% latest_acs5_year(api_key = api_key, fips = fips)
-  raw <- fetch_acs_counties(ACS_SUBJECT_ENDPOINT, c("NAME", "S2403_C01_001E", "S2403_C01_004E"), year, api_key, fips)
+  raw <- fetch_acs_counties(ACS_SUBJECT_ENDPOINT, c("NAME", "S2403_C01_001E", "S2403_C01_004E", "S2403_C01_001M",
+                                                   "S2403_C01_004M"), year, api_key, fips)
   parse_census_mining_employment_share(raw, county_suffix)
 }
 

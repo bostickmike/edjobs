@@ -7,7 +7,7 @@
 parse_census_income_rent_population(raw, year, county_suffix = NULL)
 }
 \arguments{
-\item{raw}{Output of \code{\link[=fetch_acs_counties]{fetch_acs_counties()}} for B19013_001E, B25064_001E, B01003_001E.}
+\item{raw}{Output of \code{\link[=fetch_acs_counties]{fetch_acs_counties()}} for B19013_001E, B25064_001E, B01003_001E (and the _001M MOEs).}
 
 \item{year}{ACS vintage.}
 
@@ -15,5 +15,7 @@ parse_census_income_rent_population(raw, year, county_suffix = NULL)
 (", Montana"); NULL keeps the full name.}
 }
 \description{
-County, Median_Household_Income, Median_Gross_Rent, Population, ACS_Year.
+County, Median_Household_Income, Median_Gross_Rent, Population, ACS_Year,
+and the 90\% margins of error Median_Household_Income_MOE and
+Median_Gross_Rent_MOE (NA when \code{raw} has no B19013_001M / B25064_001M).
 }

@@ -324,3 +324,41 @@ test_that("county_label removes the trailing state name but leaves other text al
   expect_equal(county_label("Yellowstone County, Montana", ", Montana"), "Yellowstone County")
   expect_equal(county_label("Not A State Suffix", ", Montana"), "Not A State Suffix")
 })
+
+# ---- ACS margins of error (Mike's decision 2026-11-16, option B) ----------------
+
+acs_fixture <- function(f) parse_acs_json(paste(readLines(test_path("fixtures", f), warn = FALSE), collapse = "\n"))
+
+test_that("income and rent carry Census's own 90% MOEs (Meagher income, Treasure rent; 2024)", {
+  d <- parse_census_income_rent_population(acs_fixture("acs_mt_detail_moe_2024.json"), 2024, county_suffix = ", Montana")
+  expect_equal(nrow(d), 56)
+  expect_equal(unlist(d[d$County == "Meagher County", c("Median_Household_Income", "Median_Household_Income_MOE")], use.names = FALSE),
+               c(71932, 21850))
+  expect_equal(unlist(d[d$County == "Treasure County", c("Median_Gross_Rent", "Median_Gross_Rent_MOE")], use.names = FALSE),
+               c(850, 509))
+  expect_false(anyNA(d$Median_Household_Income_MOE))
+})
+
+test_that("an estimates-only response gives NA MOEs, not an error", {
+  d <- parse_census_income_rent_population(acs_fixture("acs_mt_detail_2022.json"), 2022, county_suffix = ", Montana")
+  expect_true(all(is.na(d$Median_Household_Income_MOE)) && all(is.na(d$Median_Gross_Rent_MOE)))
+  m <- parse_census_mining_employment_share(acs_fixture("acs_mt_subject_2022.json"), county_suffix = ", Montana")
+  expect_true(all(is.na(m$Mining_Employment_Share_MOE)))
+})
+
+test_that("the mining share's MOE follows the handbook's proportion formula (Big Horn, 2024)", {
+  m <- parse_census_mining_employment_share(acs_fixture("acs_mt_subject_moe_2024.json"), county_suffix = ", Montana")
+  b <- m[m$County == "Big Horn County", ]
+  p <- 178 / 4700
+  expect_equal(b$Mining_Employment_Share, p)
+  expect_equal(b$Mining_Employment_Share_MOE, sqrt(101^2 - p^2 * 325^2) / 4700)
+  # Treasure: 5 +/- 6 of 392 -- the MOE is at least the estimate, Census's "not significantly different from zero"
+  t <- m[m$County == "Treasure County", ]
+  expect_gte(t$Mining_Employment_Share_MOE, t$Mining_Employment_Share)
+})
+
+test_that("acs_proportion_moe switches to plus when the value under the root is negative, and handles bad input", {
+  # num 50 +/- 5 of 100 +/- 20: 25 - 0.25 * 400 < 0, so sqrt(25 + 100) / 100
+  expect_equal(acs_proportion_moe(50, 5, 100, 20), sqrt(25 + 0.25 * 400) / 100)
+  expect_true(all(is.na(acs_proportion_moe(c(1, NA, 1), c(1, 1, 1), c(0, 10, 10), c(1, 1, NA)))))
+})

@@ -315,7 +315,8 @@ test_that("parse_census_income_rent_population extracts real income/rent/populat
   result <- parse_census_income_rent_population(raw, 2024)
 
   expect_equal(nrow(result), 3)
-  expect_equal(names(result), c("County", "Median_Household_Income", "Median_Gross_Rent", "Population", "ACS_Year"))
+  expect_equal(names(result), c("County", "Median_Household_Income", "Median_Gross_Rent", "Population", "ACS_Year",
+                                "Median_Household_Income_MOE", "Median_Gross_Rent_MOE"))
   expect_true(all(result$ACS_Year == 2024))
 
   teton <- result[result$County == "Teton County, Wyoming", ]

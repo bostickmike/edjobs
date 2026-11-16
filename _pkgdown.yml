@@ -360,6 +360,7 @@ reference:
   - SAIPE_RELATIVE_ERROR
   - saipe_relative_error
   - add_saipe_range
+  - acs_proportion_moe
   - surrounding_district_poverty
 - title: "Package"
   contents:
