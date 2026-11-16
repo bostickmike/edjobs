@@ -1,3 +1,14 @@
+# edjobs 0.35.0
+
+A link to each district's and college's own page at its source (Mike 2026-11-16: "each row in each data set could
+have a url link to its source whenever possible"; measured in Jobs_Dash_repos
+claude-notes/2026-11-16_source-links-per-row.md). The posting files already link every posting.
+
+* `nces_district_url()`: NCES CCD district page from a 7-digit `NCES_LEAID`.
+* `college_navigator_url()`: IPEDS College Navigator page from a 6-digit `IPEDS_UNITID`.
+* `add_source_record_links()`: adds `CCD_Link` / `IPEDS_Link` right after the id column; NA where the id is missing.
+  Both NCES pages show NCES's newest year, which can be newer than the file's own year columns.
+
 # edjobs 0.34.0
 
 College postings at outreach sites and field offices, stage 2 (Mike 2026-11-16: "yes, build it"; measured on 360
