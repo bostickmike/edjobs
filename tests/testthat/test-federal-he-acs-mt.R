@@ -33,7 +33,9 @@ test_that("parse_ipeds_he_salaries extracts real overall + Professor-rank salari
   expect_equal(mtech$Faculty_Count, 125)
 
   um <- result[result$Name == "University of Montana", ]
-  expect_equal(round(um$Faculty_Avg_Salary), 93938)
+  # 9-12-month contracts only (437 staff): the Total row's 442 includes 5 on
+  # contracts under 9 months with no salary reported (Total row avg $93,938).
+  expect_equal(round(um$Faculty_Avg_Salary), 95013)
   expect_equal(um$Faculty_Count, 442)
 
   # Blackfeet CC, Dawson CC, and Miles CC (all small 2-year colleges) have
@@ -42,7 +44,11 @@ test_that("parse_ipeds_he_salaries extracts real overall + Professor-rank salari
   # Faculty_Avg_Salary_Professor must be real NA for all three, not 0 or
   # a silently-wrong fallback.
   blackfeet <- result[result$Name == "Blackfeet Community College", ]
-  expect_equal(round(blackfeet$Faculty_Avg_Salary), 25621)
+  # 25 staff on 10-month contracts, $1,357,915. The Total row ($25,621) divides
+  # that by 53, counting 28 staff on contracts under 9 months whose salaries
+  # IPEDS doesn't collect (2026-11-16). Faculty_Count stays 53: all full-time
+  # instructional staff.
+  expect_equal(round(blackfeet$Faculty_Avg_Salary), 54317)
   expect_equal(blackfeet$Faculty_Count, 53)
   expect_true(is.na(blackfeet$Faculty_Avg_Salary_Professor))
 
@@ -361,4 +367,14 @@ test_that("acs_proportion_moe switches to plus when the value under the root is 
   # num 50 +/- 5 of 100 +/- 20: 25 - 0.25 * 400 < 0, so sqrt(25 + 100) / 100
   expect_equal(acs_proportion_moe(50, 5, 100, 20), sqrt(25 + 0.25 * 400) / 100)
   expect_true(all(is.na(acs_proportion_moe(c(1, NA, 1), c(1, 1, 1), c(0, 10, 10), c(1, 1, NA)))))
+})
+
+test_that("ipeds_avg_salary_9to12 skips contract groups with no salary reported", {
+  df <- data.frame(unitid = 1, sex = 99, academic_rank = 99,
+                   contract_length = c(8, 9, 10, 12, 99),
+                   instruc_staff_count = c(28, 0, 25, 4, 57),
+                   salary_outlays = c(-1, 0, 1357915, -1, 1357915))
+  out <- ipeds_avg_salary_9to12(df)
+  expect_equal(out$avg, 1357915 / 25)
+  expect_equal(nrow(ipeds_avg_salary_9to12(df[df$contract_length %in% c(8, 99), ])), 0)
 })

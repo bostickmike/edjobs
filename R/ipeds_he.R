@@ -18,8 +18,16 @@
 #
 # Endpoints and quirks:
 # - salaries-instructional-staff: one row per unitid x academic_rank x
-#   contract_length x sex; 99 = all. The headline figure is the all-ranks,
-#   all-contracts, both-sexes row; academic_rank 1 is Professor.
+#   contract_length x sex; 99 = all. IPEDS collects salaries for full-time
+#   instructional staff only. The salary figures are the average over staff on
+#   9-, 10-, 11- and 12-month contracts (contract_length 9-12: outlays / count;
+#   Mike 2026-11-16), not the contract_length 99 "Total" row: that row counts
+#   staff on contracts under 9 months (code 8), whose salaries IPEDS doesn't
+#   collect, so it divides the others' pay by too many people (Blackfeet 2024:
+#   $1,357,915 for 25 people on 10-month contracts over 53 heads = $25,621 vs
+#   $54,317). Faculty_Count stays the Total row's count: all full-time
+#   instructional staff. academic_rank 1 is Professor.
+#   claude-notes/2026-11-16_ipeds-faculty-salary.md.
 # - fall-enrollment: despite its name, this is IPEDS's FTE enrollment survey
 #   (one row per unitid x level_of_study with est_fte/rep_fte; Urban's own
 #   docs call it enrollment-full-time-equivalent). est_fte (computed from
@@ -129,9 +137,24 @@ find_latest_ipeds_salary_year <- function(fips = state_fips(), start_year = as.i
   find_latest_urban_college_year(IPEDS_SALARY_ENDPOINT, fips, start_year, years_back, quiet_errors = TRUE)
 }
 
+#' Average salary over 9- to 12-month contracts
+#'
+#' Per unitid: salary outlays / staff over contract_length 9-12 (both sexes, the given rank), using only
+#' contract groups that report both a positive count and positive outlays. NA when none do.
+#' @param df Rows from the salaries-instructional-staff endpoint.
+#' @param rank academic_rank (99 = all ranks, 1 = Professor).
+#' @export
+ipeds_avg_salary_9to12 <- function(df, rank = 99) {
+  x <- df[which(df$sex == 99 & df$academic_rank == rank & df$contract_length %in% 9:12 &
+                  df$instruc_staff_count > 0 & df$salary_outlays > 0), , drop = FALSE]
+  if (nrow(x) == 0) return(data.frame(unitid = df$unitid[0], avg = numeric(0)))
+  a <- stats::aggregate(cbind(outlays = salary_outlays, n = instruc_staff_count) ~ unitid, data = x, FUN = sum)
+  data.frame(unitid = a$unitid, avg = a$outlays / a$n)
+}
+
 #' Parse IPEDS instructional staff salaries
 #'
-#' One row per `unitid_map` row: Name, Faculty_Avg_Salary (all ranks),
+#' One row per `unitid_map` row: Name, Faculty_Avg_Salary (all ranks, full-time staff on 9-12-month contracts),
 #' Faculty_Avg_Salary_Professor, Faculty_Count, Salary_Year, and Salary_Note
 #' when the map has that column. An institution missing from `df` keeps its
 #' row with NA figures.
@@ -150,16 +173,15 @@ parse_ipeds_he_salaries <- function(df, year, unitid_map) {
                         Salary_Year = character(0), Salary_Note = character(0), stringsAsFactors = FALSE)
     return(empty[, cols, drop = FALSE])
   }
-  all_rows <- df$contract_length == 99 & df$sex == 99
-  overall <- df[which(all_rows & df$academic_rank == 99), , drop = FALSE]
-  overall <- data.frame(unitid = overall$unitid,
-                        Faculty_Avg_Salary = clean_ipeds_value(overall$average_salary),
-                        Faculty_Count = clean_ipeds_value(overall$instruc_staff_count))
-  professor <- df[which(all_rows & df$academic_rank == 1), , drop = FALSE]
-  professor <- data.frame(unitid = professor$unitid,
-                          Faculty_Avg_Salary_Professor = clean_ipeds_value(professor$average_salary))
+  total <- df[which(df$contract_length == 99 & df$sex == 99 & df$academic_rank == 99), , drop = FALSE]
+  total <- data.frame(unitid = total$unitid, Faculty_Count = clean_ipeds_value(total$instruc_staff_count))
+  overall <- ipeds_avg_salary_9to12(df, 99)
+  names(overall)[2] <- "Faculty_Avg_Salary"
+  professor <- ipeds_avg_salary_9to12(df, 1)
+  names(professor)[2] <- "Faculty_Avg_Salary_Professor"
   out <- unitid_map %>%
     dplyr::left_join(overall, by = "unitid") %>%
+    dplyr::left_join(total, by = "unitid") %>%
     dplyr::left_join(professor, by = "unitid")
   out$Salary_Year <- as.character(year)
   as.data.frame(out)[, cols, drop = FALSE]
@@ -176,7 +198,7 @@ fetch_ipeds_he_salaries <- function(unitid_map, fips = state_fips()) {
 
 #' Parse one year of the IPEDS salary trend
 #'
-#' Name, Year, Faculty_Avg_Salary (the all-ranks figure) per map row.
+#' Name, Year, Faculty_Avg_Salary (the all-ranks, 9-12-month-contract figure) per map row.
 #' @inheritParams parse_ipeds_he_salaries
 #' @export
 parse_ipeds_salary_trend_year <- function(df, year, unitid_map) {
@@ -184,8 +206,8 @@ parse_ipeds_salary_trend_year <- function(df, year, unitid_map) {
   if (nrow(df) == 0) {
     return(data.frame(Name = character(0), Year = integer(0), Faculty_Avg_Salary = numeric(0)))
   }
-  overall <- df[which(df$academic_rank == 99 & df$contract_length == 99 & df$sex == 99), , drop = FALSE]
-  overall <- data.frame(unitid = overall$unitid, Faculty_Avg_Salary = clean_ipeds_value(overall$average_salary))
+  overall <- ipeds_avg_salary_9to12(df, 99)
+  names(overall)[2] <- "Faculty_Avg_Salary"
   out <- dplyr::left_join(unitid_map, overall, by = "unitid")
   data.frame(Name = out$Name, Year = rep(year, nrow(out)), Faculty_Avg_Salary = out$Faculty_Avg_Salary)
 }
