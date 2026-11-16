@@ -1,3 +1,16 @@
+# edjobs 0.29.0
+
+A retrieval date for every outside data source (Mike, 2026-11-16: BLS asks citations to give the date data were
+accessed; show one for every source).
+
+* `record_source_retrieved()`, `read_source_retrieved()`, `source_retrieved_path()`, `source_retrieved_label()`:
+  one row per source in the app folder's `source_retrieved_dates.csv` (Source, Retrieved), and the footer text.
+* `safe_scrape()` (with `app_dir`) and `write_reference_file()` take an optional `retrieved_source`: a kept,
+  non-empty result records today. A failed, empty or rejected refresh keeps the earlier date, since the page still
+  shows that data.
+* `refresh_oews_wages()` passes it through only when it downloads a new year; "already on file" keeps the date of
+  the download that produced the file.
+
 # edjobs 0.28.0
 
 Margins of error for the ACS county context (Mike's decision 2026-11-16, option B).

@@ -165,8 +165,12 @@ log_scrape_result <- function(source_name, status, n_rows,
 #' @param scrape_fn See the description.
 #' @param expected_cols See the description.
 #' @param log_path See the description.
+#' @param retrieved_source Optional source key; with `app_dir`, a non-empty result records today as that source's
+#'   retrieval date (record_source_retrieved()).
+#' @param app_dir The dashboard's app folder, for `retrieved_source`.
 #' @export
-safe_scrape <- function(source_name, scrape_fn, expected_cols, log_path = "scrape_log.csv") {
+safe_scrape <- function(source_name, scrape_fn, expected_cols, log_path = "scrape_log.csv",
+                        retrieved_source = NULL, app_dir = NULL) {
   outcome <- tryCatch(
     list(df = scrape_fn(), error = NULL),
     error = function(e) list(df = NULL, error = conditionMessage(e))
@@ -186,6 +190,7 @@ safe_scrape <- function(source_name, scrape_fn, expected_cols, log_path = "scrap
   }
 
   log_scrape_result(source_name, status = "ok", n_rows = nrow(df), log_path = log_path)
+  if (!is.null(retrieved_source) && !is.null(app_dir)) record_source_retrieved(retrieved_source, app_dir)
   if ("Posted_Date" %in% names(df)) df$Posted_Date <- as.character(df$Posted_Date)
   if ("date_posted" %in% names(df)) df$date_posted <- as.character(df$date_posted)
   df
@@ -279,8 +284,10 @@ reference_table_problem <- function(new, rules, old = NULL, min_share = 0.9) {
 #' @param new See the description.
 #' @param path See the description.
 #' @param log_path See the description.
+#' @param retrieved_source Optional source key: a written (accepted) table records today as its retrieval date in
+#'   the same folder's source_retrieved_dates.csv.
 #' @export
-write_reference_file <- function(new, path, log_path = "scrape_log.csv") {
+write_reference_file <- function(new, path, log_path = "scrape_log.csv", retrieved_source = NULL) {
   rules <- reference_rules_for(path)
   old <- if (file.exists(path)) utils::read.csv(path, stringsAsFactors = FALSE) else NULL
   problem <- reference_table_problem(new, rules, old)
@@ -292,6 +299,7 @@ write_reference_file <- function(new, path, log_path = "scrape_log.csv") {
   }
   utils::write.csv(new, path, row.names = FALSE)
   log_scrape_result(paste("Reference:", rules$name), "ok", nrow(new), log_path = log_path)
+  if (!is.null(retrieved_source)) record_source_retrieved(retrieved_source, dirname(path))
   invisible(TRUE)
 }
 
