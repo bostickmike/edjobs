@@ -1,3 +1,17 @@
+# edjobs 0.32.0
+
+College postings at branch campuses and outreach sites (Mike 2026-11-16: "we need the locations to be accurate on
+the map"; measured on both states' archives in claude-notes/2026-11-16_college-campus-locations.md).
+
+* `place_he_postings(postings, institutions, places, state_abbrev)`: adds `Campus_Town`, `Campus_County`,
+  `Campus_Latitude`, `Campus_Longitude` and `Place_Basis` ("main", "other_town", "out_of_state", "no_town"). A
+  posting is placed at another town only when its Location writes a town in the state other than the institution's
+  main campus town (the HE registry's new `Town` column); anything else stays at the main campus.
+* `location_town()`: the town a Location writes (the whole value, before ", <ST>", after "US-<ST>-", either side of
+  " - "); never a word inside other text, and never a name two places in the state share.
+* `location_out_of_state()`, `read_state_places()` (a state's `places.csv`: every Census place, its internal point
+  and county). New import: datasets (`state.abb`).
+
 # edjobs 0.31.0
 
 One registry schema for both states (plan 2b gap 2; Mike 2026-11-16).
