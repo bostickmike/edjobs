@@ -176,7 +176,9 @@ parse_tedk12_postings <- function(html_text, url) {
 #' `<published>`, which moves when a posting is re-published (11 of 16 MSU
 #' Billings / Great Falls postings on 2026-11-04 opened earlier than
 #' `<published>` said, one by two years). A failed page leaves only that
-#' posting's pay and dates blank.
+#' posting's pay and dates blank. The page also gives `Page_Places`
+#' ([peopleadmin_page_places()]), the places it names, for
+#' [place_he_postings()]; NA without `fetch_pay`.
 #' @param feed_url The feed.
 #' @param location_fallback Location for an entry with no `<author>`, or for
 #'   every entry when `location_from_author` is FALSE.
@@ -195,6 +197,7 @@ fetch_peopleadmin_atom <- function(feed_url, location_fallback = NA_character_, 
   if (!fetch_pay || nrow(postings) == 0) {
     postings <- ensure_posted_pay_columns(postings)
     postings$Close_Date <- rep(NA_character_, nrow(postings))
+    postings$Page_Places <- rep(NA_character_, nrow(postings))
     return(postings)
   }
   pages <- lapply(postings$Link, function(link) {
@@ -205,6 +208,9 @@ fetch_peopleadmin_atom <- function(feed_url, location_fallback = NA_character_, 
   dates <- dplyr::bind_rows(lapply(pages, parse_peopleadmin_posting_dates))
   postings$Posted_Date <- dplyr::coalesce(dates$Open_Date, as.character(postings$Posted_Date))
   postings$Close_Date <- dates$Close_Date
+  # Places the page names (edjobs 0.34.0), for place_he_postings(): MSU's departments and WY's fixed campus labels
+  # don't say where a job is, but some pages do ("This position is located in Joliet, Montana").
+  postings$Page_Places <- vapply(pages, peopleadmin_page_places, character(1))
   cbind(postings, pay)
 }
 

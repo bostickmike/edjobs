@@ -51,3 +51,49 @@ test_that("HE_PLACE_COLUMNS names exactly the columns place_he_postings adds", {
   p <- data.frame(Institution = "A", Location = "Jackson")
   expect_setequal(setdiff(names(place_he_postings(p, reg, places, "WY")), names(p)), HE_PLACE_COLUMNS)
 })
+
+test_that("title_place_names reads only a marker", {
+  expect_equal(title_place_names(c("Livestock and Farm Assistant Manager *Havre, MT*", "Administrative Associate III (Conrad, MT)",
+                                   "Research Associate – Precision Agriculture **Havre, MT**", "Instructor (Rock Springs Campus)",
+                                   "Director of Workforce Development and the Green River Center", NA)),
+               list("Havre", "Conrad", "Havre", "Rock Springs", character(0), character(0)))
+})
+
+pa_page <- function(name) paste(readLines(test_path("fixtures", paste0("peopleadmin_posting_", name, "_2026-11-16.html")),
+                                          warn = FALSE, encoding = "UTF-8"), collapse = "\n")
+
+test_that("peopleadmin_page_places reads explicit phrases, not boilerplate or checkboxes", {
+  expect_equal(peopleadmin_page_places(pa_page("msu_53598")), "Joliet")         # Carbon County agent; seat is Red Lodge
+  expect_equal(peopleadmin_page_places(pa_page("msu_53614")), "Plentywood")     # "The Extension office is located in"
+  expect_equal(peopleadmin_page_places(pa_page("msu_53666")), "Miles City")
+  expect_equal(peopleadmin_page_places(pa_page("sheridan_4737")), "Wright")     # not "Gillette College is located in Gillette"
+  expect_equal(peopleadmin_page_places(pa_page("western_6074")), "Green River")
+  expect_equal(peopleadmin_page_places(pa_page("eastern_1989")), "Douglas")
+  w <- strsplit(peopleadmin_page_places(pa_page("western_5258")), "; ")[[1]]
+  expect_setequal(w, c("Green River", "main campus"))
+  expect_false(grepl("Billings|Missoula|Kalispell", coalesce_chr(peopleadmin_page_places(pa_page("msu_52040")))))  # checkboxes
+  expect_true(is.na(peopleadmin_page_places(NA_character_)))
+})
+
+test_that("place_he_postings uses title, department table and page places; several towns stay at the main campus", {
+  pl <- rbind(places, data.frame(Town = c("Bozeman", "Havre", "Sidney", "Joliet", "Rock Springs", "Green River"),
+                                 County = c("Gallatin County", "Hill County", "Richland County", "Carbon County",
+                                            "Sweetwater County", "Sweetwater County"),
+                                 Latitude = 1:6, Longitude = -(1:6), stringsAsFactors = FALSE))
+  reg <- data.frame(Institution = c("Montana State University", "Western Wyoming Community College"),
+                    Town = c("Bozeman", "Rock Springs"), stringsAsFactors = FALSE)
+  dep <- data.frame(Institution = "Montana State University", Location = c("AES EARC", "AES NARC"),
+                    Town = c("Sidney", "Havre"), stringsAsFactors = FALSE)
+  p <- data.frame(Institution = c(rep("Montana State University", 5), rep("Western Wyoming Community College", 3)),
+                  Location = c("AES EARC", "AES NARC", "Extension Agents/Field", "Physics", "Extension Agents/Field",
+                               rep("Western Wyoming Community College", 3)),
+                  Title = c("Research Assistant II", "Agronomist *Havre, MT*", "Extension Agent - Carbon County",
+                            "Lecturer", "Extension Agent - Two Counties", "Instructor", "Adjunct", "Aide (Rock Springs Campus)"),
+                  Page_Places = c(NA, NA, "Joliet", NA, "Joliet; Sidney", "Green River", "Green River; main campus", NA),
+                  stringsAsFactors = FALSE)
+  out <- place_he_postings(p, reg, pl, "MT", campus_departments = dep)
+  expect_equal(out$Campus_Town, c("Sidney", "Havre", "Joliet", NA, NA, "Green River", NA, NA))
+  expect_equal(out$Place_Basis, c("other_town", "other_town", "other_town", "no_town", "no_town", "other_town", "no_town", "main"))
+  expect_false("Page_Places" %in% names(out))
+  expect_setequal(setdiff(names(out), names(p)), HE_PLACE_COLUMNS)
+})

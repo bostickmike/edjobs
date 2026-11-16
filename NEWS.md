@@ -1,3 +1,18 @@
+# edjobs 0.34.0
+
+College postings at outreach sites and field offices, stage 2 (Mike 2026-11-16: "yes, build it"; measured on 360
+live PeopleAdmin pages and MT's archives in claude-notes/2026-11-16_college-campus-locations.md, "Stage 2 measured").
+Boards whose Location is a department (MSU's) or a fixed campus label (WY's four PeopleAdmin colleges) can now place
+a posting from what the posting itself says.
+
+* `place_he_postings(campus_departments = )`: an institution's Location value -> town (MT: MSU's research centers).
+  The function now also reads the title's markers and the page's places, and a posting naming several towns stays at
+  the main campus (`Place_Basis` "no_town"). The output columns are unchanged; `Page_Places` is dropped.
+* `title_place_names()`: `*Havre, MT*`, `(Conrad, MT)`, `(Rock Springs Campus)`.
+* `peopleadmin_page_places()`: only explicit phrases ("This position is located in <Town>, MT", "The Extension
+  office is located in <Town>", "at the <Town> Campus|Center", "main campus"), never a bare town name.
+* `fetch_peopleadmin_atom()` adds `Page_Places` from the pages it already reads for pay and dates (no new requests).
+
 # edjobs 0.33.0
 
 IPEDS faculty salary: the average over full-time instructional staff on 9- to 12-month contracts (Mike

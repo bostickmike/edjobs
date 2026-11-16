@@ -60,24 +60,106 @@ read_state_places <- function(path) {
   p
 }
 
+# Stage 2 (edjobs 0.34.0): places a posting names in its title or on its own page, for boards whose Location is a
+# department or a fixed campus label (the PeopleAdmin colleges). Only explicit phrases count, never a bare town
+# name: pages carry boilerplate ("Gillette College is located in Gillette, WY" on a Wright posting; EWC's footer
+# address) and application checkboxes ("Interested in Billings Campus"). Measured on 360 live PeopleAdmin pages and
+# MT's archives: claude-notes/2026-11-16_college-campus-locations.md, "Stage 2 measured".
+PLACE_NAME_RX <- "([A-Z][A-Za-z.'-]+(?: [A-Z][A-Za-z.'-]+){0,2})"
+PLACE_STATE_RX <- ",?\\s*(?:MT|Montana|WY|Wyoming)\\b"
+
+# Every first capture group of `rx` in each string.
+all_captures <- function(x, rx) {
+  m <- regmatches(x, gregexpr(rx, x, perl = TRUE))
+  lapply(m, function(hits) if (length(hits)) sub(rx, "\\1", hits, perl = TRUE) else character(0))
+}
+
+#' Places a posting title marks
+#'
+#' The town in a title marker: `*Havre, MT*`, `(Conrad, MT)`, `**Havre, MT**`, `(Rock Springs Campus)`. A marker
+#' is a town and either a state or "Campus" inside asterisks or parentheses; a town elsewhere in a title doesn't
+#' count ("Director of ... the Green River Center").
+#' @param title Character vector of titles.
+#' @return A list of character vectors (candidate names, not yet checked against the state's places).
+#' @export
+title_place_names <- function(title) {
+  rx <- paste0("[*(]\\s*", PLACE_NAME_RX, "(?:", PLACE_STATE_RX, "|\\s+Campus)\\s*[*)]")
+  all_captures(coalesce_chr(title), rx)
+}
+
+#' Places a PeopleAdmin posting page names
+#'
+#' Reads only explicit phrases from the page's text (navigation, header, footer and scripts removed): "This position
+#' is located (or based) in <Town>, MT|WY"; "The Extension office is located in <Town>" (MSU Extension: an agent's
+#' office is not always the county seat, e.g. Carbon County's is in Joliet); "at/on the <Town> Campus|Center"; and
+#' "main campus" in lower case (a site banner's "Main Campus" is not about the job), returned as "main campus".
+#' Names are not yet checked against the state's places.
+#' @param html_text A posting page, or NA.
+#' @return Character: the names found, "; "-separated, or NA.
+#' @export
+peopleadmin_page_places <- function(html_text) {
+  if (is.na(html_text)) return(NA_character_)
+  doc <- rvest::read_html(html_text)
+  xml2::xml_remove(rvest::html_elements(doc, "script, style, nav, header, footer"))
+  body <- rvest::html_element(doc, "body")
+  if (inherits(body, "xml_missing")) return(NA_character_)
+  txt <- gsub("\\s+", " ", rvest::html_text2(body))
+  rx <- c(paste0("\\bThis position is (?:located|based) in ", PLACE_NAME_RX, PLACE_STATE_RX),
+          paste0("\\bThe Extension office is located in ", PLACE_NAME_RX, "\\b"),
+          paste0("\\b(?:at|on) the ", PLACE_NAME_RX, " (?:Campus|campus|Center)\\b"))
+  found <- unlist(lapply(rx, function(r) all_captures(txt, r)[[1]]))
+  # Lower case only, as measured: EWC's site banner reads "Eastern Wyoming College Main Campus & Douglas Campus".
+  if (grepl("\\bmain (?:[A-Z]{2,5} )?campus\\b", txt, perl = TRUE)) found <- c(found, "main campus")
+  found <- unique(trimws(found))
+  if (length(found)) paste(found, collapse = "; ") else NA_character_
+}
+
 #' Place each college posting at a campus town
 #'
-#' Adds where each posting goes on the map. `Campus_Town` is the town when the Location writes a town in the state
-#' other than the institution's main campus town (`Town` in the HE registry); otherwise NA, and the posting is shown
-#' at the main campus. `Place_Basis` says why: "main" (the main campus town, or a registry with no `Town`),
-#' "other_town", "out_of_state", "no_town" (nothing placeable: a department, "United States", several sites).
-#' @param postings Data frame with `Institution` and `Location`.
+#' Adds where each posting goes on the map. A posting's towns come from: its Location ([location_town()]); its
+#' title's markers ([title_place_names()]); a department table (`campus_departments`: an institution's Location
+#' value -> town, e.g. MSU's research centers); and its page (`Page_Places`, from [peopleadmin_page_places()], where
+#' "main campus" means the main campus town). Only places in the state count, and never a name two places share.
+#' One town other than the main campus town -> `Campus_Town`; anything else stays at the main campus. `Place_Basis`
+#' says why: "main" (the main campus town, or a registry with no `Town`), "other_town", "out_of_state", "no_town"
+#' (nothing placeable: a department, "United States", or several towns at once: Mike 2026-11-16, a posting for
+#' several sites goes at the main campus). `Page_Places`, when present, is dropped.
+#' @param postings Data frame with `Institution` and `Location` (and optionally `Title`, `Page_Places`).
 #' @param institutions The HE registry (columns `Institution`, `Town`).
 #' @param places The state's places, from [read_state_places()].
+#' @param campus_departments Optional data frame (`Institution`, `Location`, `Town`): Location values that are a
+#'   fixed off-campus site.
 #' @inheritParams location_town
 #' @return `postings` with `Campus_Town`, `Campus_County`, `Campus_Latitude`, `Campus_Longitude`, `Place_Basis`.
 #' @export
-place_he_postings <- function(postings, institutions, places, state_abbrev) {
+place_he_postings <- function(postings, institutions, places, state_abbrev, campus_departments = NULL) {
   stopifnot(all(c("Institution", "Location") %in% names(postings)), all(c("Institution", "Town") %in% names(institutions)))
   main <- institutions$Town[match(postings$Institution, institutions$Institution)]
-  town <- location_town(postings$Location, places, state_abbrev)
-  oos <- is.na(town) & location_out_of_state(postings$Location, state_abbrev)
   no_main <- is.na(main) | !nzchar(main)
+  n <- nrow(postings)
+  unique_towns <- places$Town[!places$Town %in% places$Town[duplicated(tolower(places$Town))]]
+  as_place <- function(x) {
+    x <- gsub("\\bFt\\.? ", "Fort ", trimws(x))
+    unique_towns[match(tolower(x), tolower(unique_towns))]
+  }
+  dept <- rep(NA_character_, n)
+  if (!is.null(campus_departments) && nrow(campus_departments)) {
+    stopifnot(all(c("Institution", "Location", "Town") %in% names(campus_departments)))
+    dept <- campus_departments$Town[match(paste(postings$Institution, postings$Location, sep = "\r"),
+                                          paste(campus_departments$Institution, campus_departments$Location, sep = "\r"))]
+  }
+  titles <- if ("Title" %in% names(postings)) title_place_names(postings$Title) else vector("list", n)
+  page <- if ("Page_Places" %in% names(postings)) strsplit(coalesce_chr(postings$Page_Places), "; ", fixed = TRUE) else vector("list", n)
+  loc_town <- location_town(postings$Location, places, state_abbrev)
+  towns <- lapply(seq_len(n), function(i) {
+    pg <- page[[i]]
+    pg[pg == "main campus"] <- if (no_main[i]) NA_character_ else main[i]
+    t <- as_place(c(loc_town[i], dept[i], titles[[i]], pg))
+    unique(t[!is.na(t)])
+  })
+  n_towns <- lengths(towns)
+  town <- ifelse(n_towns == 1, vapply(towns, function(t) if (length(t)) t[1] else NA_character_, ""), NA_character_)
+  oos <- n_towns == 0 & location_out_of_state(postings$Location, state_abbrev)
   basis <- ifelse(oos, "out_of_state", ifelse(is.na(town), "no_town",
                   ifelse(no_main | tolower(town) == tolower(coalesce_chr(main)), "main", "other_town")))
   at <- ifelse(basis == "other_town", town, NA_character_)
@@ -87,6 +169,7 @@ place_he_postings <- function(postings, institutions, places, state_abbrev) {
   postings$Campus_Latitude <- places$Latitude[i]
   postings$Campus_Longitude <- places$Longitude[i]
   postings$Place_Basis <- basis
+  postings$Page_Places <- NULL
   postings
 }
 

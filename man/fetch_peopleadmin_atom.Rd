@@ -41,5 +41,7 @@ spaced out. The same page gives the posting's dates
 \verb{<published>}, which moves when a posting is re-published (11 of 16 MSU
 Billings / Great Falls postings on 2026-11-04 opened earlier than
 \verb{<published>} said, one by two years). A failed page leaves only that
-posting's pay and dates blank.
+posting's pay and dates blank. The page also gives \code{Page_Places}
+(\code{\link[=peopleadmin_page_places]{peopleadmin_page_places()}}), the places it names, for
+\code{\link[=place_he_postings]{place_he_postings()}}; NA without \code{fetch_pay}.
 }
