@@ -4,7 +4,14 @@
 \alias{safe_scrape}
 \title{Safe scrape}
 \usage{
-safe_scrape(source_name, scrape_fn, expected_cols, log_path = "scrape_log.csv")
+safe_scrape(
+  source_name,
+  scrape_fn,
+  expected_cols,
+  log_path = "scrape_log.csv",
+  retrieved_source = NULL,
+  app_dir = NULL
+)
 }
 \arguments{
 \item{source_name}{See the description.}
@@ -14,6 +21,11 @@ safe_scrape(source_name, scrape_fn, expected_cols, log_path = "scrape_log.csv")
 \item{expected_cols}{See the description.}
 
 \item{log_path}{See the description.}
+
+\item{retrieved_source}{Optional source key; with \code{app_dir}, a non-empty result records today as that source's
+retrieval date (record_source_retrieved()).}
+
+\item{app_dir}{The dashboard's app folder, for \code{retrieved_source}.}
 }
 \description{
 Run scrape_fn() under tryCatch, log the outcome, and always return a data

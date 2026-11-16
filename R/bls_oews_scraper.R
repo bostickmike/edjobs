@@ -199,8 +199,9 @@ fetch_oews_wages <- function(state, api_key = Sys.getenv("BLS_API_KEY"), pause =
 #' @param state See the description.
 #' @param path See the description.
 #' @param api_key See the description.
+#' @param retrieved_source Optional source key, recorded only when a new year is downloaded and kept.
 #' @export
-refresh_oews_wages <- function(state, path, api_key = Sys.getenv("BLS_API_KEY")) {
+refresh_oews_wages <- function(state, path, api_key = Sys.getenv("BLS_API_KEY"), retrieved_source = NULL) {
   existing <- if (file.exists(path)) utils::read.csv(path, stringsAsFactors = FALSE,
                                                      colClasses = c(SOC = "character", Area_Code = "character")) else NULL
   latest <- fetch_oews_latest_year(state, api_key)
@@ -210,7 +211,8 @@ refresh_oews_wages <- function(state, path, api_key = Sys.getenv("BLS_API_KEY"))
     return(invisible(existing))
   }
   wages <- fetch_oews_wages(state, api_key)
-  if (!write_reference_file(wages, path)) return(invisible(existing))
+  # Only a new year's download is a retrieval; "already on file" keeps the earlier download's date.
+  if (!write_reference_file(wages, path, retrieved_source = retrieved_source)) return(invisible(existing))
   message("OEWS ", state, ": wrote May ", latest, " (", nrow(wages), " rows)")
   invisible(wages)
 }

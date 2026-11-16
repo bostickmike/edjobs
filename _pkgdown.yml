@@ -20,6 +20,10 @@ reference:
   - reference_table_status
   - safe_scrape
   - write_reference_file
+  - source_retrieved_path
+  - read_source_retrieved
+  - record_source_retrieved
+  - source_retrieved_label
 - title: "Platform scrapers (AppliTrack, SchoolSpring, PeopleAdmin, NEOGOV)"
   contents:
   - PEOPLEADMIN_CLOSE_LABELS

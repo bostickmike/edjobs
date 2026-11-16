@@ -4,7 +4,12 @@
 \alias{write_reference_file}
 \title{Write reference file}
 \usage{
-write_reference_file(new, path, log_path = "scrape_log.csv")
+write_reference_file(
+  new,
+  path,
+  log_path = "scrape_log.csv",
+  retrieved_source = NULL
+)
 }
 \arguments{
 \item{new}{See the description.}
@@ -12,6 +17,9 @@ write_reference_file(new, path, log_path = "scrape_log.csv")
 \item{path}{See the description.}
 
 \item{log_path}{See the description.}
+
+\item{retrieved_source}{Optional source key: a written (accepted) table records today as its retrieval date in
+the same folder's source_retrieved_dates.csv.}
 }
 \description{
 Writes a refreshed reference table only when reference_table_problem()

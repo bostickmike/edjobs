@@ -4,7 +4,12 @@
 \alias{refresh_oews_wages}
 \title{Refresh oews wages}
 \usage{
-refresh_oews_wages(state, path, api_key = Sys.getenv("BLS_API_KEY"))
+refresh_oews_wages(
+  state,
+  path,
+  api_key = Sys.getenv("BLS_API_KEY"),
+  retrieved_source = NULL
+)
 }
 \arguments{
 \item{state}{See the description.}
@@ -12,6 +17,8 @@ refresh_oews_wages(state, path, api_key = Sys.getenv("BLS_API_KEY"))
 \item{path}{See the description.}
 
 \item{api_key}{See the description.}
+
+\item{retrieved_source}{Optional source key, recorded only when a new year is downloaded and kept.}
 }
 \description{
 Keeps the committed file unless BLS has published a newer year; a failed
