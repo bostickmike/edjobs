@@ -4,23 +4,36 @@
 \alias{place_he_postings}
 \title{Place each college posting at a campus town}
 \usage{
-place_he_postings(postings, institutions, places, state_abbrev)
+place_he_postings(
+  postings,
+  institutions,
+  places,
+  state_abbrev,
+  campus_departments = NULL
+)
 }
 \arguments{
-\item{postings}{Data frame with \code{Institution} and \code{Location}.}
+\item{postings}{Data frame with \code{Institution} and \code{Location} (and optionally \code{Title}, \code{Page_Places}).}
 
 \item{institutions}{The HE registry (columns \code{Institution}, \code{Town}).}
 
 \item{places}{The state's places, from \code{\link[=read_state_places]{read_state_places()}}.}
 
 \item{state_abbrev}{Two-letter state abbreviation.}
+
+\item{campus_departments}{Optional data frame (\code{Institution}, \code{Location}, \code{Town}): Location values that are a
+fixed off-campus site.}
 }
 \value{
 \code{postings} with \code{Campus_Town}, \code{Campus_County}, \code{Campus_Latitude}, \code{Campus_Longitude}, \code{Place_Basis}.
 }
 \description{
-Adds where each posting goes on the map. \code{Campus_Town} is the town when the Location writes a town in the state
-other than the institution's main campus town (\code{Town} in the HE registry); otherwise NA, and the posting is shown
-at the main campus. \code{Place_Basis} says why: "main" (the main campus town, or a registry with no \code{Town}),
-"other_town", "out_of_state", "no_town" (nothing placeable: a department, "United States", several sites).
+Adds where each posting goes on the map. A posting's towns come from: its Location (\code{\link[=location_town]{location_town()}}); its
+title's markers (\code{\link[=title_place_names]{title_place_names()}}); a department table (\code{campus_departments}: an institution's Location
+value -> town, e.g. MSU's research centers); and its page (\code{Page_Places}, from \code{\link[=peopleadmin_page_places]{peopleadmin_page_places()}}, where
+"main campus" means the main campus town). Only places in the state count, and never a name two places share.
+One town other than the main campus town -> \code{Campus_Town}; anything else stays at the main campus. \code{Place_Basis}
+says why: "main" (the main campus town, or a registry with no \code{Town}), "other_town", "out_of_state", "no_town"
+(nothing placeable: a department, "United States", or several towns at once: Mike 2026-11-16, a posting for
+several sites goes at the main campus). \code{Page_Places}, when present, is dropped.
 }
