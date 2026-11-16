@@ -87,3 +87,14 @@ current_state_config <- function() get0("config", envir = .edjobs_state, inherit
 reference_table_rules <- function(config = current_state_config()) {
   c(REFERENCE_TABLE_RULES, if (!is.null(config)) config$reference_tables)
 }
+
+#' The current state's FIPS code
+#'
+#' `current_state_config()$fips`, with a clear error when no state config is
+#' set. The default `fips` for the federal-data fetchers.
+#' @export
+state_fips <- function() {
+  config <- current_state_config()
+  if (is.null(config)) stop("No state config set: source the state's state_config.R (set_state_config()) or pass fips")
+  config$fips
+}

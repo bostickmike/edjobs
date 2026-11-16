@@ -295,6 +295,46 @@ reference:
   - qcew_county_key
   - read_qcew_csv
   - refresh_oews_wages
+- title: "Federal context (IPEDS, FSA Pell, Census ACS)"
+  contents:
+  - ACS_DETAIL_ENDPOINT
+  - ACS_SUBJECT_ENDPOINT
+  - FSA_GRANTS_ENDPOINT
+  - FSA_PELL_GRANT_TYPE
+  - IPEDS_COLLEGE_DIRECTORY_ENDPOINT
+  - IPEDS_ENROLLMENT_ENDPOINT
+  - IPEDS_SALARY_ENDPOINT
+  - census_api_key
+  - clean_acs_value
+  - clean_fsa_value
+  - clean_ipeds_enrollment_value
+  - clean_ipeds_value
+  - compute_enrollment_change
+  - compute_population_change
+  - fetch_acs_counties
+  - fetch_census_county_context
+  - fetch_census_income_rent_population
+  - fetch_census_mining_employment_share
+  - fetch_ipeds_he_enrollment
+  - fetch_ipeds_he_enrollment_trend
+  - fetch_ipeds_he_pell_share
+  - fetch_ipeds_he_salaries
+  - fetch_ipeds_he_salary_trend
+  - fetch_urban_college_year
+  - find_latest_fsa_grants_year
+  - find_latest_ipeds_directory_year
+  - find_latest_ipeds_enrollment_year
+  - find_latest_ipeds_salary_year
+  - find_latest_urban_college_year
+  - latest_acs5_year
+  - parse_acs_json
+  - parse_census_income_rent_population
+  - parse_census_mining_employment_share
+  - parse_ipeds_he_enrollment
+  - parse_ipeds_he_pell_share
+  - parse_ipeds_he_salaries
+  - parse_ipeds_salary_trend_year
+  - state_fips
 - title: "Package"
   contents:
   - 'edjobs-package'
