@@ -11,6 +11,8 @@ the map"; measured on both states' archives in claude-notes/2026-11-16_college-c
   " - "); never a word inside other text, and never a name two places in the state share.
 * `location_out_of_state()`, `read_state_places()` (a state's `places.csv`: every Census place, its internal point
   and county). New import: datasets (`state.abb`).
+* `HE_PLACE_COLUMNS`: the columns `place_he_postings()` adds, for leaving them out of accumulated histories
+  (facultydata.csv) the way the pay columns are.
 
 # edjobs 0.31.0
 

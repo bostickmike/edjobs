@@ -45,3 +45,9 @@ test_that("read_state_places requires the place columns", {
   utils::write.csv(places[, c("Town", "County")], f, row.names = FALSE)
   expect_error(read_state_places(f))
 })
+
+test_that("HE_PLACE_COLUMNS names exactly the columns place_he_postings adds", {
+  reg <- data.frame(Institution = "A", Town = "Riverton")
+  p <- data.frame(Institution = "A", Location = "Jackson")
+  expect_setequal(setdiff(names(place_he_postings(p, reg, places, "WY")), names(p)), HE_PLACE_COLUMNS)
+})

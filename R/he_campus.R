@@ -89,3 +89,10 @@ place_he_postings <- function(postings, institutions, places, state_abbrev) {
   postings$Place_Basis <- basis
   postings
 }
+
+#' `HE_PLACE_COLUMNS`
+#'
+#' The columns [place_he_postings()] adds. They belong to the week's postings (hedata.xlsx and its archive), not to
+#' accumulated histories such as facultydata.csv, which leave them out the way they leave out the pay columns.
+#' @export
+HE_PLACE_COLUMNS <- c("Campus_Town", "Campus_County", "Campus_Latitude", "Campus_Longitude", "Place_Basis")
