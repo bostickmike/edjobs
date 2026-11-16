@@ -27,6 +27,6 @@ geography of its own: the districts \code{geocode()} finds at its point, pooled
 with \code{\link[=pool_child_poverty]{pool_child_poverty()}} where a town is split into elementary and
 secondary districts. \code{saipe}: LEAID, Child_Poverty_Rate (and SAIPE_Year,
 and the counts for pooling). \code{district_names}: LEAID -> display name.
-Returns status "ok", "none" (no district found / no rate) or "failed" (the
+\code{population} is \code{\link[=pool_saipe_population]{pool_saipe_population()}} of those districts. Returns status "ok", "none" (no district found / no rate) or "failed" (the
 geocoder errored: the caller keeps last run's value and logs it).
 }

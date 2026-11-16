@@ -13,5 +13,6 @@ saipe_rows_by_leaid(geos, fips)
 }
 \description{
 One row per SAIPE district: LEAID, SD_NAME, Child_Poverty_Rate (0-1),
-SAIPE_Poor_5_17, SAIPE_Children_5_17.
+SAIPE_Poor_5_17, SAIPE_Children_5_17, SAIPE_Population (total population,
+SAEPOVALL_PT; it sets the estimate's error band, \code{\link[=saipe_relative_error]{saipe_relative_error()}}).
 }

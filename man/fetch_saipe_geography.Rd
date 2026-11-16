@@ -21,6 +21,6 @@ fetch_saipe_geography(
 \item{fips}{Two-digit state FIPS code; defaults to the current state config's.}
 }
 \description{
-SD_NAME, the rate and both counts for every district of one geography in
+SD_NAME, the rate, both counts and the total population for every district of one geography in
 the state. A 204 (no districts of that kind) gives an empty data frame.
 }

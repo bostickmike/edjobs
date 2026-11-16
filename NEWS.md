@@ -1,3 +1,14 @@
+# edjobs 0.27.0
+
+Census's error band beside SAIPE child poverty (Mike's decision 2026-11-15, option A).
+
+* `fetch_saipe_by_leaid()` also reads each district's total population (`SAEPOVALL_PT`) as `SAIPE_Population`;
+  `parse_census_saipe_child_poverty()` and `surrounding_district_poverty()` carry it, a pair taking the larger
+  district's (`pool_saipe_population()`).
+* `SAIPE_RELATIVE_ERROR`, `saipe_relative_error()` and `add_saipe_range()`: Census publishes no margin of error for
+  one district, only median relative errors by district size, "an approximate upper bound"; the approximate 90% range
+  is rate x (1 -/+ 1.645 x CV) per Census's own rule, floored at 0 and capped at 1 (Child_Poverty_Low / _High).
+
 # edjobs 0.26.0
 
 Package phase 5, second slice: CCD staffing and SAIPE child poverty move from both states, matched by NCES id.
