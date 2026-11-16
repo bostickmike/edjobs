@@ -364,3 +364,22 @@ reference_table_status <- function(app_dir, scrape_log, today = Sys.Date(),
   out <- do.call(rbind, rows)
   if (is.null(out)) data.frame(name = character(0), file = character(0), problem = character(0)) else out
 }
+
+#' Standardize a posted date
+#'
+#' Parses the posted-date text the scrapers return into a `Date`: drops a trailing note in parentheses (a time zone
+#' such as "(UTC)"), then tries "Oct 23 2025 6:00 AM", "October 23 2025 6:00 AM", year-month-day, month-day-year,
+#' day-month-year and "2025-10-23 06:00:00" in that order. Unparseable text gives `NA`. Moved from both states'
+#' pipeline Rmd (phase 5 close-out, 2026-11-16).
+#' @param x Posted dates (character, factor or Date).
+#' @export
+standardize_date <- function(x) {
+  x <- as.character(x)
+  x <- stringr::str_remove(x, "\\s*\\(.*\\)$")
+  parsed <- lubridate::parse_date_time(
+    x,
+    orders = c("b d Y h:M p", "B d Y h:M p", "ymd", "mdy", "dmy", "Y-m-d H:M:S"),
+    tz = "UTC", quiet = TRUE
+  )
+  as.Date(parsed)
+}
