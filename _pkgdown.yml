@@ -24,6 +24,7 @@ reference:
   - read_source_retrieved
   - record_source_retrieved
   - source_retrieved_label
+  - standardize_date
 - title: "Platform scrapers (AppliTrack, SchoolSpring, PeopleAdmin, NEOGOV)"
   contents:
   - PEOPLEADMIN_CLOSE_LABELS
@@ -299,6 +300,8 @@ reference:
   - qcew_county_key
   - read_qcew_csv
   - refresh_oews_wages
+  - archive_k12_salary_snapshot
+  - missing_k12_salary_snapshot_rows
 - title: "Federal context (IPEDS, FSA Pell, Census ACS and SAIPE, NCES CCD)"
   contents:
   - ACS_DETAIL_ENDPOINT

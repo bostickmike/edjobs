@@ -1,3 +1,15 @@
+# edjobs 0.30.0
+
+Phase 5 close-out: the last pipeline helpers both states defined.
+
+* `standardize_date()`: the posted-date parser from both states' pipeline Rmd (same code in both). New import:
+  lubridate.
+* `archive_k12_salary_snapshot(salarymap2, history_path, columns)` and `missing_k12_salary_snapshot_rows()`: the
+  K-12 salary history, one row per district per salary year, with the state's salary `columns`. Takes MT's rule
+  (append any district/year pair the archive lacks, which also repairs a partly written year); WY's rule appended
+  only a new year. Measured 2026-11-16 on WY's committed files: 0 rows differ (48 of 48 districts archived).
+  `needs_k12_salary_archive_update()` (WY's year check) is retired, not moved.
+
 # edjobs 0.29.0
 
 A retrieval date for every outside data source (Mike, 2026-11-16: BLS asks citations to give the date data were
