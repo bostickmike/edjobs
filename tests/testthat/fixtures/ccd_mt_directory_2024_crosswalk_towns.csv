@@ -1,0 +1,37 @@
+"leaid","lea_name","city_location","county_name","latitude","longitude","agency_type","number_of_schools","teachers_total_fte","enrollment"
+3000019,"Custer","Miles City","Custer County",46.4074,-105.844901,3,0,NA,NA
+3000020,"Big Country Coop","Miles City","Custer County",46.410156,-105.820744,4,0,1,NA
+3000071,"Roosevelt","Wolf Point","Roosevelt County",48.08772,-105.638314,3,0,NA,NA
+3000086,"Yellowstone","Billings","Yellowstone County",45.784416,-108.505756,3,0,NA,NA
+3000105,"Yellowstone Boys & Girls Ranch","Billings","Yellowstone County",45.737359,-108.699942,8,0,15,NA
+3000932,"Shields Valley Elem","Clyde Park","Park County",45.990573,-110.662924,1,2,12,139
+3000933,"Shields Valley H S","Clyde Park","Park County",45.887466,-110.597836,1,1,6,59
+3001710,"Absarokee Elem","Absarokee","Stillwater County",45.513868,-109.447207,1,2,11,120
+3001740,"Absarokee H S","Absarokee","Stillwater County",45.513868,-109.447207,1,1,8,74
+3003820,"Bigfork Elem","Bigfork","Flathead County",48.064599,-114.078263,1,2,36,579
+3003840,"Bigfork H S","Bigfork","Flathead County",48.064599,-114.078263,1,1,24,333
+3003870,"Billings Elem","Billings","Yellowstone County",45.78412,-108.510827,1,28,696,11169
+3003900,"Billings H S","Billings","Yellowstone County",45.78412,-108.510827,1,6,328,5444
+3004230,"Blue Creek Elem","Billings","Yellowstone County",45.701384,-108.506549,1,1,13,145
+3004440,"Box Elder Elem","Box Elder","Hill County",48.316556,-110.009714,1,2,24,298
+3004500,"Box Elder H S","Box Elder","Hill County",48.316556,-110.009714,1,1,12,86
+3005460,"Canyon Creek Elem","Billings","Yellowstone County",45.71231,-108.637386,1,2,17,216
+3007500,"Cottonwood Elem","Bozeman","Gallatin County",45.56944,-111.125791,1,1,2,16
+3007930,"Custer County H S","Miles City","Custer County",46.408202,-105.840458,1,1,32,487
+3008010,"S Y Elem","Miles City","Custer County",45.960531,-105.63412,1,1,1,6
+3009720,"Elder Grove Elem","Billings","Yellowstone County",45.741029,-108.680234,1,2,37,713
+3009840,"Elysian Elem","Billings","Yellowstone County",45.740312,-108.577278,1,2,27,450
+3011670,"Frontier Elem","Wolf Point","Roosevelt County",48.093408,-105.559871,1,2,12,129
+3014150,"Cottonwood Elem","Havre","Hill County",48.779758,-109.988368,1,1,2,20
+3014820,"Independent Elem","Billings","Yellowstone County",45.851107,-108.46532,1,1,19,272
+3015640,"Kircher Elem","Miles City","Custer County",46.447497,-105.781554,1,1,4,51
+3018410,"Miles City Elem","Miles City","Custer County",46.408202,-105.840458,1,5,71,926
+3018960,"Morin Elem","Billings","Yellowstone County",45.637758,-108.401403,1,1,5,35
+3020790,"Pioneer Elem","Billings","Yellowstone County",45.856444,-108.41517,1,1,7,73
+3022750,"Rocky Boy Elem","Box Elder","Hill County",48.257452,-109.784278,1,2,38,421
+3025500,"Swan River Elem","Bigfork","Flathead County",48.095963,-114.028048,1,2,13,158
+3026400,"Trail Creek Elem","Miles City","Custer County",46.243875,-105.272673,1,1,1,8
+3028590,"Wolf Point Elem","Wolf Point","Roosevelt County",48.096562,-105.643157,1,3,47,480
+3028620,"Wolf Point H S","Wolf Point","Roosevelt County",48.096562,-105.643157,1,1,16,200
+3028860,"Yellowstone Academy Elem","Billings","Yellowstone County",45.737927,-108.701068,1,2,11,52
+3028911,"Rocky Boy H S","Box Elder","Hill County",48.257452,-109.784278,1,1,8,125

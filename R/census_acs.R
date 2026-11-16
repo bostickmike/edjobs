@@ -3,9 +3,11 @@
 # ---------------------------------------------------------------------------
 #
 # County median household income (B19013), median gross rent (B25064),
-# population (B01003), the share of employment in agriculture, forestry,
-# fishing, hunting and mining (S2403 line 4: the mining/energy exposure the
-# dashboards show), and the population change over five years. Joined to K-12
+# population (B01003), the share of civilian employed people 16 and over who
+# work in mining, quarrying, and oil and gas extraction (S2403_C01_004E over
+# S2403_C01_001E; the Census API's own labels, checked 2026-11-15 -- line 4 is
+# mining only, not the combined agriculture-and-mining line), and the
+# population change over five years. Joined to K-12
 # districts and to colleges by county. Moved from the states'
 # census_acs_scraper.R (package phase 5); the copies differed only in the state
 # FIPS code and in Montana stripping ", Montana" from the county name
@@ -110,7 +112,8 @@ parse_census_income_rent_population <- function(raw, year, county_suffix = NULL)
 
 #' Parse the ACS mining/energy employment share
 #'
-#' County, Mining_Employment_Share (S2403 line 4 over all civilian employed).
+#' County, Mining_Employment_Share (S2403 line 4, mining, quarrying, and oil and
+#' gas extraction, over all civilian employed 16 and over).
 #' @param raw Output of [fetch_acs_counties()] for S2403_C01_001E, S2403_C01_004E.
 #' @inheritParams parse_census_income_rent_population
 #' @export

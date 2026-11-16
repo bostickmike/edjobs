@@ -13,5 +13,6 @@ parse_census_mining_employment_share(raw, county_suffix = NULL)
 (", Montana"); NULL keeps the full name.}
 }
 \description{
-County, Mining_Employment_Share (S2403 line 4 over all civilian employed).
+County, Mining_Employment_Share (S2403 line 4, mining, quarrying, and oil and
+gas extraction, over all civilian employed 16 and over).
 }
