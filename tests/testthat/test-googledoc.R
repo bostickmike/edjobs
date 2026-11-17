@@ -32,3 +32,10 @@ test_that("ids from a registry Slug; empty input gives zero rows with the column
   expect_true(all(c("Title", "Location", "Posted_Date", "Link") %in% names(r)))
   expect_equal(googledoc_preview_text(""), "")
 })
+
+test_that("the preview reader reads through escaped quotes and decodes every escape (2026-11-17 review)", {
+  page <- paste0('<script>var d = {"s":"The \\"Lead\\" Cook\\nBus Driver\\nFood Service \\u0026 Custodial Aide"};',
+                 '{"s":"Second \\u0027part\\u0027"}</script>')
+  expect_equal(strsplit(googledoc_preview_text(page), "\n")[[1]],
+               c("The \"Lead\" Cook", "Bus Driver", "Food Service & Custodial Aide", "Second 'part'"))
+})

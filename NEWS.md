@@ -16,6 +16,8 @@ Fixes from the 2026-11-17 full review (workspace `claude-notes/2026-11-17_edjobs
   propagates, so the pipeline keeps last run's file and logs the failure instead of shipping an older year
   (`try_federal_year()`; each API's answer for 2027 checked 2026-11-17).
 * `reference_table_problem()`: a refresh whose newest `year_col` is older than the current file's is rejected.
+* `googledoc_preview_text()`: reads each value as a JSON string, so an escaped quote no longer cuts off the rest
+  of the document and every escape (`\u0026`, `\"`) is decoded. Victor's preview reads identically.
 
 # edjobs 0.37.0
 
