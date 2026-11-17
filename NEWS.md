@@ -1,3 +1,21 @@
+# edjobs 0.40.0
+
+Classifier and pay fixes from the 2026-11-17 full review. Each was replayed over every archived title or pay
+text in both states; every move listed is intended.
+
+* Posted pay (bug 3): benefit words belong to their own amount; "K" and ".000" thousands; hourly "up to" ranges.
+  1,007 archived texts with a $: 4 lost salaries recovered (Shelby, Cottonwood, Plevna, Hobson), nothing else moves.
+* `PART_FTE_RX`: ".5 FTE", "0.50 FTE", "0.75 FTE" make a part-time teacher (3 archived titles).
+* K-12 subjects (bug 10): school and place names (Woods Learning Center, Cheyenne East) don't pick a subject;
+  "Second Language" isn't Elementary; Title I + math is Mathematics. 16 of 7,900 archived titles move.
+* `classify_he_appointment()` (bug 9): "Part-time" makes an adjunct only beside a faculty word. Committed data:
+  adjunct/part-time faculty MT 33 -> 28, WY 120 -> 102 (staff such as cooks and bus drivers leave the bucket).
+* College job types (bug 11): chief officers -> Administration; campus police and security officers -> Support
+  Services; pharmacy technicians -> Healthcare; library technicians/assistants/associates -> Support Services.
+  24 archived college titles move.
+* `apptegy_passed_deadline()` (item 4): "open until filled" postings, and first-review, priority or screening
+  dates, are never a passed deadline.
+
 # edjobs 0.39.0
 
 Twice-weekly runs (2026-11-17): every history window and threshold that counted runs or files where weeks were

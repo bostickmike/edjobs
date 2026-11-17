@@ -202,5 +202,12 @@ test_that("a deadline needs a cue and a full date with its year", {
   expect_equal(passed("Applications due May 20."), c(FALSE, FALSE))          # no year
   expect_equal(passed("Renewed in April 2021 and on August 17, 2021."), c(FALSE, FALSE))  # no cue
   expect_equal(passed("Position closes December 4, 2026"), c(FALSE, FALSE))  # still ahead
+  # Open until filled: a candidate can still apply, whatever date the text gives (2026-11-17 review, item 4).
+  expect_equal(passed("Open until filled. Applications received by October 1, 2026 get first consideration."), c(FALSE, FALSE))
+  expect_equal(passed(c("Applications due 10/1/2026", "or until the position is filled.")), c(FALSE, FALSE))
+  expect_equal(passed("Review of applications begins October 1, 2026; open until filled"), c(FALSE, FALSE))
+  expect_equal(passed("Priority deadline: October 1, 2026"), c(FALSE, FALSE))
+  expect_equal(passed("First review due October 1, 2026"), c(FALSE, FALSE))
+  expect_equal(passed("Applications will be accepted until 5:00 PM on Thursday October 29, 2026."), c(TRUE, FALSE))
   expect_equal(apptegy_passed_deadline(data.frame(Title = character(0), Line = character(0)), "x"), logical(0))
 })

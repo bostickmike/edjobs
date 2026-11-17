@@ -203,3 +203,10 @@ test_that("footer_retrieved gives one date, a range, or nothing", {
   expect_identical(footer_retrieved("C", r), "")
   expect_identical(footer_retrieved("A", r[0, ]), "")
 })
+
+test_that("part-time staff aren't adjunct faculty (2026-11-17 review, bug 9)", {
+  t <- c("Cook I - Part Time", "Grounds Worker (Part-time & Student)", "Lab Assistant, Science (Part-Time)",
+         "Part-time Faculty Pool - Spanish Instructor", "Part-Time Librarian", "Adjunct - Biology", "Professor of History")
+  expect_equal(classify_he_appointment(t), c(rep("Other / not faculty", 3), rep("Adjunct/part-time faculty", 3),
+                                             "Faculty/instructor (non-adjunct)"))
+})

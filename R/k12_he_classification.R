@@ -193,8 +193,8 @@ classify_k12_position <- function(title, role_hint = NULL) {
     # postings in the subject-category trend charts.
     (grepl("Teacher|Instructor|Interventionist|English|Math|Library|Media|Language Arts|Science|Educator",
            title, ignore.case = TRUE) &
-       grepl("Part[- ]?Time|Half[- ]?Time|\\b1/[2-9]th\\b|\\b0?\\.[1-9]\\s*FTE\\b",
-             title, ignore.case = TRUE)) ~ "Part-Time Teacher",
+       grepl(paste0("Part[- ]?Time|Half[- ]?Time|\\b1/[2-9]th\\b|", PART_FTE_RX),
+             title, ignore.case = TRUE, perl = TRUE)) ~ "Part-Time Teacher",
 
     # Teacher-related positions
     grepl("Teacher|Instructor|Interventionist|English|Math|Library|Media|Language Arts|Science|Educator",
@@ -265,7 +265,7 @@ k12_role_hint <- function(description) {
   lead <- substr(gsub("\\s+", " ", fix_title_encoding(as.character(description))), 1, 250)
   lead[is.na(lead)] <- ""
   long_term_sub <- grepl("long[- ]?term sub", lead, ignore.case = TRUE)
-  part_time <- grepl("part[- ]time|half[- ]time|(?<![\\w.])0?\\.[1-9]\\s*FTE\\b", lead, ignore.case = TRUE, perl = TRUE) &
+  part_time <- grepl(paste0("part[- ]time|half[- ]time|", PART_FTE_RX), lead, ignore.case = TRUE, perl = TRUE) &
     !grepl("full[- ]time|1\\.0\\s*FTE", lead, ignore.case = TRUE)
   # The role named first in the opening.
   first <- vapply(lead, function(t) {
@@ -313,20 +313,20 @@ k12_category_keywords <- list(
   # Bare "CTE" / "Career and Technical" live in "CTE Teacher" below, checked
   # last, so "CTE - Agricultural Education" / "CTE - Business and Marketing" /
   # "CTE - Family and Consumer Sciences" reach their specific subject first.
-  "Technical Education" = "\\b(Welding|Weld|WeldingTeacher|Automotive|Auto(?!nomy)|Wood|Woods|Woodworking|Industrial Arts|Industrial Tech(nology)?|Shop|Tech Ed|Technical Education|Trade and Technical|Drivers?\\s*Ed(ucation)?|Traffic Ed(ucation)?)\\b",
+  "Technical Education" = "\\b(Welding|Weld|WeldingTeacher|Automotive|Auto(?!nomy)|Woods?(?=\\s*(/|&|\\band\\b|Shop|Teacher|Instructor|Tech|Construction|Manufacturing|Products?\\b|$))|Woodworking|Industrial Arts|Industrial Tech(nology)?|Shop|Tech Ed|Technical Education|Trade and Technical|Drivers?\\s*Ed(ucation)?|Traffic Ed(ucation)?)\\b",
   "Agriculture Education" = "(\\b(Agricultur(e|al)|Ag Teacher|Ag Program|Agricultural teacher|FFA|Vo[-/]?Ag)\\b|\\(AG\\))",
   "Computer Science Education" = "\\b(Computer Science|Information Technology|\\bIT\\b|Technology Education(?! Teacher Assistant)|Technology Teacher)\\b",
   # Pre[- ]?school covers "Preschool"/"Pre-school"/"Pre school" in one
   # pattern; Head Start is a real, common federal early-childhood program
   # name that doesn't otherwise contain any of the other keywords here.
   "Early Childhood Education" = "\\b(Early Childhood|Pre\\s*[- ]?\\s*K(?!indergarten)|Pre\\s*[- ]?\\s*school|Birth to age|Ages 3-5|Head Start|Toddler|Daycare|Early Learning|\\bSACC\\b)\\b",
-  "Elementary Education" = "\\b(Elementary|Kindergarten|1st|2nd|3rd|4th|5th|First|Second|Third|Fourth|Fifth|Grade [1-7]|Grades?\\s*K-[1-7]|K-[1-7]\\s*Teacher|Classroom Teacher|Colony Teacher|Sixth Grade|6th Grade|Seventh Grade|7th Grade|Primary Grade|Primary Teacher)\\b",
+  "Elementary Education" = "\\b(Elementary|Kindergarten|1st|2nd|3rd|4th|5th|First|Second(?!\\s+Language)|Third|Fourth|Fifth|Grade [1-7]|[1-6](st|nd|rd|th)?\\s*/\\s*[1-6](st|nd|rd|th)?\\s+Grade|Grades?\\s*K-[1-7]|K-[1-7]\\s*Teacher|Classroom Teacher|Colony Teacher|Sixth Grade|6th Grade|Seventh Grade|7th Grade|Primary Grade|Primary Teacher)\\b",
   # "Literacy/Reading Interventionist" specifically (not bare "Interventionist"
   # or "Academic Interventionist" -- those don't name a subject and are
   # genuinely ambiguous, left as Uncategorized rather than guessed).
-  "English Language Arts Education" = "(?i)\\b(English(?!\\s+as\\s+a\\s+Second\\s+Language|\\s+Learner|\\s+Language\\s+Learner)|ELA|Language Arts(?!\\s*Coordinator)|(Literacy|Reading) Interventionist|Title\\s*(One|1|I)\\b|Reading Recovery|Literacy Teacher|Reading Teacher|Literacy Specialist|Reading and Writing|Intervention Teacher|Teacher Reading|Reading|Journalism)\\b",
+  "English Language Arts Education" = "(?i)\\b(English(?!\\s+as\\s+a\\s+Second\\s+Language|\\s+Second\\s+Language|\\s+Learner|\\s+Language\\s+Learner)|ELA|Language Arts(?!\\s*Coordinator)|(Literacy|Reading) Interventionist|Title\\s*(One|1|I)\\b|Reading Recovery|Literacy Teacher|Reading Teacher|Literacy Specialist|Reading and Writing|Intervention Teacher|Teacher Reading|Reading|Journalism)\\b",
   "Family and Consumer Science" = "\\b(Family and Consumer Sciences?|FCS|Home Economics|Culinary)\\b",
-  "Language Education" = "\\b(ESL|ELL|English as a Second Language|English Learner|Bilingual|Spanish|French|Dual Language|World Languages?|Foreign Languages?|English Language Learner|Arapaho|Arapahoe|Shoshone|Salish|Kootenai|Cree|Crow|Blackfeet|Cheyenne|Assiniboine|Lakota|Dakota|Native Language|Indigenous Language|Culture Teacher|\\bEL Teacher\\b|\\bELL Teacher\\b|\\bESL Teacher\\b)\\b",
+  "Language Education" = "\\b(ESL|ELL|English as a Second Language|English Learner|Bilingual|Spanish|French|Dual Language|World Languages?|Foreign Languages?|English Language Learner|(Arapaho|Arapahoe|Shoshone|Salish|Kootenai|Cree|Crow|Blackfeet|Cheyenne|Assiniboine|Lakota|Dakota|Nakoda|Gros Ventre|Ojibwe|Chippewa)\\s+(Language|Culture|Studies|Teacher|Instructor|Enhancement|Program|Immersion)|Native Language|Second Language|Indigenous Language|Culture Teacher|\\bEL Teacher\\b|\\bELL Teacher\\b|\\bESL Teacher\\b)\\b",
   "Mathematics Education" = "\\b(Mathematics|\\bMath\\b)\\b",
   "Music Education" = "\\b(Music|Orchestra|Band|Choir|Chorus|Vocal)\\b",
   "Health Science" = "(?i)\\b(Nurse Educator|Health Science(s)? Teacher|Health Science(s)?|Certified Nursing Assistant|Nursing Assistant|CNA)\\b",
@@ -371,6 +371,10 @@ classify_k12_subject <- function(title) {
     stringr::str_detect(title, stringr::regex(kw[["Computer Science Education"]], ignore_case = TRUE)) ~ "Computer Science Education",
     stringr::str_detect(title, stringr::regex(kw[["Early Childhood Education"]], ignore_case = TRUE)) ~ "Early Childhood Education",
     stringr::str_detect(title, stringr::regex(kw[["Elementary Education"]], ignore_case = TRUE)) ~ "Elementary Education",
+    # "Title I Math Teacher": Title I funds the post; the subject is math (2026-11-17 review).
+    stringr::str_detect(title, stringr::regex("\\bTitle\\s*(One|1|I)\\b", ignore_case = TRUE)) &
+      stringr::str_detect(title, stringr::regex(kw[["Mathematics Education"]], ignore_case = TRUE)) &
+      !stringr::str_detect(title, stringr::regex("Reading|Literacy|\\bELA\\b|English|Language Arts", ignore_case = TRUE)) ~ "Mathematics Education",
     stringr::str_detect(title, stringr::regex(kw[["English Language Arts Education"]], ignore_case = TRUE)) ~ "English Language Arts Education",
     stringr::str_detect(title, stringr::regex(kw[["Family and Consumer Science"]], ignore_case = TRUE)) ~ "Family and Consumer Science",
     stringr::str_detect(title, stringr::regex(kw[["Language Education"]], ignore_case = TRUE)) ~ "Language Education",
@@ -465,6 +469,14 @@ is_placeholder_posting <- function(title) {
 # Posted pay
 # ---------------------------------------------------------------------------
 
+#' Part-time FTE pattern
+#'
+#' A fraction of a full-time post written as an FTE: ".5 FTE", "0.5 FTE", "0.50 FTE", ".75 FTE" (any nonzero
+#' decimal under 1, up to three digits), but not "1.0 FTE" or "10.5 FTE". Perl regex (2026-11-17 review: ".5 FTE",
+#' "0.50 FTE" and "0.75 FTE" titles stayed full Teacher).
+#' @export
+PART_FTE_RX <- "(?<![\\w.])0?\\.(?!0+\\b)\\d{1,3}\\s*FTE\\b"
+
 #' Extract posted pay
 #'
 #' Pulls the advertised pay out of a posting's free text: the amount (or
@@ -484,8 +496,10 @@ extract_posted_pay <- function(text) {
   # Up to three decimals: Montana University System classified rates are
   # posted to the tenth of a cent ("$17.820 to $22.00 hourly").
   amount <- "\\$\\s?((?:\\d{1,3}(?:,\\d{3})+|\\d+)(?:\\.\\d{1,3})?)\\s?([kK](?![a-z]))?\\*{0,2}"
-  # A range may repeat the unit after its low end ("$23.684/hr - $29.604/hr").
-  pattern <- paste0(amount, "(?:(?:\\s?/\\s?(?:hr|hour))?\\s*(?:-|\u2013|\u2014|to)(?:\\s+(?:a\\s+)?max(?:imum)?(?:\\s+of)?)?\\s*\\$?\\s?((?:\\d{1,3}(?:,\\d{3})+|\\d+)(?:\\.\\d{1,3})?)\\s?([kK](?![a-z]))?\\*{0,2})?")
+  # A range may repeat the unit after its low end ("$23.684/hr - $29.604/hr"), and an hourly one may say "up to"
+  # after it ("$16.50 per hour, up to $19.00"; only after an hourly unit, so "$45,000, up to $3,000 signing bonus"
+  # stays two amounts, and "$14 per hour, up to 32 hours" one).
+  pattern <- paste0(amount, "(?:(?:\\s?/\\s?(?:hr|hour)|\\s?(?:/|per)\\s?(?:hr|hour)\\s*,?\\s*up(?=\\s+to\\s*\\$))?\\s*(?:-|\u2013|\u2014|to)(?:\\s+(?:a\\s+)?max(?:imum)?(?:\\s+of)?)?\\s*\\$?\\s?((?:\\d{1,3}(?:,\\d{3})+|\\d+)(?:\\.\\d{1,3})?)\\s?([kK](?![a-z]))?\\*{0,2})?")
   to_num <- function(x, k) {
     v <- suppressWarnings(as.numeric(gsub(",", "", x)))
     ifelse(!is.na(k) & nzchar(k), v * 1000, v)
@@ -512,7 +526,12 @@ extract_posted_pay <- function(text) {
       # Nor does an earlier amount's own wording: in "Signing bonus $1,000,
       # $42,000 annual salary" the bonus word belongs to $1,000.
       near_before <- sub("^.*\\$\\s?\\d[0-9,.]*[kK]?", "", near_before)
-      not_pay <- grepl("bonus|fee|\\bcosts?\\b|reimburs|insurance|retire|deductible|allowance|incentive|signing|relocation|tuition|premium|contribut|match|donat|scholarship|award|grant of|differential|repayment|forgiveness|\\bloan|assistance", paste(near_before, substr(after, 1, 25))) ||
+      # The words right after the amount count only up to the next amount ("$43,200-76,995 + $2,000 Signing Bonus":
+      # "signing" is the $2,000's), and not at all when a pay word leads it ("Base Salary: $41,615 Full family
+      # insurance"): the benefit words then describe what comes with the salary (2026-11-17 review, bug 3).
+      own_after <- sub("\\$.*$", "", substr(after, 1, 25))
+      if (grepl("salary|wage|\\bpay\\b|\\brate\\b|compensation", near_before)) own_after <- ""
+      not_pay <- grepl("bonus|fee|\\bcosts?\\b|reimburs|insurance|retire|deductible|allowance|incentive|signing|relocation|tuition|premium|contribut|match|donat|scholarship|award|grant of|differential|repayment|forgiveness|\\bloan|assistance", paste(near_before, own_after)) ||
         # "up to $3,000 of loan repayment": a ceiling on a benefit, not pay --
         # unless a pay word leads it ("Salary: up to $60,000").
         (grepl("up to\\s*$", near_before) && !grepl("salary|wage|pay|rate|compensation", near_before)) ||
@@ -538,6 +557,16 @@ extract_posted_pay <- function(text) {
       }
       cap <- function(k) if (cl[j, k] > 0) substr(t, cs[j, k], cs[j, k] + cl[j, k] - 1) else NA_character_
       lo <- to_num(cap(1), cap(2)); hi <- if (!is.na(cap(3))) to_num(cap(3), cap(4)) else lo
+      # "$42-48K": the K after the high end covers the low end too.
+      if (!is.na(cap(4)) && is.na(cap(2)) && !is.na(lo) && lo < 1000 && lo * 1000 <= hi) lo <- lo * 1000
+      # "$45.000": a thousands separator written as a period (a salary), not $45 with three decimals, unless an
+      # hourly unit follows. Montana University System hourly rates keep real tenths of a cent ("$17.820").
+      thou <- function(x) !is.na(x) && grepl("^\\d{2,3}\\.000$", x)
+      if (!grepl("^[^a-z]{0,3}(/|per|an|a)?\\s*(hour|hr\\b)|^[^a-z]{0,3}hourly", after)) {
+        if (thou(cap(1)) && is.na(cap(2))) lo <- lo * 1000
+        if (thou(cap(3)) && is.na(cap(4))) hi <- hi * 1000
+        if (is.na(cap(3))) hi <- lo
+      }
       # "$0.00" is a board's blank pay field (NEOGOV prints "Adjunct - $0.00
       # Hourly" when none is entered), not a wage.
       if (is.na(lo) || max(lo, hi, na.rm = TRUE) <= 0) next
@@ -758,6 +787,15 @@ classify_he_job_type_rules <- function(title) {
     # copy of the same words.
     grepl("Chef|Cook|Baker|Dining|Culinary|Barista|Caf[e\u00e9]|Dishwasher|Kitchen|Catering|Food Service|Line Server", title, ignore.case = TRUE) ~ "Culinary",
 
+    # Officers before Professional's "Officer" (2026-11-17 review, bug 11): a chief officer runs a division
+    # (Administration, like "Chief" below), and police and security officers are campus safety staff (Support
+    # Services' Police/Security). Information/cyber security officers stay with Professional/Technical.
+    # "Office of the CIO" names a unit, not the job; environmental/radiation safety officers are professional
+    # EHS staff, so only campus/public safety officers count here.
+    grepl("\\bChief\\b[^,;/]*\\bOfficer\\b|\\bC[FIMT]O\\b", title) & !grepl("Office of the", title, ignore.case = TRUE) ~ "Administration",
+    grepl("Police Officer|Patrol|Public Safety Officer|Campus Safety Officer|Security Officer|Security Guard", title, ignore.case = TRUE) &
+      !grepl("Information|Cyber|Data|Network|IT\\b", title, ignore.case = TRUE) ~ "Support Services",
+
     # Professional
     grepl("Admissions|Coordinator|\\bCoord\\b|Registrar|Executive Assistant|Professional|Statistician|Proctor|Exec Assistant|Grant Writer|Graphic Designer|Negotiator|Botanist|College Relations|Controller|Database|Officer|Auditor|Web Site|Special Assistant|Retention Mentor|Buyer Assistant|Buyer, Textbooks|GEAR UP Event & College Coordination|Ombudsperson|Data Analyst|Employee Relations Specialist|Finance Technician|Grant Support Specialist|Marketing & Comm Spec.|Program Specialist",
           title, ignore.case = TRUE) ~ "Professional",
@@ -772,13 +810,17 @@ classify_he_job_type_rules <- function(title) {
     grepl("Accountant|Receivable|Accounts|Payroll|Bursar|Accounting|Cashier|Financial Associate|Storekeeper", title, ignore.case = TRUE) ~ "Accounting/Finance",
 
     # Research & Science (only actual research/scientific roles)
-    grepl("Research Associate|Laboratory Technician|Research Scientist|Research Assistant|Lab Assistant|Laboratory Assistant|Lab/Clinical|Farm M|Researcher|ologist\\b|Research Pilot|Laboratory Aide|Lab Aide|Husbandry|Paleontolog|Fossil", title, ignore.case = TRUE) ~ "Research & Science",
+    grepl("Research Associate|Laboratory Technician|Lab Technician|Research Scientist|Research Assistant|Lab Assistant|Laboratory Assistant|Lab/Clinical|Farm M|Researcher|ologist\\b|Research Pilot|Laboratory Aide|Lab Aide|Husbandry|Paleontolog|Fossil", title, ignore.case = TRUE) ~ "Research & Science",
 
     # Technical -- bare "Specialist" excluded (it shadows later, more
     # specific buckets like Support Services' "Library Information
     # Specialist"; only qualified "<Thing> Specialist" phrases stay here).
     # A stationary engineer runs the heating plant; enterprise/solutions/data
     # architects are IT (golden set, 2026-11-09).
+    # Technicians whose work isn't buildings or equipment, before Maintenance & Service's "Technician"
+    # (2026-11-17 review, bug 11).
+    grepl("Pharmacy Tech", title, ignore.case = TRUE) ~ "Healthcare",
+    grepl("Library (Technician|Tech\\b|Assistant|Associate)", title, ignore.case = TRUE) ~ "Support Services",
     grepl("Stationary Engineer", title, ignore.case = TRUE) ~ "Maintenance & Service",
     grepl("(Enterprise|Solutions?|Data|Cloud|Software) Architect", title, ignore.case = TRUE) ~ "Technical",
 

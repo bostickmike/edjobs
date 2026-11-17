@@ -116,3 +116,30 @@ test_that("UW 'Hourly Pooled' postings are classified by the job after the prefi
   expect_equal(classify_he_job_type("Hourly Pooled - Basketball Table Crew"), "Staff")
   expect_equal(classify_he_job_type("Hourly Pooled - Part-Time Office Assistant, Senior"), "Staff")
 })
+
+test_that("school and place names don't pick a subject (2026-11-17 review, bug 10)", {
+  t <- c("Woods K/1 Classroom Teacher for the 2025-2026 School Year Only", "Woods Language Arts Teacher for the 2025-26 School Year Only",
+         "Woods Math Teacher beginning the 2025-26 School Year", "Woods 2/3 Grade Teacher for the 2025-2026 School Year Only",
+         "CTE Woods/CAD Teacher", "Woods and Metals Teacher", "Math Teacher - Cheyenne East High School", "Salish Teacher",
+         "Northern Cheyenne Language and Culture Teacher", "English as a Second Language (ESL) Teacher", "English Second Language",
+         "Title I Math Teacher - Sheridan Junior High School", "Title I Reading / Math Teacher", "Title I Teacher")
+  expect_equal(classify_k12_subject(t), c(
+    "Elementary Education", "English Language Arts Education", "Mathematics Education", "Elementary Education",
+    "Technical Education", "Technical Education", "Mathematics Education", "Language Education", "Language Education",
+    "Language Education", "Language Education", "Mathematics Education", "English Language Arts Education",
+    "English Language Arts Education"))
+})
+
+test_that("college officers and technicians land in their own job types (2026-11-17 review, bug 11)", {
+  t <- c("Chief Financial Officer (CFO) and Associate Vice President (AVP)", "WPBS Chief Technology Officer",
+         "Police Officer - University Police", "Campus Security Officer", "Police Patrol Officer",
+         "Pharmacy Technician - Casper", "Library Technician (Part-Time)", "Library Tech II", "Library Associate",
+         # stay where they were
+         "Hourly Pooled - Teldesk Aide, Office of the CIO", "Radiation Safety Officer - UW Safety Office",
+         "Occupational and Environmental Safety Officer", "Information Security Officer",
+         "Library Specialist - Studio Coe, UW Libraries User Services Division", "Police Records Coordinator")
+  expect_equal(classify_he_job_type(t), c(
+    "Administration", "Administration", "Support Services", "Support Services", "Support Services",
+    "Healthcare", "Support Services", "Support Services", "Support Services",
+    "Support Services", "Professional", "Professional", "Professional", "Professional", "Professional"))
+})

@@ -492,8 +492,9 @@ parse_apptegy_postings <- function(content, url, location, mode = "text",
 #' The first line in it with a deadline cue (deadline, close/closing, due,
 #' until, no later than, accepted through, apply/received/submitted by)
 #' followed within 60 characters by a full date with its year ("October 29,
-#' 2026", "10/29/2026") is the deadline. A date without a year, or "until
-#' filled" with no date, is no deadline. Measured 2026-11-14 on every MT and WY
+#' 2026", "10/29/2026") is the deadline. A date without a year is no deadline,
+#' and neither is any date in a block that says the job is open until filled,
+#' or a first-review, priority or screening date (2026-11-17 review, item 4). Measured 2026-11-14 on every MT and WY
 #' Apptegy page (228 postings at 50 districts): one passed deadline, Weston
 #' County SD 7's School Maintenance Technician (closed 2026-10-29).
 #' @param rows The filter's rows (`Title`, `Line`).
@@ -522,11 +523,17 @@ APPTEGY_FULL_DATE <- paste0("(?i)((Jan(uary)?|Feb(ruary)?|Mar(ch)?|Apr(il)?|May|
                             "Oct(ober)?|Nov(ember)?|Dec(ember)?)\\.?\\s+\\d{1,2}(st|nd|rd|th)?,?\\s+\\d{4}|",
                             "\\b\\d{1,2}/\\d{1,2}/(\\d{4}|\\d{2})\\b)")
 
+# A posting that stays open until filled can still be applied to whatever date its text gives (2026-11-17
+# review, item 4); a first-review, priority or screening date is not a closing date either.
+APPTEGY_UNTIL_FILLED <- "(?i)until\\s+(the\\s+)?((position|job|vacancy)\\s+)?(is\\s+|has\\s+been\\s+)?filled"
+APPTEGY_SOFT_DATE <- "(?i)(first|initial)\\s+(review|consideration|screening)|priority|review\\s+(of\\s+applications\\s+)?(will\\s+)?begins?|screening\\s+(will\\s+)?begins?"
+
 # The first deadline date in a block of lines, or NA.
 apptegy_block_deadline <- function(block) {
+  if (any(grepl(APPTEGY_UNTIL_FILLED, block, perl = TRUE))) return(NA)
   for (l in block) {
     m <- regmatches(l, regexpr(paste0(APPTEGY_DEADLINE_CUE, ".{0,60}?", APPTEGY_FULL_DATE), l, perl = TRUE))
-    if (!length(m)) next
+    if (!length(m) || grepl(APPTEGY_SOFT_DATE, l, perl = TRUE)) next
     ds <- regmatches(m, regexpr(APPTEGY_FULL_DATE, m, perl = TRUE))
     ds <- gsub("\\.", "", gsub("(\\d)(st|nd|rd|th)\\b", "\\1", ds, perl = TRUE))
     month <- match(tolower(substr(sub("^\\s+", "", ds), 1, 3)), tolower(month.abb))

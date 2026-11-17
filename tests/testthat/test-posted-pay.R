@@ -184,3 +184,25 @@ test_that("parse_neogov_card_pay reads each schooljobs card's pay line by job ID
   expect_true(is.na(pay$Pay_Min[8]))
   expect_equal(nrow(parse_neogov_card_pay("<html></html>")), 0)
 })
+
+test_that("benefit words belong to their own amount, and a pay word before an amount wins (2026-11-17 review, bug 3)", {
+  # Real MT OPI descriptions (archives 2026-10/11): each lost its salary before.
+  p <- extract_posted_pay(c("Est. Salary: $43,200-76,995 + $2,000 Signing Bonus + $1,000 Colony Bonus",
+                            "Base Salary: $41,615 Full family insurance, including an",
+                            "Starting salary $42,900 DOE Health Insurance Stipend",
+                            "2026-2027 minimum salary is $42,863. The district contributes to health"))
+  expect_equal(p$Pay_Min, c(43200, 41615, 42900, 42863))
+  expect_equal(p$Pay_Max, c(76995, 41615, 42900, 42863))
+  expect_equal(p$Pay_Unit, rep("year", 4))
+  # The bonus itself is still never read as pay.
+  expect_equal(extract_posted_pay("Signing bonus $1,000, $42,000 annual salary")$Pay_Min, 42000)
+  expect_equal(extract_posted_pay("$45,000, up to $3,000 signing bonus")$Pay_Max, 45000)
+})
+
+test_that("K on the high end, a period as thousands separator, and hourly 'up to' ranges", {
+  p <- extract_posted_pay(c("Salary $42-48K DOE", "Salary $45.000 per year", "Pay: $16.50 per hour, up to $19.00",
+                            "$14 per hour, up to 32 hours per week", "$17.820 to $22.00 hourly"))
+  expect_equal(p$Pay_Min, c(42000, 45000, 16.5, 14, 17.82))
+  expect_equal(p$Pay_Max, c(48000, 45000, 19, 14, 22))
+  expect_equal(p$Pay_Unit, c("year", "year", "hour", "hour", "hour"))
+})
