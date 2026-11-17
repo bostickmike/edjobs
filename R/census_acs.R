@@ -217,8 +217,7 @@ compute_population_change <- function(current, prior) {
 latest_acs5_year <- function(start_year = as.integer(format(Sys.Date(), "%Y")), years_back = 3,
                              api_key = census_api_key(), fips = state_fips()) {
   for (year in seq(start_year, start_year - years_back)) {
-    result <- tryCatch(fetch_acs_counties(ACS_DETAIL_ENDPOINT, c("NAME", "B01003_001E"), year, api_key, fips),
-                       error = function(e) data.frame())
+    result <- try_federal_year(fetch_acs_counties(ACS_DETAIL_ENDPOINT, c("NAME", "B01003_001E"), year, api_key, fips))
     if (nrow(result) > 0) return(year)
   }
   stop("latest_acs5_year(): no working ACS 5-Year vintage found in the last ", years_back, " years.")

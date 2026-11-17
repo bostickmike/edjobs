@@ -21,7 +21,20 @@ test_that("attach_scrape_log_errors attaches the latest error message for a matc
   expect_true(is.na(result$scrape_error[result$name == "Stable District"]))
 })
 
-test_that("attach_scrape_log_errors matches by substring for a platform-prefixed scrape_log source name", {
+test_that("attach_scrape_log_errors never takes another source's error from a longer name (2026-11-17 review)", {
+  flagged <- data.frame(name = c("Fremont County School District 1", "Helena Public Schools"),
+                        mean_count = 8, n_weeks = 3, count = 0, stringsAsFactors = FALSE)
+  scrape_log <- data.frame(
+    timestamp = "2026-11-13 15:39:00",
+    source = c("Fremont County School District 14", "East Helena Public Schools"),
+    status = "error", n_rows = 0, error_message = c("HTTP 503", "HTTP 404"),
+    stringsAsFactors = FALSE
+  )
+  result <- attach_scrape_log_errors(flagged, scrape_log)
+  expect_true(all(is.na(result$scrape_error)))
+})
+
+test_that("attach_scrape_log_errors matches a platform-prefixed scrape_log source name", {
   flagged <- data.frame(name = "Niobrara County School District 1", mean_count = 8, n_weeks = 3, count = 0,
                         stringsAsFactors = FALSE)
   scrape_log <- data.frame(

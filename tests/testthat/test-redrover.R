@@ -23,6 +23,14 @@ test_that("parse_redrover_json returns zero rows (not an error) for an empty res
                                 "Pay_Min", "Pay_Max", "Pay_Unit", "Pay_Text"))
 })
 
+test_that("parse_redrover_json reads a response whose every location is null (2026-11-17 review)", {
+  json <- '{"data":{"jobSeekerSiteUnauthenticated":{"jobPostingSearch":{"results":[
+    {"id":1,"name":"Custodian","location":null,"activePublicOnDateUtc":"2026-11-04T15:00:00Z","payTypeId":null,"minPay":null,"maxPay":null}]}}}}'
+  result <- parse_redrover_json(json, "jcsd1")
+  expect_equal(result$Title, "Custodian")
+  expect_true(is.na(result$Location))
+})
+
 test_that("standing application forms are dropped (St. Ignatius, MT, real response 2026-11-13)", {
   json <- paste(readLines(test_path("fixtures", "redrover_graphql_stignatius_2261_2026-11-13.json"), warn = FALSE), collapse = "\n")
   raw <- jsonlite::fromJSON(json)$data$jobSeekerSiteUnauthenticated$jobPostingSearch$results$name

@@ -489,3 +489,13 @@ test_that("weeks the calendar says failed are left out, not counted as 0", {
   expect_equal(b$mean_count, 4); expect_equal(b$n_weeks, 2)
   expect_equal(nrow(failed_source_weeks(NULL)), 0)
 })
+
+test_that("summarize_central_safety_net takes the feed total from the feed's own log row (2026-11-17 review)", {
+  log <- data.frame(
+    timestamp = c("2026-11-17 16:00:00", "2026-11-17 16:05:00", "2026-11-17 16:10:00"),
+    source = c("OPI Jobs for Teachers (statewide)", "OPI per-district General Fund expenditures (MT)", "Other"),
+    status = "ok", n_rows = c(557, 32, 9), stringsAsFactors = FALSE)
+  summary <- summarize_central_safety_net(scrape_log = log, feed_label = "OPI Jobs for Teachers (statewide)",
+                                          feed_short_name = "OPI", discrepancy_path = NULL)
+  expect_equal(summary$total_feed_vacancies, 557L)
+})

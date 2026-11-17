@@ -312,6 +312,78 @@ bridge_adjacent_runs <- function(panel, rules = spell_rules()) {
   panel
 }
 
+#' Split title-identified postings at a gap their board was answering through
+#'
+#' A fallback ID (district + board + title, plus a posted date where the board
+#' gives one) is reused by every later posting with that title, so a posting
+#' that dropped off while its own board kept answering and "came back" months
+#' later was one spell across the gap, usually two different listings (WY,
+#' 2026-11-17: 92% of the college gaps with dates on both sides were posted
+#' after the earlier listing was last seen). Evidence first (Mike, 2026-11-17,
+#' "the most accurate data"; workspace `claude-notes/2026-11-17_spells-gaps/`):
+#' - same posted date on both sides: the same posting, missed by a scrape; kept
+#'   as one spell;
+#' - posted after the run the earlier one was last seen: a new posting; split,
+#'   and the earlier piece ends by the usual rules;
+#' - no date to compare: split, and the earlier piece's ending is censored
+#'   ("censored: back after a gap"; `Gap_Censored`): it may have ended, or the
+#'   scrape may have missed it, so no claim either way.
+#' Stable per-posting IDs are never split (the same posting by definition; when
+#' they vanish they are back within 28 days 92% of the time). "Answering": in
+#' at least one missing run the board returned at least half the rows it had on
+#' either side of the gap; a gap the board was down or empty for is a source
+#' gap and stays bridged, as before. Run after [bridge_posting_ids()] and before
+#' [use_earliest_posted_date()], so each piece keeps its own posted date.
+#' Later pieces get the ID `<id>~1`, `<id>~2`, ...
+#' @param panel A spells panel (`Run_Date`, `Posting_ID`, `Posting_Identity_Method`, `District`,
+#'   `Posting_Source`, `date_posted`).
+#' @return `panel` with split IDs and a logical `Gap_Censored` column.
+#' @export
+split_posting_gaps <- function(panel) {
+  panel$Gap_Censored <- rep(FALSE, nrow(panel))
+  if (nrow(panel) == 0) return(panel)
+  iso <- function(x) suppressWarnings(as.Date(substr(as.character(x), 1, 10), format = "%Y-%m-%d"))
+  runs <- sort(unique(panel$Run_Date))
+  ri <- match(panel$Run_Date, runs)
+  board <- paste(panel$District, panel$Posting_Source, sep = "\u001f")
+  counts <- table(paste(board, ri, sep = "\u001e"))
+  rows_on <- function(b, r) { n <- counts[paste(b, r, sep = "\u001e")]; ifelse(is.na(n), 0L, as.integer(n)) }
+
+  fb <- !grepl("^Stable", panel$Posting_Identity_Method)
+  x <- data.frame(id = panel$Posting_ID, ri = ri, board = board, posted = iso(panel$date_posted),
+                  stringsAsFactors = FALSE)[fb, , drop = FALSE]
+  x <- x[order(x$id, x$ri, is.na(x$posted)), , drop = FALSE]
+  x <- x[!duplicated(x[, c("id", "ri")]), , drop = FALSE]
+  same_id <- c(FALSE, x$id[-1] == x$id[-nrow(x)])
+  at <- which(same_id & c(0L, diff(x$ri)) > 1L)
+  if (length(at) == 0) return(panel)
+  g <- data.frame(id = x$id[at], prev = x$ri[at - 1L], back = x$ri[at], board = x$board[at - 1L],
+                  posted_before = x$posted[at - 1L], posted_after = x$posted[at], stringsAsFactors = FALSE)
+  g$answered <- vapply(seq_len(nrow(g)), function(i) {
+    floor <- 0.5 * min(rows_on(g$board[i], g$prev[i]), rows_on(g$board[i], g$back[i]))
+    n <- rows_on(g$board[i], seq(g$prev[i] + 1L, g$back[i] - 1L))
+    any(n > 0 & n >= floor)
+  }, logical(1))
+  same_date <- !is.na(g$posted_before) & !is.na(g$posted_after) & g$posted_before == g$posted_after
+  g <- g[g$answered & !same_date, , drop = FALSE]
+  if (nrow(g) == 0) return(panel)
+  g$anew <- !is.na(g$posted_after) & g$posted_after > runs[g$prev]
+  g <- g[order(g$id, g$back), , drop = FALSE]
+  g$piece_before <- stats::ave(seq_len(nrow(g)), g$id, FUN = seq_along) - 1L
+
+  piece <- integer(nrow(panel))
+  rows_of <- split(seq_len(nrow(panel)), panel$Posting_ID)
+  for (id in unique(g$id)) {
+    rows <- rows_of[[id]]
+    gi <- g[g$id == id, , drop = FALSE]
+    piece[rows] <- findInterval(ri[rows], gi$back)
+    censored <- gi$piece_before[!gi$anew]
+    panel$Gap_Censored[rows] <- piece[rows] %in% censored
+  }
+  panel$Posting_ID <- ifelse(piece > 0L, paste0(panel$Posting_ID, "~", piece), panel$Posting_ID)
+  panel
+}
+
 #' Frozen boards
 #'
 #' A source whose whole posting set (titles, any case) was identical run after
@@ -431,6 +503,7 @@ build_posting_spells <- function(panel, calendar = NULL, endings = NULL, frozen 
   if (is.null(panel$Bridged_From)) panel$Bridged_From <- NA_character_
   if (is.null(panel$Posted_Approx)) panel$Posted_Approx <- FALSE
   if (is.null(panel$Role_Hint)) panel$Role_Hint <- NA_character_
+  if (is.null(panel$Gap_Censored)) panel$Gap_Censored <- FALSE
   runs <- sort(unique(panel$Run_Date))
   latest <- max(runs)
   stable_row <- grepl("^Stable", panel$Posting_Identity_Method)
@@ -466,7 +539,8 @@ build_posting_spells <- function(panel, calendar = NULL, endings = NULL, frozen 
                      Posted_Approx = dplyr::first((Posted_Approx %in% TRUE)[!is.na(date_posted) & nzchar(date_posted)], default = FALSE),
                      URL = dplyr::last(url), First_Seen = min(Run_Date), Last_Seen = max(Run_Date),
                      Stated_Close_Date = dplyr::last(Close_Date[!is.na(Close_Date)], default = NA_character_),
-                     Runs_Seen = dplyr::n_distinct(Run_Date), .groups = "drop") %>%
+                     Runs_Seen = dplyr::n_distinct(Run_Date), Gap_Censored = any(Gap_Censored %in% TRUE),
+                     .groups = "drop") %>%
     dplyr::left_join(first_source_run, by = c("District", "Posting_Source"))
   sp$Shared_Title <- sp$Posting_ID %in% dup_ids
   if (rules$shared_titles == "fallback only") sp$Shared_Title <- sp$Shared_Title & !grepl("^Stable", sp$Identity)
@@ -524,6 +598,9 @@ build_posting_spells <- function(panel, calendar = NULL, endings = NULL, frozen 
     TRUE ~ paste0("censored: source ", sp$Next_Run_Source_Status))
   relisted <- relisted_next_run(sp$District, sp$Posting_Source, sp$Title, sp$First_Seen, sp$Next_Run)
   sp$Ending[relisted & sp$Ending %in% setdiff(POSTING_SPELL_EVENTS, "filled")] <- "censored: relisted next run"
+  # The earlier piece of a title-identified posting split at a gap with no posted date to compare
+  # (split_posting_gaps()): it may have ended or been missed, so its absence is no ending.
+  sp$Ending[sp$Gap_Censored & sp$Ending == "no longer listed"] <- "censored: back after a gap"
   sp$Event <- sp$Ending %in% POSTING_SPELL_EVENTS
 
   posted <- suppressWarnings(as.Date(substr(sp$Posted_Date, 1, 10), format = "%Y-%m-%d"))

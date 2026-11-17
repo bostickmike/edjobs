@@ -1,3 +1,37 @@
+# edjobs 0.38.0
+
+Fixes from the 2026-11-17 full review (workspace `claude-notes/2026-11-17_edjobs-full-review.md`), each with a test.
+
+* **Posting spells split at gaps, on the evidence** (Mike, 2026-11-17): `split_posting_gaps()`, run between
+  `bridge_posting_ids()` and `use_earliest_posted_date()`. A title-identified posting missing for runs while its own
+  board answered was one spell across the gap, usually two listings. Same posted date on both sides: one spell; a
+  later posted date: split, the earlier piece ends; no date: split, the earlier piece censored ("censored: back
+  after a gap"). Stable IDs never split. WY's archives: K-12 median 26.5 days (unchanged), college 59.5 -> 52.5;
+  measured in the workspace's `claude-notes/2026-11-17_spells-gaps/`. Each state's `scripts/build_posting_spells.R`
+  adds the call when it pins 0.38.0.
+* `match_job_query()`: what a visitor types is literal text; "(" no longer breaks the map search.
+* `validate_and_pad_schema()` and `build_k12_combinedclean()` pad missing columns on a zero-row frame.
+* A 200 page with no HTML is a failed fetch in every family reader (Google Sites, Finalsite, WordPress, CyberSchool,
+  as Edlio already did; shared `stop_if_no_html()`), so an outage is logged "error", not "empty".
+* `fetch_peopleadmin_atom()`: a posting page with no HTML blanks only that posting's pay and dates.
+* `parse_llm_extracted_postings()`: a model date like "March 20, 2023" is read instead of throwing.
+* `attach_scrape_log_errors()`: a source matches its exact name or the name behind a platform prefix, not a
+  substring ("... District 1" no longer takes "... District 14"'s error).
+* `summarize_central_safety_net()`: the feed total comes from the feed's own log row (exact label, latest).
+* Federal year searches (IPEDS staff and instructional salaries, the college directory, QCEW, ACS, SAIPE): only a
+  year that isn't published yet (a 404, or no rows) moves the search back; a 5xx or timeout on the newest year now
+  propagates, so the pipeline keeps last run's file and logs the failure instead of shipping an older year
+  (`try_federal_year()`; each API's answer for 2027 checked 2026-11-17).
+* `reference_table_problem()`: a refresh whose newest `year_col` is older than the current file's is rejected.
+* `googledoc_preview_text()`: reads each value as a JSON string, so an escaped quote no longer cuts off the rest
+  of the document and every escape (`\u0026`, `\"`) is decoded. Victor's preview reads identically.
+* College places: a "Town, ST" title marker or page sentence counts only for the state being placed
+  (`place_state_rx()`, from `place_he_postings(state_abbrev = )` or the state config), not MT/WY in either state; a
+  third state's markers now read. Every archived MT and WY college title gives the same markers as before.
+* Smaller: `merge_posting_status()` merges by column name; `parse_redrover_json()` reads a response whose every
+  location is null; `safe_scrape()` logs a scraper that returns something other than a data frame as an error;
+  `nces_district_url()` restores the leading zero a numeric LEAID loses (FIPS 01-09 states).
+
 # edjobs 0.37.0
 
 Package phase 6, slice 2: six more dashboard app helpers that both states' `app.R` defined identically but that read

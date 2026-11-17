@@ -45,6 +45,7 @@ parse_cyberschool_postings <- function(html_text, url, location, mode = "items",
   mode <- match.arg(mode, c("items", "text"))
   empty <- cyberschool_empty()
   if (is.null(html_text) || !nzchar(trimws(html_text))) return(empty)
+  stop_if_no_html(html_text)
   doc <- tryCatch(rvest::read_html(html_text), error = function(e) NULL)
   if (is.null(doc)) return(empty)
   if (mode == "text") return(cyberschool_text_postings(doc, url, location, start, stop, skip_section))

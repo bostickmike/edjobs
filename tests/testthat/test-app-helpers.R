@@ -111,6 +111,21 @@ test_that("college map dot names and job searches", {
   expect_equal(match_job_query(titles, "pe"), c(FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE))
   expect_equal(match_job_query(titles, "art teacher"), c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE))
   expect_equal(match_job_query(titles, "  "), rep(TRUE, 7))
+  # Regex characters in what a visitor types are literal text, never an error.
+  odd <- c("Teacher (Math)", "C++ Developer", "Math Teacher", "Cook")
+  expect_equal(match_job_query(odd, "("), c(TRUE, FALSE, FALSE, FALSE))
+  expect_equal(match_job_query(odd, "math ("), c(TRUE, FALSE, FALSE, FALSE))
+  expect_equal(match_job_query(odd, "c++"), c(FALSE, TRUE, FALSE, FALSE))
+  expect_equal(match_job_query(odd, "teacher."), c(FALSE, FALSE, FALSE, FALSE))
+})
+
+test_that("validate_and_pad_schema pads a header-only file", {
+  empty <- data.frame(District = character(0))
+  msgs <- character(0)
+  out <- validate_and_pad_schema(empty, c("District", "Title"), "x.csv", on_missing = function(m) msgs <<- c(msgs, m))
+  expect_equal(names(out), c("District", "Title"))
+  expect_equal(nrow(out), 0)
+  expect_length(msgs, 1)
 })
 
 test_that("trends table and biggest mover compare against the nearest earlier snapshot", {

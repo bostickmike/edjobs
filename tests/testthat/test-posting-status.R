@@ -90,6 +90,17 @@ test_that("the status table keeps closings, dates them by a passed closing date,
   expect_equal(nrow(posting_status_rechecks(t2, listed_check_urls = "c")), 0)
 })
 
+test_that("merge_posting_status merges by column name when the saved file's columns are in another order", {
+  ck <- function(url, status) data.frame(Check_URL = url, Platform = "neogov", Status = status, Signal = "s",
+                                         Stated_Close_Date = NA, Segment = "HE", District = "D", Title = "T",
+                                         Last_Listed = "2026-10-30", stringsAsFactors = FALSE)
+  t1 <- merge_posting_status(NULL, ck("a", "unknown"), "2026-11-06")
+  t2 <- merge_posting_status(t1[, rev(names(t1))], ck("a", "closed"), "2026-11-13")
+  expect_equal(t2$Status, "closed")
+  expect_equal(t2$Checks, "2")
+  expect_equal(t2$Check_URL, "a")
+})
+
 test_that("postings that dropped off their board are found, once per page", {
   prev <- data.frame(url = c("https://www.applitrack.com/crb1/onlineapp/default.aspx?AppliTrackLayoutMode=detail&AppliTrackJobId=1634",
                              "https://www.applitrack.com/crb1/OnlineApp/JobPostings/View.asp?AppliTrackJobId=1634",

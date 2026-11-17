@@ -481,3 +481,14 @@ test_that("fetch_tedk12_postings reads the board's page through the parser", {
                         parse_tedk12_postings = function(page, url) data.frame(Title = "Teacher", Link = url))
   expect_equal(fetch_tedk12_postings("https://x.tedk12.com/hire/index.aspx")$Title, "Teacher")
 })
+
+test_that("a PeopleAdmin posting page with no HTML leaves only that posting's pay and dates blank (2026-11-17 review)", {
+  atom <- httr2::response(200, headers = list("Content-Type" = "application/atom+xml; charset=utf-8"),
+                          body = charToRaw(read_fixture("peopleadmin_atom_mt.xml")))
+  busy <- httr2::response(200, headers = list("Content-Type" = "text/plain"), body = charToRaw("Too Many Requests"))
+  httr2::local_mocked_responses(c(list(atom), rep(list(busy), 9)))
+  result <- fetch_peopleadmin_atom("https://jobs.gfcmsu.edu/postings/search.atom",
+                                   location_fallback = "Great Falls College MSU", detail_delay = 0)
+  expect_equal(nrow(result), 9)
+  expect_true(all(is.na(result$Pay_Min)) && all(is.na(result$Close_Date)))
+})

@@ -127,3 +127,13 @@ test_that("fetch_json_paginated handles empty results and respects max_pages", {
   res_limited <- fetch_json_paginated("https://api.example.com/p1", max_pages = 1)
   expect_equal(nrow(res_limited), 1)
 })
+
+test_that("safe_scrape logs a scraper that returns something other than a data frame (2026-11-17 review)", {
+  log <- withr::local_tempfile(fileext = ".csv")
+  out <- suppressMessages(safe_scrape("Odd source", function() c("a", "b"), c("Title", "Link"), log_path = log))
+  expect_equal(names(out), c("Title", "Link"))
+  expect_equal(nrow(out), 0)
+  l <- read.csv(log)
+  expect_equal(l$status, "error")
+  expect_match(l$error_message, "not a data frame")
+})

@@ -24,6 +24,7 @@ find_latest_urban_college_year(
 \description{
 Walks back from \code{start_year} and returns \code{list(year, data)} for the first
 year with rows, or \code{list(year = NA, data = data.frame())} when none has.
-A failed request counts as no rows when \code{quiet_errors} is TRUE (the salary
-endpoint's behavior in both states); otherwise the error propagates.
+With \code{quiet_errors = TRUE} a 404 counts as no rows (\code{\link[=try_federal_year]{try_federal_year()}});
+any other failed request propagates either way (until 2026-11-17 every
+error counted as no rows, so a 5xx on the newest year shipped an older one).
 }

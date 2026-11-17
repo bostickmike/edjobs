@@ -199,3 +199,12 @@ test_that("fetch_all_llm_extracted_postings is a no-op without a chromote factor
   logged <- read.csv(log_path, stringsAsFactors = FALSE)
   expect_true("skipped_no_key" %in% logged$status)
 })
+
+test_that("a non-ISO posted date from the model is read, not an error (2026-11-17 review)", {
+  postings <- mk(list(title = "Custodian", posted_date = "March 20, 2023"),
+                 list(title = "Assistant Cook", posted_date = "November 2, 2026"),
+                 list(title = "Seventh Grade Volleyball", posted_date = "soon"))
+  res <- parse_llm_extracted_postings(PAGE, postings, URL)
+  # The 2023 date is stale page rot and is dropped; an unreadable date is kept as undated.
+  expect_setequal(res$Title, c("Assistant Cook", "Seventh Grade Volleyball"))
+})

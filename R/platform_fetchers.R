@@ -202,7 +202,11 @@ fetch_peopleadmin_atom <- function(feed_url, location_fallback = NA_character_, 
   }
   pages <- lapply(postings$Link, function(link) {
     Sys.sleep(detail_delay)
-    tryCatch(resp_body_string(request(link) %>% perform_with_retry()), error = function(e) NA_character_)
+    page <- tryCatch(resp_body_string(request(link) %>% perform_with_retry()), error = function(e) NA_character_)
+    # A 200 with no HTML ("Too Many Requests", an empty body) is a failed page like a request error: only this
+    # posting's pay and dates stay blank. read_html() would otherwise error and fail the whole institution
+    # (2026-11-17 review).
+    if (!is.na(page) && !grepl("<", page, fixed = TRUE)) NA_character_ else page
   })
   pay <- dplyr::bind_rows(lapply(pages, parse_peopleadmin_posting_pay))
   dates <- dplyr::bind_rows(lapply(pages, parse_peopleadmin_posting_dates))
@@ -732,7 +736,8 @@ parse_redrover_json <- function(json_text, org_slug) {
   out <- cbind(
     data.frame(
       Title = results$name,
-      Location = results$location$name,
+      # When every result's location is null, jsonlite gives an NA vector, not a data frame (2026-11-17 review).
+      Location = if (is.data.frame(results$location)) results$location$name else rep(NA_character_, nrow(results)),
       Posted_Date = substr(results$activePublicOnDateUtc, 1, 10),
       Posting_ID = paste0("redrover:", tolower(org_slug), ":", results$id),
       Link = paste0("https://jobs.redroverk12.com/org/", org_slug, "/opening/", results$id),

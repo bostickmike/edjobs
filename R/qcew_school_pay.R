@@ -64,8 +64,7 @@ read_qcew_csv <- function(url) {
 fetch_qcew_school_pay <- function(state_fips, start_year = as.integer(format(Sys.Date(), "%Y")), lookback = 3) {
   titles <- read_qcew_csv("https://data.bls.gov/cew/doc/titles/area/area_titles.csv")
   for (year in seq(start_year, start_year - lookback)) {
-    industry <- tryCatch(read_qcew_csv(paste0(QCEW_API, "/", year, "/a/industry/6111.csv")),
-                         error = function(e) NULL)
+    industry <- try_federal_year(read_qcew_csv(paste0(QCEW_API, "/", year, "/a/industry/6111.csv")), NULL)
     if (is.null(industry)) next
     out <- parse_qcew_school_pay(industry, titles, state_fips)
     if (nrow(out) > 0) return(out)

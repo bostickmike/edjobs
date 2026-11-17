@@ -18,6 +18,7 @@ reference_table_problem(new, rules, old = NULL, min_share = 0.9)
 \description{
 Why \code{new} shouldn't replace \code{old} (NULL when it's fine): fewer than
 \code{min_share} of the current rows, a required column missing or mostly
-blank, or a value out of bounds. With \code{old = NULL}, it checks a file on
+blank, a value out of bounds, or a newest \code{year_col} older than the
+current file's. With \code{old = NULL}, it checks a file on
 its own.
 }

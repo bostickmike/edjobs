@@ -4,10 +4,13 @@
 \alias{title_place_names}
 \title{Places a posting title marks}
 \usage{
-title_place_names(title)
+title_place_names(title, state_abbrev = NULL)
 }
 \arguments{
 \item{title}{Character vector of titles.}
+
+\item{state_abbrev}{Two-letter abbreviation; by default the state config's (from its \code{state} name). With neither,
+any US state.}
 }
 \value{
 A list of character vectors (candidate names, not yet checked against the state's places).

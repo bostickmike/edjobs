@@ -337,7 +337,10 @@ parse_llm_extracted_postings <- function(page_text, llm_postings, url,
   # current opening (confirmed on Power SD -- "Date Posted: March 20, 2023"
   # entries sitting under a real 2026 hiring blurb). Only drops rows that
   # carry a parseable old date; undated rows are kept.
-  parsed_date <- suppressWarnings(as.Date(df$Posted_Date))
+  # The prompt asks for ISO dates, but nothing enforces it: as.Date() errors on "March 20, 2023" when it is the
+  # first value, which failed the district (and llm_titles_from_page_text(), documented as never throwing).
+  # Read the common forms; anything else is undated (2026-11-17 review).
+  parsed_date <- as.Date(lubridate::parse_date_time(df$Posted_Date, c("Ymd", "mdY", "BdY", "dBY"), quiet = TRUE))
   stale <- !is.na(parsed_date) & parsed_date < (Sys.Date() - stale_after_days)
   df <- df[!stale, , drop = FALSE]
   if (nrow(df) == 0) return(llm_extract_empty())

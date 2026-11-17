@@ -152,12 +152,13 @@ build_k12_combinedclean <- function(rows, oews_wages, district_county, state, co
   }
   if (!"Posting_ID" %in% names(rows)) stop("build_k12_combinedclean(): rows need a posting id (Posting_ID, or name it in `columns`)")
   for (col in c("Posting_Source", "Posting_Identity_Method", "Feed_District", "Close_Date", "Feed_Description")) {
-    if (!col %in% names(rows)) rows[[col]] <- NA_character_
+    if (!col %in% names(rows)) rows[[col]] <- rep(NA_character_, nrow(rows))
   }
-  if (!"Also_On_Feed" %in% names(rows)) rows$Also_On_Feed <- NA
+  # rep(): a run with no K-12 rows has zero rows, where assigning a single NA fails (review 11-17).
+  if (!"Also_On_Feed" %in% names(rows)) rows$Also_On_Feed <- rep(NA, nrow(rows))
   rows$Close_Date <- as.character(rows$Close_Date)
   is_feed <- if (is.null(feed_label)) rep(FALSE, nrow(rows)) else !is.na(rows$Posting_Source) & rows$Posting_Source == feed_label
-  rows$Role_Hint <- NA_character_
+  rows$Role_Hint <- rep(NA_character_, nrow(rows))
   hinted <- is_feed & !is.na(rows$Feed_Description) & nzchar(rows$Feed_Description)
   if (any(hinted)) rows$Role_Hint[hinted] <- k12_role_hint(rows$Feed_Description[hinted])
 

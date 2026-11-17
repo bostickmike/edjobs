@@ -94,11 +94,13 @@ build_pay_coverage_report_markdown <- function(flagged, date = Sys.Date()) {
 #' signal: the registered URL itself is broken (a dead ATS tenant, a DNS
 #' failure, a migrated platform, an HTTP error perform_with_retry() couldn't
 #' recover from), not just "no visible postings right now". scrape_log's
-#' `source` strings aren't always an exact match for a flagged `name` (a
-#' platform-prefixed source name, e.g. "Apptegy/chromote: <District>",
-#' would still need this even though nothing in this project currently logs
-#' that way), so match by substring containment rather than requiring
-#' equality.
+#' `source` strings are the flagged `name` itself or the name behind a
+#' platform prefix ("Apptegy/chromote: <District>", which MT logs), so a
+#' source matches when it equals the name or ends with ": <name>". Not by
+#' substring: "Fremont County School District 1" is inside "... District 14",
+#' "Helena Public Schools" inside "East Helena Public Schools" (2026-11-17
+#' review: a flagged source took another's error, became
+#' `confirmed_broken`, and its auto-fix issue was never filed).
 #' @param flagged See the description.
 #' @param scrape_log See the description.
 #' @export
@@ -116,7 +118,7 @@ attach_scrape_log_errors <- function(flagged, scrape_log) {
   if (nrow(errors) == 0) return(flagged)
 
   for (i in seq_len(nrow(flagged))) {
-    hits <- which(vapply(errors$source, function(s) grepl(flagged$name[i], s, fixed = TRUE), logical(1)))
+    hits <- which(errors$source == flagged$name[i] | endsWith(errors$source, paste0(": ", flagged$name[i])))
     if (length(hits) > 0) flagged$scrape_error[i] <- errors$error_message[hits[1]]
   }
   flagged
@@ -1004,8 +1006,11 @@ summarize_central_safety_net <- function(
   # 1. Total vacancies on the statewide feed
   feed_total <- 0L
   if (!is.null(scrape_log) && nrow(scrape_log) > 0 && "source" %in% names(scrape_log)) {
-    feed_log <- scrape_log[grepl(feed_short_name, scrape_log$source, ignore.case = TRUE) |
-                           grepl(feed_label, scrape_log$source, fixed = TRUE), , drop = FALSE]
+    # The feed's own log row, by its exact label: matching the short name also caught "OPI per-district General
+    # Fund expenditures" and the WSBA salary tables, so the reported total was another table's row count
+    # (2026-11-17 review). The latest attempt by timestamp, when the log has one.
+    feed_log <- scrape_log[!is.na(scrape_log$source) & scrape_log$source == feed_label, , drop = FALSE]
+    if ("timestamp" %in% names(feed_log)) feed_log <- feed_log[order(feed_log$timestamp), , drop = FALSE]
     if (nrow(feed_log) > 0 && "n_rows" %in% names(feed_log)) {
       latest_rows <- feed_log$n_rows[nrow(feed_log)]
       if (!is.na(latest_rows) && is.numeric(latest_rows)) {

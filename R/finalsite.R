@@ -47,6 +47,7 @@ finalsite_page_text <- function(html_text) {
 # The page with resource links read by their title and the site chrome removed.
 finalsite_doc <- function(html_text) {
   if (is.null(html_text) || length(html_text) == 0 || is.na(html_text[1]) || !nzchar(trimws(html_text[1]))) return(NULL)
+  stop_if_no_html(html_text)
   doc <- tryCatch(rvest::read_html(html_text), error = function(e) NULL)
   if (is.null(doc)) return(NULL)
   for (a in rvest::html_elements(doc, "a[data-resource-title]")) {

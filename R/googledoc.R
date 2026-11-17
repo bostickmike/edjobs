@@ -64,13 +64,15 @@ googledoc_updated <- function(text) {
 #' @export
 googledoc_preview_text <- function(html_text) {
   if (is.null(html_text) || !nzchar(trimws(html_text))) return("")
-  strings <- regmatches(html_text, gregexpr("\"s\":\"([^\"]+)\"", html_text))[[1]]
+  # Each value is a JSON string: match through escaped quotes (`\"`) and decode every escape (`\n`, `\u0026`,
+  # `\"`), not just a few. The old `[^"]+` stopped at the first escaped quote and dropped the rest of the
+  # document (2026-11-17 review).
+  strings <- regmatches(html_text, gregexpr("\"s\":\"(?:[^\"\\\\]|\\\\.)+\"", html_text, perl = TRUE))[[1]]
   if (length(strings) == 0) return("")
   parts <- vapply(strings, function(s) {
-    txt <- sub("^\"s\":\"", "", sub("\"$", "", s))
-    txt <- gsub("\\\\n", "\n", txt)
-    txt <- gsub("\\\\u0027", "'", txt)
-    gsub("\\\\u0010|\\\\u0011|\\\\u0012|\\\\u001c", "", txt)
+    txt <- tryCatch(jsonlite::fromJSON(sub("^\"s\":", "", s)), error = function(e) NA_character_)
+    if (is.na(txt)) return("")
+    gsub("[\u0010\u0011\u0012\u001c]", "", txt)   # Docs' paragraph and table markers
   }, character(1))
   paste(parts, collapse = "\n")
 }

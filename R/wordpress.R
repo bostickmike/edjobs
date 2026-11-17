@@ -45,6 +45,7 @@ wordpress_page_text <- function(html_text) {
 
 wordpress_doc <- function(html_text) {
   if (is.null(html_text) || length(html_text) == 0 || is.na(html_text[1]) || !nzchar(trimws(html_text[1]))) return(NULL)
+  stop_if_no_html(html_text)
   doc <- tryCatch(rvest::read_html(html_text), error = function(e) NULL)
   if (is.null(doc)) return(NULL)
   xml2::xml_remove(rvest::html_elements(doc, paste("nav, header, footer, aside, script, style, noscript, [role=navigation],",
