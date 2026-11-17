@@ -29,3 +29,9 @@ test_that("add_source_record_links() puts each link after its id and is the same
   plain <- data.frame(Title = "x")
   expect_identical(add_source_record_links(plain), plain)
 })
+
+test_that("a numeric LEAID from a FIPS 01-09 state keeps its leading zero (2026-11-17 review)", {
+  expect_equal(nces_district_url(100005), "https://nces.ed.gov/ccd/districtsearch/district_detail.asp?ID2=0100005")
+  expect_equal(nces_district_url("0100005"), nces_district_url(100005))
+  expect_true(is.na(nces_district_url("12345")))
+})

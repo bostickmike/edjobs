@@ -202,6 +202,14 @@ safe_scrape <- function(source_name, scrape_fn, expected_cols, log_path = "scrap
   }
 
   df <- outcome$df
+  if (!is.null(df) && !is.data.frame(df)) {
+    # A scraper must return a data frame; anything else is its bug, logged like any failure rather than stopping
+    # the whole run outside the tryCatch (2026-11-17 review).
+    msg <- paste0("scraper returned a ", class(df)[1], ", not a data frame")
+    log_scrape_result(source_name, status = "error", n_rows = 0L, error_message = msg, log_path = log_path)
+    message("safe_scrape: ", source_name, " failed: ", msg)
+    return(empty_df(expected_cols))
+  }
   if (is.null(df) || nrow(df) == 0) {
     log_scrape_result(source_name, status = "empty", n_rows = 0L, log_path = log_path)
     return(empty_df(expected_cols))

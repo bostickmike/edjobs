@@ -736,7 +736,8 @@ parse_redrover_json <- function(json_text, org_slug) {
   out <- cbind(
     data.frame(
       Title = results$name,
-      Location = results$location$name,
+      # When every result's location is null, jsonlite gives an NA vector, not a data frame (2026-11-17 review).
+      Location = if (is.data.frame(results$location)) results$location$name else rep(NA_character_, nrow(results)),
       Posted_Date = substr(results$activePublicOnDateUtc, 1, 10),
       Posting_ID = paste0("redrover:", tolower(org_slug), ":", results$id),
       Link = paste0("https://jobs.redroverk12.com/org/", org_slug, "/opening/", results$id),

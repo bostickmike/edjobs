@@ -12,6 +12,10 @@
 #' @export
 nces_district_url <- function(leaid) {
   id <- sub("\\.0+$", "", trimws(as.character(leaid)))
+  # A LEAID read as a number loses the leading zero of a state with FIPS 01-09 (Alabama's 0100005 -> 100005). Only
+  # numbers are padded: a 6-digit string is a malformed id, not a lost zero.
+  short <- is.numeric(leaid) & !is.na(id) & grepl("^[0-9]{6}$", id)
+  id[short] <- paste0("0", id[short])
   ifelse(!is.na(id) & grepl("^[0-9]{7}$", id),
          paste0("https://nces.ed.gov/ccd/districtsearch/district_detail.asp?ID2=", id), NA_character_)
 }

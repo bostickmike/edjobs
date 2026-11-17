@@ -21,6 +21,9 @@ Fixes from the 2026-11-17 full review (workspace `claude-notes/2026-11-17_edjobs
 * College places: a "Town, ST" title marker or page sentence counts only for the state being placed
   (`place_state_rx()`, from `place_he_postings(state_abbrev = )` or the state config), not MT/WY in either state; a
   third state's markers now read. Every archived MT and WY college title gives the same markers as before.
+* Smaller: `merge_posting_status()` merges by column name; `parse_redrover_json()` reads a response whose every
+  location is null; `safe_scrape()` logs a scraper that returns something other than a data frame as an error;
+  `nces_district_url()` restores the leading zero a numeric LEAID loses (FIPS 01-09 states).
 
 # edjobs 0.37.0
 

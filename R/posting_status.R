@@ -295,7 +295,7 @@ merge_posting_status <- function(previous, checks, run_date) {
     if (is.na(new$Stated_Close_Date)) new$Stated_Close_Date <- old$Stated_Close_Date
     if (identical(old$Status, "closed")) new$Status_Since <- old$Status_Since
     if (is.na(new$Last_Listed) || (!is.na(old$Last_Listed) && old$Last_Listed > new$Last_Listed)) new$Last_Listed <- old$Last_Listed
-    previous[j, ] <- new
+    previous[j, names(new)] <- new   # by name: a file whose columns are in another order still merges right
   }
   rbind(previous, checks[is.na(hit), , drop = FALSE])
 }
