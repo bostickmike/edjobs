@@ -484,8 +484,10 @@ extract_posted_pay <- function(text) {
   # Up to three decimals: Montana University System classified rates are
   # posted to the tenth of a cent ("$17.820 to $22.00 hourly").
   amount <- "\\$\\s?((?:\\d{1,3}(?:,\\d{3})+|\\d+)(?:\\.\\d{1,3})?)\\s?([kK](?![a-z]))?\\*{0,2}"
-  # A range may repeat the unit after its low end ("$23.684/hr - $29.604/hr").
-  pattern <- paste0(amount, "(?:(?:\\s?/\\s?(?:hr|hour))?\\s*(?:-|\u2013|\u2014|to)(?:\\s+(?:a\\s+)?max(?:imum)?(?:\\s+of)?)?\\s*\\$?\\s?((?:\\d{1,3}(?:,\\d{3})+|\\d+)(?:\\.\\d{1,3})?)\\s?([kK](?![a-z]))?\\*{0,2})?")
+  # A range may repeat the unit after its low end ("$23.684/hr - $29.604/hr"), and an hourly one may say "up to"
+  # after it ("$16.50 per hour, up to $19.00"; only after an hourly unit, so "$45,000, up to $3,000 signing bonus"
+  # stays two amounts, and "$14 per hour, up to 32 hours" one).
+  pattern <- paste0(amount, "(?:(?:\\s?/\\s?(?:hr|hour)|\\s?(?:/|per)\\s?(?:hr|hour)\\s*,?\\s*up(?=\\s+to\\s*\\$))?\\s*(?:-|\u2013|\u2014|to)(?:\\s+(?:a\\s+)?max(?:imum)?(?:\\s+of)?)?\\s*\\$?\\s?((?:\\d{1,3}(?:,\\d{3})+|\\d+)(?:\\.\\d{1,3})?)\\s?([kK](?![a-z]))?\\*{0,2})?")
   to_num <- function(x, k) {
     v <- suppressWarnings(as.numeric(gsub(",", "", x)))
     ifelse(!is.na(k) & nzchar(k), v * 1000, v)
@@ -512,7 +514,12 @@ extract_posted_pay <- function(text) {
       # Nor does an earlier amount's own wording: in "Signing bonus $1,000,
       # $42,000 annual salary" the bonus word belongs to $1,000.
       near_before <- sub("^.*\\$\\s?\\d[0-9,.]*[kK]?", "", near_before)
-      not_pay <- grepl("bonus|fee|\\bcosts?\\b|reimburs|insurance|retire|deductible|allowance|incentive|signing|relocation|tuition|premium|contribut|match|donat|scholarship|award|grant of|differential|repayment|forgiveness|\\bloan|assistance", paste(near_before, substr(after, 1, 25))) ||
+      # The words right after the amount count only up to the next amount ("$43,200-76,995 + $2,000 Signing Bonus":
+      # "signing" is the $2,000's), and not at all when a pay word leads it ("Base Salary: $41,615 Full family
+      # insurance"): the benefit words then describe what comes with the salary (2026-11-17 review, bug 3).
+      own_after <- sub("\\$.*$", "", substr(after, 1, 25))
+      if (grepl("salary|wage|\\bpay\\b|\\brate\\b|compensation", near_before)) own_after <- ""
+      not_pay <- grepl("bonus|fee|\\bcosts?\\b|reimburs|insurance|retire|deductible|allowance|incentive|signing|relocation|tuition|premium|contribut|match|donat|scholarship|award|grant of|differential|repayment|forgiveness|\\bloan|assistance", paste(near_before, own_after)) ||
         # "up to $3,000 of loan repayment": a ceiling on a benefit, not pay --
         # unless a pay word leads it ("Salary: up to $60,000").
         (grepl("up to\\s*$", near_before) && !grepl("salary|wage|pay|rate|compensation", near_before)) ||
@@ -538,6 +545,16 @@ extract_posted_pay <- function(text) {
       }
       cap <- function(k) if (cl[j, k] > 0) substr(t, cs[j, k], cs[j, k] + cl[j, k] - 1) else NA_character_
       lo <- to_num(cap(1), cap(2)); hi <- if (!is.na(cap(3))) to_num(cap(3), cap(4)) else lo
+      # "$42-48K": the K after the high end covers the low end too.
+      if (!is.na(cap(4)) && is.na(cap(2)) && !is.na(lo) && lo < 1000 && lo * 1000 <= hi) lo <- lo * 1000
+      # "$45.000": a thousands separator written as a period (a salary), not $45 with three decimals, unless an
+      # hourly unit follows. Montana University System hourly rates keep real tenths of a cent ("$17.820").
+      thou <- function(x) !is.na(x) && grepl("^\\d{2,3}\\.000$", x)
+      if (!grepl("^[^a-z]{0,3}(/|per|an|a)?\\s*(hour|hr\\b)|^[^a-z]{0,3}hourly", after)) {
+        if (thou(cap(1)) && is.na(cap(2))) lo <- lo * 1000
+        if (thou(cap(3)) && is.na(cap(4))) hi <- hi * 1000
+        if (is.na(cap(3))) hi <- lo
+      }
       # "$0.00" is a board's blank pay field (NEOGOV prints "Adjunct - $0.00
       # Hourly" when none is entered), not a wage.
       if (is.na(lo) || max(lo, hi, na.rm = TRUE) <= 0) next
