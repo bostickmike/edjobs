@@ -132,3 +132,59 @@ test_that("trends table and biggest mover compare against the nearest earlier sn
   expect_equal(m$prior_date, as.Date("2026-10-01"))
   expect_null(find_biggest_mover(w[5:6, ], "District"))
 })
+
+# Phase 6, slice 2: helpers that read an app global now take it as an argument.
+
+test_that("validate_and_pad_schema pads missing columns with NA and reports the file once", {
+  got <- character(0)
+  df <- data.frame(a = 1:2)
+  out <- validate_and_pad_schema(df, c("a", "b", "c"), "x.csv", on_missing = function(m) got <<- c(got, m))
+  expect_identical(names(out), c("a", "b", "c"))
+  expect_true(all(is.na(out$b)) && all(is.na(out$c)))
+  expect_identical(got, "x.csv is missing expected column(s): b, c. That data will show blank until the pipeline is fixed.")
+  expect_identical(validate_and_pad_schema(df, "a", "x.csv", on_missing = function(m) stop("not called")), df)
+  expect_warning(validate_and_pad_schema(df, "z", "y.csv"), "y.csv is missing expected column\\(s\\): z")
+})
+
+test_that("in_pay_band compares each posting in its own unit, lo inclusive and hi exclusive", {
+  bands <- list(year_50_60 = list(unit = "year", lo = 50000, hi = 60000, label = "x"),
+                hour_25p = list(unit = "hour", lo = 25, hi = Inf, label = "y"))
+  v <- c(50000, 60000, 55000, 30, 55000, NA)
+  u <- c("year", "year", "hour", "hour", NA, "year")
+  expect_identical(in_pay_band(v, u, "year_50_60", bands), c(TRUE, FALSE, FALSE, FALSE, FALSE, FALSE))
+  expect_identical(in_pay_band(v, u, "hour_25p", bands), c(FALSE, FALSE, TRUE, TRUE, FALSE, FALSE))
+  expect_identical(in_pay_band(v, u, NULL, bands), rep(TRUE, 6))
+  expect_identical(in_pay_band(v, u, "nope", bands), rep(TRUE, 6))
+})
+
+test_that("relabel_spell_status relabels Closed / Filled only, and leaves empty or Status-less frames alone", {
+  df <- data.frame(Status = c("Closed / Filled", "Open", NA), stringsAsFactors = FALSE)
+  expect_identical(relabel_spell_status(df)$Status, c("No longer listed", "Open", NA))
+  expect_identical(relabel_spell_status(data.frame()), data.frame())
+  expect_identical(relabel_spell_status(data.frame(x = 1)), data.frame(x = 1))
+})
+
+test_that("map_marker_radius grows with the square root of the count and is capped", {
+  expect_equal(map_marker_radius(c(0, 25, 10000)), c(6, 12, 24))
+  expect_equal(map_marker_radius(4, min_radius = 2, max_radius = 3), 3)
+})
+
+test_that("dictionary_columns_help lists a file's columns, NULL for an unknown file", {
+  d <- data.frame(File_Name = c("a.csv", "a.csv", "b.csv"), Column_Name = c("X", "Y", "Z"),
+                  Definition = c("ex <1>", "why", "zed"), stringsAsFactors = FALSE)
+  h <- as.character(dictionary_columns_help("a.csv", d))
+  expect_match(h, "<strong>\\s*2\\s*columns:\\s*</strong>")
+  expect_match(h, "<dt>\\s*<code>X</code>\\s*</dt>")
+  expect_match(h, "ex &lt;1&gt;", fixed = TRUE)
+  expect_false(grepl("zed", h))
+  expect_null(dictionary_columns_help("c.csv", d))
+})
+
+test_that("footer_retrieved gives one date, a range, or nothing", {
+  r <- data.frame(Source = c("A", "B", "B", "C"), Retrieved = c("2026-11-01", "2026-11-03", "2026-10-02", ""),
+                  stringsAsFactors = FALSE)
+  expect_identical(footer_retrieved("A", r), " (retrieved 2026-11-01)")
+  expect_identical(footer_retrieved(c("A", "B"), r), " (retrieved 2026-10-02 to 2026-11-03)")
+  expect_identical(footer_retrieved("C", r), "")
+  expect_identical(footer_retrieved("A", r[0, ]), "")
+})
