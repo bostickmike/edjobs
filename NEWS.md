@@ -2,6 +2,13 @@
 
 Fixes from the 2026-11-17 full review (workspace `claude-notes/2026-11-17_edjobs-full-review.md`), each with a test.
 
+* **Posting spells split at gaps, on the evidence** (Mike, 2026-11-17): `split_posting_gaps()`, run between
+  `bridge_posting_ids()` and `use_earliest_posted_date()`. A title-identified posting missing for runs while its own
+  board answered was one spell across the gap, usually two listings. Same posted date on both sides: one spell; a
+  later posted date: split, the earlier piece ends; no date: split, the earlier piece censored ("censored: back
+  after a gap"). Stable IDs never split. WY's archives: K-12 median 26.5 days (unchanged), college 59.5 -> 52.5;
+  measured in the workspace's `claude-notes/2026-11-17_spells-gaps/`. Each state's `scripts/build_posting_spells.R`
+  adds the call when it pins 0.38.0.
 * `match_job_query()`: what a visitor types is literal text; "(" no longer breaks the map search.
 * `validate_and_pad_schema()` and `build_k12_combinedclean()` pad missing columns on a zero-row frame.
 * A 200 page with no HTML is a failed fetch in every family reader (Google Sites, Finalsite, WordPress, CyberSchool,

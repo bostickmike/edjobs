@@ -390,3 +390,46 @@ test_that("first_seen_lookup keys the latest run's postings the way the app show
   expect_equal(fs$Left_Censored, c(TRUE, FALSE))
   expect_equal(first_seen_key(" A  B ", "Math  Teacher", " u "), "a b | math teacher | u")
 })
+
+# ---- split_posting_gaps (evidence first, 2026-11-17) -------------------------
+gap_panel <- function() {
+  runs <- as.Date("2026-01-02") + 7 * (0:5)
+  row <- function(id, r, method = "Source fallback", posted = NA, title = "Bus Driver", src = "board.example")
+    data.frame(Run_Date = runs[r], Posting_ID = id, Posting_Identity_Method = method, District = "Alpha SD",
+               Posting_Source = src, title = title, date_posted = posted, stringsAsFactors = FALSE)
+  # A busy board (5 other postings every run) so the board answers through every gap.
+  other <- do.call(rbind, lapply(1:6, function(r) do.call(rbind, lapply(1:5, function(k)
+    row(paste0("stable:", k), r, "Stable per-posting ID", title = paste("Job", k))))))
+  rbind(other,
+        row("fb:none", c(1, 2, 5)),                                    # no dates: split, earlier piece censored
+        row("fb:new", 1:2, posted = "2025-12-30"), row("fb:new", 5, posted = "2026-01-30"),   # posted anew: split
+        row("fb:same", c(1, 2, 5), posted = "2025-12-30"),             # same date: one posting
+        row("stable:9", c(1, 5), "Stable per-posting ID", title = "Cook"))                     # stable: never split
+}
+
+test_that("split_posting_gaps splits title-identified postings on the evidence, never stable IDs", {
+  p <- split_posting_gaps(gap_panel())
+  ids <- unique(p$Posting_ID)
+  expect_true(all(c("fb:none", "fb:none~1", "fb:new", "fb:new~1", "fb:same", "stable:9") %in% ids))
+  expect_false(any(c("fb:same~1", "stable:9~1") %in% ids))
+  expect_true(all(p$Gap_Censored[p$Posting_ID == "fb:none"]))
+  expect_false(any(p$Gap_Censored[p$Posting_ID %in% c("fb:none~1", "fb:new", "fb:new~1", "fb:same")]))
+})
+
+test_that("a gap the board was down for is a source gap and is not split", {
+  p <- gap_panel()
+  p <- p[!(p$Run_Date %in% unique(p$Run_Date)[3:4]), ]   # the board returned nothing in runs 3-4
+  expect_false(any(grepl("~", split_posting_gaps(p)$Posting_ID)))
+})
+
+test_that("build_posting_spells censors the earlier piece of an undated split as 'back after a gap'", {
+  p <- use_earliest_posted_date(split_posting_gaps(gap_panel()))
+  p$url <- NA_character_; p$position <- "Transportation"
+  s <- build_posting_spells(p)
+  expect_equal(s$Ending[s$Posting_ID == "fb:none"], "censored: back after a gap")
+  expect_false(s$Event[s$Posting_ID == "fb:none"])
+  expect_equal(s$Ending[s$Posting_ID == "fb:new"], "no longer listed")
+  expect_equal(s$Posted_Date[s$Posting_ID == "fb:new~1"], "2026-01-30")   # each piece keeps its own posted date
+  expect_equal(s$Runs_Spanned[s$Posting_ID == "fb:same"], 5)
+  expect_equal(nrow(split_posting_gaps(gap_panel()[0, ])), 0)
+})

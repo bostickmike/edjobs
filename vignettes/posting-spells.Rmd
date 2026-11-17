@@ -52,6 +52,13 @@ bridged <- bridge_posting_ids(panel)
 unique(bridged[, c("Posting_ID", "Bridged_From")])
 ```
 
+The opposite mistake: a fallback ID (district, board, title) is reused by every later posting with that title, so a
+posting that dropped off while its board kept answering and "came back" months later would be one spell across the
+gap. `split_posting_gaps()`, run after bridging and before `use_earliest_posted_date()`, decides on the evidence: the
+same posted date on both sides keeps one spell; a later posted date splits it, and the earlier piece ends; no date
+to compare splits it, and the earlier piece's ending is censored ("censored: back after a gap"). Stable IDs are
+never split.
+
 ## Endings, starts and flags
 
 ```{r}
