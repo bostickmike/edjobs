@@ -1,3 +1,16 @@
+# edjobs 0.37.0
+
+Package phase 6, slice 2: six more dashboard app helpers that both states' `app.R` defined identically but that read
+an app global. The global becomes an argument; where both states set it to the same value, that value is the default.
+
+* `validate_and_pad_schema(on_missing = )`: the apps pass a function that adds the message to their
+  `DATA_LOAD_ISSUES` (the app copy assigned that global itself). Default: a warning.
+* `in_pay_band(bands = )`: the state's `PAY_BANDS` (they differ by state).
+* `dictionary_columns_help(dictionary = )` and `footer_retrieved(retrieved = )`: the app's data dictionary and
+  `source_retrieved_dates.csv`.
+* `relabel_spell_status(labels = )` and `map_marker_radius(min_radius = , max_radius = )`: defaults are both
+  states' values ("Closed / Filled" shown as "No longer listed"; 6 and 24 px).
+
 # edjobs 0.36.0
 
 Package phase 6, slice 1: the dashboard apps' shared helpers. 22 functions both states' `app.R` defined identically

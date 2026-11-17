@@ -444,3 +444,97 @@ match_job_query <- function(title_vec, query) {
 compute_vacancy_rate_domain <- function(vacancy_rate) {
   if (all(is.na(vacancy_rate))) c(0, 1) else range(vacancy_rate, na.rm = TRUE)
 }
+
+# Phase 6, slice 2 (2026-11-16): helpers both states' app.R defined identically but that read an app global. The
+# global becomes an argument; where both states set it to the same value, that value is the default. Bodies are as
+# they were in app.R otherwise.
+
+#' Pad a loaded data file's missing columns
+#'
+#' Adds every column of `required_cols` that `df` lacks, filled with NA, so a pipeline output that lost a column
+#' shows blank values instead of crashing the dashboard. Each file with missing columns is reported once through
+#' `on_missing`; the apps collect those messages for a Home-tab banner.
+#' @param df A loaded data frame.
+#' @param required_cols Columns the app reads.
+#' @param source_name File name for the message.
+#' @param on_missing Function given the message when columns are missing. Defaults to a warning.
+#' @return `df`, with any missing columns added as NA.
+#' @export
+validate_and_pad_schema <- function(df, required_cols, source_name,
+                                    on_missing = function(msg) warning(msg, call. = FALSE)) {
+  missing <- setdiff(required_cols, names(df))
+  if (length(missing) > 0) {
+    on_missing(sprintf(
+      "%s is missing expected column(s): %s. That data will show blank until the pipeline is fixed.",
+      source_name, paste(missing, collapse = ", ")
+    ))
+    for (col in missing) df[[col]] <- NA
+  }
+  df
+}
+
+#' Which postings fall in a pay band
+#'
+#' @param value,unit Posted pay value and its unit (from [posting_pay_value()]).
+#' @param band Name of a band in `bands`; NULL or an unknown name keeps every posting.
+#' @param bands Named list of bands, each a list with `unit`, `lo` and `hi` (the state's `PAY_BANDS`; `lo` is
+#'   inclusive, `hi` exclusive).
+#' @return A logical vector.
+#' @export
+in_pay_band <- function(value, unit, band, bands) {
+  if (is.null(band) || !band %in% names(bands)) return(rep(TRUE, length(value)))
+  b <- bands[[band]]
+  !is.na(value) & !is.na(unit) & unit == b$unit & value >= b$lo & value < b$hi
+}
+
+#' Relabel posting-spell statuses for display
+#'
+#' The posting-spell files say "Closed / Filled" for a spell whose posting stopped appearing. The dashboard shows
+#' "No longer listed": a listing ends when it stops appearing, whether it was filled, cancelled, moved to another
+#' board or missed by a scrape (the apps' spells footnote).
+#' @param df A posting-spells data frame with a `Status` column.
+#' @param labels Named character vector: names are file statuses, values the labels shown.
+#' @export
+relabel_spell_status <- function(df, labels = c("Closed / Filled" = "No longer listed")) {
+  if (nrow(df) > 0 && "Status" %in% names(df)) {
+    hit <- df$Status %in% names(labels)
+    df$Status[hit] <- labels[df$Status[hit]]
+  }
+  df
+}
+
+#' Map marker radius from a posting count
+#'
+#' @param current_count Current postings at the marker.
+#' @param min_radius,max_radius Radius in pixels for zero postings, and the cap.
+#' @export
+map_marker_radius <- function(current_count, min_radius = 6, max_radius = 24) {
+  pmin(max_radius, min_radius + 1.2 * sqrt(current_count))
+}
+
+#' A download file's column definitions, for its help popover
+#'
+#' @param file_name The file, as in the data dictionary's `File_Name`.
+#' @param dictionary The app's data dictionary (`File_Name`, `Column_Name`, `Definition`).
+#' @return An htmltools tag list, or NULL when the file has no rows in the dictionary.
+#' @export
+dictionary_columns_help <- function(file_name, dictionary) {
+  d <- dictionary[dictionary$File_Name == file_name, , drop = FALSE]
+  if (nrow(d) == 0) return(NULL)
+  htmltools::tagList(
+    htmltools::p(class = "mb-1", htmltools::tags$strong(nrow(d), " columns:")),
+    htmltools::tags$dl(class = "help-columns mb-0",
+                       lapply(seq_len(nrow(d)), function(i) htmltools::tagList(htmltools::tags$dt(htmltools::tags$code(d$Column_Name[i])), htmltools::tags$dd(d$Definition[i]))))
+  )
+}
+
+#' "(retrieved ...)" text for the data-sources footer
+#'
+#' @param sources Source names, as in `retrieved$Source`.
+#' @param retrieved Data frame with `Source` and `Retrieved` (the app's `source_retrieved_dates.csv`).
+#' @return " (retrieved D)", " (retrieved D1 to D2)" for several dates, or "" when none is known.
+#' @export
+footer_retrieved <- function(sources, retrieved) {
+  x <- sort(unique(retrieved$Retrieved[retrieved$Source %in% sources & nzchar(retrieved$Retrieved)]))
+  if (length(x) == 0) "" else if (length(x) == 1) paste0(" (retrieved ", x, ")") else paste0(" (retrieved ", x[1], " to ", x[length(x)], ")")
+}
