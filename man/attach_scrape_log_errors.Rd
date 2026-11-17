@@ -22,9 +22,11 @@ this run was a real "error" (not "empty") is a much stronger and cheaper
 signal: the registered URL itself is broken (a dead ATS tenant, a DNS
 failure, a migrated platform, an HTTP error perform_with_retry() couldn't
 recover from), not just "no visible postings right now". scrape_log's
-\code{source} strings aren't always an exact match for a flagged \code{name} (a
-platform-prefixed source name, e.g. "Apptegy/chromote: \if{html}{\out{<District>}}",
-would still need this even though nothing in this project currently logs
-that way), so match by substring containment rather than requiring
-equality.
+\code{source} strings are the flagged \code{name} itself or the name behind a
+platform prefix ("Apptegy/chromote: \if{html}{\out{<District>}}", which MT logs), so a
+source matches when it equals the name or ends with ": \if{html}{\out{<name>}}". Not by
+substring: "Fremont County School District 1" is inside "... District 14",
+"Helena Public Schools" inside "East Helena Public Schools" (2026-11-17
+review: a flagged source took another's error, became
+\code{confirmed_broken}, and its auto-fix issue was never filed).
 }

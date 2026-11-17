@@ -1,3 +1,17 @@
+# edjobs 0.38.0
+
+Fixes from the 2026-11-17 full review (workspace `claude-notes/2026-11-17_edjobs-full-review.md`), each with a test.
+
+* `match_job_query()`: what a visitor types is literal text; "(" no longer breaks the map search.
+* `validate_and_pad_schema()` and `build_k12_combinedclean()` pad missing columns on a zero-row frame.
+* A 200 page with no HTML is a failed fetch in every family reader (Google Sites, Finalsite, WordPress, CyberSchool,
+  as Edlio already did; shared `stop_if_no_html()`), so an outage is logged "error", not "empty".
+* `fetch_peopleadmin_atom()`: a posting page with no HTML blanks only that posting's pay and dates.
+* `parse_llm_extracted_postings()`: a model date like "March 20, 2023" is read instead of throwing.
+* `attach_scrape_log_errors()`: a source matches its exact name or the name behind a platform prefix, not a
+  substring ("... District 1" no longer takes "... District 14"'s error).
+* `summarize_central_safety_net()`: the feed total comes from the feed's own log row (exact label, latest).
+
 # edjobs 0.37.0
 
 Package phase 6, slice 2: six more dashboard app helpers that both states' `app.R` defined identically but that read
