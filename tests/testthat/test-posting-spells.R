@@ -72,7 +72,7 @@ test_that("frozen boards are found, broken by a missing run, and their postings 
   p <- rbind(p, do.call(rbind, lapply(seq_along(runs), function(i) ps_row(format(runs[i]), paste0("o", i), paste("Opening", i)))))
   f <- frozen_board_runs(p)
   expect_equal(nrow(f), 1)
-  expect_equal(f$Runs, 14L)
+  expect_equal(c(f$Runs, f$Weeks), c(14L, 14L))
   sp <- build_posting_spells(p, frozen = f)
   expect_true(all(sp$Frozen_Board[sp$District == "Fremont County School District 38"]))
   expect_false(any(sp$In_Durations[sp$District == "Fremont County School District 38"]))
@@ -126,7 +126,7 @@ test_that("Kaplan-Meier medians use delayed entry and need enough endings", {
 test_that("the drift report lists only boards still frozen this run", {
   f <- data.frame(District = c("Fremont County School District 38", "Weston County School District 7"),
                   Posting_Source = c("applitrack.com/fcsd38", "weston7.org"), From = c("2024-10-18", "2024-10-18"),
-                  To = c("2026-10-30", "2025-01-10"), Runs = c(57L, 13L), Postings = c(14L, 10L),
+                  To = c("2026-10-30", "2025-01-10"), Runs = c(57L, 13L), Weeks = c(57L, 13L), Postings = c(14L, 10L),
                   Ongoing = c(TRUE, FALSE), Segment = "K-12", stringsAsFactors = FALSE)
   md <- build_frozen_board_report_markdown(f, date = "2026-11-06")
   expect_true(any(grepl("Fremont County School District 38\\*\\* \\(applitrack.com/fcsd38\\).*14 posting\\(s\\) for 57 weeks", md)))
@@ -350,13 +350,31 @@ test_that("card text in a posted date ('Posted 3 weeks ago') is no date, never a
   expect_identical(names(build_posting_spells(bridge_posting_ids(q))), POSTING_SPELL_COLUMNS)
 })
 
-test_that("Frozen_Board uses the min_runs the frozen table was built with", {
+test_that("Frozen_Board uses the min_weeks the frozen table was built with", {
   runs <- format(as.Date("2026-10-02") + 7 * 0:3)
   p <- do.call(rbind, lapply(runs, function(r) ps_row(r, "a", "Cook")))
   frozen <- data.frame(District = p$District[1], Posting_Source = p$Posting_Source[1], From = runs[1], To = runs[4],
-                       Runs = 4L, Postings = 1L, Ongoing = TRUE, stringsAsFactors = FALSE)
+                       Runs = 4L, Weeks = 4L, Postings = 1L, Ongoing = TRUE, stringsAsFactors = FALSE)
   expect_false(build_posting_spells(p, frozen = frozen)$Frozen_Board)
-  expect_true(build_posting_spells(p, frozen = frozen, frozen_min_runs = 4)$Frozen_Board)
+  sp <- build_posting_spells(p, frozen = frozen, frozen_min_weeks = 4)
+  expect_true(sp$Frozen_Board)
+  expect_equal(sp$Frozen_Weeks, 4L)
+})
+
+test_that("frozen boards are counted in weeks, so twice-weekly runs don't freeze a board twice as fast", {
+  # Mondays and Thursdays: 12 runs are 6 weeks (not frozen), 24 runs are 12 weeks (frozen).
+  mondays <- as.Date("2026-09-07") + 7 * 0:11
+  runs <- sort(c(mondays, mondays + 3))
+  titles <- paste("Teacher", 1:5)
+  board <- function(rr) do.call(rbind, lapply(rr, function(r) do.call(rbind, lapply(titles, function(t)
+    ps_row(format(r), paste0("fb-", t), t, district = "Fremont County School District 38", source = "applitrack.com/fcsd38")))))
+  expect_equal(nrow(frozen_board_runs(board(runs[1:12]))), 0)
+  f <- frozen_board_runs(board(runs))
+  expect_equal(c(f$Runs, f$Weeks), c(24L, 12L))
+  sp <- build_posting_spells(board(runs), frozen = f)
+  expect_true(all(sp$Frozen_Board))
+  expect_equal(unique(sp$Frozen_Weeks), 12L)
+  expect_match(build_frozen_board_report_markdown(cbind(f, Segment = "K-12")), "for 12 weeks", all = FALSE)
 })
 
 test_that("spell_text and spell_key drop zero-width characters and extra spaces", {

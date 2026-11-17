@@ -11,7 +11,7 @@ build_posting_spells(
   frozen = NULL,
   statuses = NULL,
   rules = spell_rules(),
-  frozen_min_runs = FROZEN_MIN_RUNS
+  frozen_min_weeks = FROZEN_MIN_WEEKS
 )
 }
 \arguments{
@@ -29,8 +29,8 @@ it dropped off its board, or NULL.}
 
 \item{rules}{\code{spell_rules()}.}
 
-\item{frozen_min_runs}{Runs inside a frozen stretch that make a posting
-\code{Frozen_Board}: the \code{min_runs} \code{frozen} was built with.}
+\item{frozen_min_weeks}{ISO weeks inside a frozen stretch that make a
+posting \code{Frozen_Board}: the \code{min_weeks} \code{frozen} was built with.}
 }
 \description{
 One row per posting (\code{POSTING_SPELL_COLUMNS}): its start and how it was

@@ -18,8 +18,9 @@
 #'   said), Stated_Close_Date (the deadline the posting states, where it does),
 #'   First_Checked, Last_Checked, Status_Since (first check that found it
 #'   closed), Checks.
-#' A closed status is kept; open and unknown are re-checked on later runs, up
-#' to POSTING_STATUS_MAX_CHECKS times. A failed check is "unknown", never closed.
+#' A closed status is kept; open and unknown are re-checked on later runs for
+#' POSTING_STATUS_RECHECK_DAYS days after the first check. A failed check is
+#' "unknown", never closed.
 #' 
 #' How each platform shows a closed posting (pages captured 2026-11-06 in
 #' tests/testthat/fixtures/posting_status_*.txt):
@@ -37,9 +38,13 @@
 #' @export
 POSTING_STATUS_COLUMNS <- c("Check_URL", "Platform", "Segment", "District", "Title", "Last_Listed", "Status", "Signal",
                             "Stated_Close_Date", "First_Checked", "Last_Checked", "Status_Since", "Checks")
-#' `POSTING_STATUS_MAX_CHECKS`
+#' `POSTING_STATUS_RECHECK_DAYS`
+#'
+#' Days after its first check that an open or unknown posting page is still re-checked. Days, not a number of
+#' checks (2026-11-17): the old limit of 4 checks was 4 weekly runs (days 0, 7, 14, 21), which twice-weekly runs
+#' would use up in under two weeks. 28 days gives those same 4 checks on weekly runs.
 #' @export
-POSTING_STATUS_MAX_CHECKS <- 4
+POSTING_STATUS_RECHECK_DAYS <- 28
 #' `POSTING_STATUS_BROWSER_PLATFORMS`
 #' @export
 POSTING_STATUS_BROWSER_PLATFORMS <- c("redrover", "oracle", "paycom")
@@ -302,14 +307,17 @@ merge_posting_status <- function(previous, checks, run_date) {
 
 #' Posting status rechecks
 #'
-#' Postings already in the table that are still open or unknown, checked fewer
-#' than POSTING_STATUS_MAX_CHECKS times, and not back on their board this run.
+#' Postings already in the table that are still open or unknown, first checked
+#' fewer than POSTING_STATUS_RECHECK_DAYS days before `run_date`, and not back on
+#' their board this run.
 #' @param previous See the description.
 #' @param listed_check_urls See the description.
+#' @param run_date This run's date.
 #' @export
-posting_status_rechecks <- function(previous, listed_check_urls) {
+posting_status_rechecks <- function(previous, listed_check_urls, run_date = Sys.Date()) {
   if (is.null(previous) || nrow(previous) == 0) return(previous[0, , drop = FALSE])
-  previous[previous$Status != "closed" & as.integer(previous$Checks) < POSTING_STATUS_MAX_CHECKS &
+  age <- as.numeric(as.Date(run_date) - as.Date(substr(previous$First_Checked, 1, 10)))
+  previous[previous$Status != "closed" & !is.na(age) & age < POSTING_STATUS_RECHECK_DAYS &
              !previous$Check_URL %in% listed_check_urls, , drop = FALSE]
 }
 
@@ -351,7 +359,7 @@ refresh_posting_status <- function(k12_archive_dir = "Archivek12_Data", he_archi
     }
   }
   todo <- dplyr::bind_rows(todo)
-  re <- posting_status_rechecks(previous, listed)
+  re <- posting_status_rechecks(previous, listed, run_date)
   if (!is.null(re) && nrow(re) > 0) {
     todo <- dplyr::bind_rows(todo, data.frame(url = re$Check_URL, title = re$Title, District = re$District,
                                               Check_URL = re$Check_URL, Segment = re$Segment,

@@ -138,7 +138,7 @@ reference:
 - title: "Posting spells and listing durations"
   contents:
   - EVERGREEN_TITLE_PATTERN
-  - FROZEN_MIN_RUNS
+  - FROZEN_MIN_WEEKS
   - POSTING_SPELL_COLUMNS
   - POSTING_SPELL_EVENTS
   - bridge_posting_ids
@@ -159,7 +159,7 @@ reference:
   contents:
   - POSTING_STATUS_BROWSER_PLATFORMS
   - POSTING_STATUS_COLUMNS
-  - POSTING_STATUS_MAX_CHECKS
+  - POSTING_STATUS_RECHECK_DAYS
   - POSTING_STATUS_UA
   - check_posting_pages
   - drop_closed_wsba_rows
@@ -186,6 +186,9 @@ reference:
 - title: "Drift, data-quality and auto-fix checks"
   contents:
   - build_historical_counts
+  - last_run_each_week
+  - week_start
+  - recent_archive_files
   - flag_drift
   - summarize_central_safety_net
   - build_drift_report_markdown

@@ -1,3 +1,23 @@
+# edjobs 0.39.0
+
+Twice-weekly runs (2026-11-17): every history window and threshold that counted runs or files where weeks were
+meant now counts days or ISO weeks, so it means the same with two full runs a week. On weekly runs each gives the
+same result as before, except where an archive already holds two runs in one week (a re-run), which now count as
+one week.
+
+* `week_start()` (the Monday of a date's ISO week) and `last_run_each_week()` (each week's last run, from dates or
+  dated file names).
+* `build_historical_counts()` reads each week's last run, so `n_weeks` stays weeks and `mean_count` a weekly
+  average. Callers of `flag_pay_coverage_drop()` and `flag_other_share_jump()` pass one history entry per week
+  through `last_run_each_week()`.
+* `recent_archive_files(days = 56)`: dated archives from the last `days` days; `recent_source_titles()` takes
+  `days = 56` instead of the last 8 files.
+* Frozen boards are counted in ISO weeks: `FROZEN_MIN_WEEKS` (12) replaces `FROZEN_MIN_RUNS`;
+  `frozen_board_runs(min_weeks = )` adds a `Weeks` column and filters on it; `build_posting_spells(frozen_min_weeks
+  = )`, and the spells column `Frozen_Weeks` replaces `Frozen_Runs`. The drift report's "for N weeks" prints weeks.
+* Posting pages are re-checked for `POSTING_STATUS_RECHECK_DAYS` (28) days after the first check, replacing
+  `POSTING_STATUS_MAX_CHECKS` (4); `posting_status_rechecks(run_date = )`.
+
 # edjobs 0.38.0
 
 Fixes from the 2026-11-17 full review (workspace `claude-notes/2026-11-17_edjobs-full-review.md`), each with a test.

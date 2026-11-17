@@ -6,7 +6,7 @@
 \usage{
 frozen_board_runs(
   rows,
-  min_runs = FROZEN_MIN_RUNS,
+  min_weeks = FROZEN_MIN_WEEKS,
   min_postings = FROZEN_MIN_POSTINGS
 )
 }
@@ -14,16 +14,17 @@ frozen_board_runs(
 \item{rows}{Any frame with Run_Date, District, Posting_Source (or none: one
 board per district) and title.}
 
-\item{min_runs, min_postings}{Thresholds.}
+\item{min_weeks, min_postings}{Thresholds.}
 }
 \value{
 One row per frozen stretch: District, Posting_Source, From, To,
-Runs, Postings, Ongoing (still frozen in the latest run).
+Runs, Weeks (ISO weeks the stretch's runs fall in), Postings, Ongoing
+(still frozen in the latest run).
 }
 \description{
 A source whose whole posting set (titles, any case) was identical run after
-run. Real boards change; a set unchanged for \code{min_runs}+ runs with
-\code{min_postings}+ postings is a stale page or cache, and every posting on it
+run. Real boards change; a set unchanged across \code{min_weeks}+ ISO weeks
+(\code{week_start()}) with \code{min_postings}+ postings is a stale page or cache, and every posting on it
 looks listed for as long as the freeze. A run with no rows from the board
 breaks a stretch.
 }

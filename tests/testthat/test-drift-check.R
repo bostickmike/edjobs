@@ -696,3 +696,29 @@ test_that("text_diff of the pre-fix Lone Rock fixture vs the CI capture shows th
   expect_lt(length(d), 40)
   expect_equal(text_diff("a\n\nb ", "a\nb"), character(0))
 })
+
+test_that("week_start and last_run_each_week key runs by ISO week (Monday to Sunday)", {
+  expect_equal(week_start(c("2026-11-16", "2026-11-19", "2026-11-22", "2026-11-23")),
+               as.Date(c("2026-11-16", "2026-11-16", "2026-11-16", "2026-11-23")))
+  # Twice-weekly (Mon + Thu): the Thursday run stands for its week.
+  expect_equal(last_run_each_week(c("2026-11-19", "2026-11-16", "2026-11-23", "2026-11-26", "2026-11-09")),
+               c("2026-11-09", "2026-11-19", "2026-11-26"))
+  # File paths keep their directory; names without a date are dropped; weekly runs pass through.
+  f <- c("A/combined_2026-11-06.csv", "A/combined_2026-11-13.csv", "A/README.md", "A/combined_2026-11-10.csv")
+  expect_equal(last_run_each_week(f), c("A/combined_2026-11-06.csv", "A/combined_2026-11-13.csv"))
+  expect_equal(last_run_each_week(as.Date(c("2026-11-06", "2026-11-13"))), as.Date(c("2026-11-06", "2026-11-13")))
+  expect_length(last_run_each_week(character(0)), 0)
+})
+
+test_that("build_historical_counts gives the same baseline from twice-weekly runs as from weekly ones", {
+  old <- current_state_config()
+  set_state_config(state_config("Test", "00", "app", drift_baseline_from = "2026-01-01"))
+  withr::defer(set_state_config(old))
+  thursdays <- format(as.Date("2026-10-01") + 7 * 0:3)
+  weekly <- setNames(lapply(c(3, 5, 0, 4), function(n) data.frame(name = c(rep("A", n), "B"))), thursdays)
+  # Monday runs in between, with other counts: they must not change the weekly baseline.
+  mondays <- format(as.Date(thursdays) - 3)
+  twice <- c(weekly, setNames(lapply(c(9, 9, 9, 9), function(n) data.frame(name = rep("A", n))), mondays))
+  expect_equal(build_historical_counts(twice, "name"), build_historical_counts(weekly, "name"))
+  expect_equal(build_historical_counts(twice, "name")$n_weeks[1], 4L)
+})
