@@ -424,6 +424,8 @@ match_job_query <- function(title_vec, query) {
   } else {
     words <- strsplit(q, "[[:space:]]+")[[1]]
     words <- words[nzchar(words)]
+    # What a visitor types is text, not a pattern: "(" or "c++" must match literally, never error (review 11-17).
+    words <- gsub("([][{}()+*^$|\\\\?.])", "\\\\\\1", words)
     if (length(words) > 1) {
       paste0("(?=.*", words, ")", collapse = "")
     } else {
@@ -468,7 +470,8 @@ validate_and_pad_schema <- function(df, required_cols, source_name,
       "%s is missing expected column(s): %s. That data will show blank until the pipeline is fixed.",
       source_name, paste(missing, collapse = ", ")
     ))
-    for (col in missing) df[[col]] <- NA
+    # rep(): a header-only file has zero rows, where `df[[col]] <- NA` fails (review 11-17).
+    for (col in missing) df[[col]] <- rep(NA, nrow(df))
   }
   df
 }

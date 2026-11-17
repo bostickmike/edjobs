@@ -76,7 +76,7 @@ with_feed_label <- function(env = parent.frame()) {
 # attach_oews_estimates() is tested with the OEWS scraper; here it only adds its columns.
 stub_oews <- function(env = parent.frame()) {
   testthat::local_mocked_bindings(attach_oews_estimates = function(postings, wages, county, state, ...) {
-    for (col in OEWS_ESTIMATE_COLUMNS) postings[[col]] <- NA
+    for (col in OEWS_ESTIMATE_COLUMNS) postings[[col]] <- rep(NA, nrow(postings))
     postings$Est_Area <- ifelse(is.na(county), state, county)
     postings
   }, .env = env)
@@ -93,6 +93,16 @@ test_that("build_k12_combinedclean writes the shared columns from a state's own 
   expect_equal(out$position, c("Teacher", classify_k12_position("Mathematics"), classify_k12_position("Custodian"), "Teacher"))
   expect_true(all(is.na(out$Posting_Source)) && all(is.na(out$Feed_District)) && all(is.na(out$Also_On_Feed)) && all(is.na(out$Role_Hint)))
   expect_equal(out$Est_Area, c("Alpha County", "WY", "Alpha County", "WY"))
+})
+
+test_that("build_k12_combinedclean returns the empty shared schema for a run with no rows", {
+  with_feed_label(); stub_oews()
+  rows <- k12_rows()[0, ]
+  rows$posting_id <- character(0)
+  out <- build_k12_combinedclean(rows, oews_none(), data.frame(District = "Alpha Schools", County = "Alpha County"), "WY",
+                                 columns = c(Posting_ID = "posting_id"))
+  expect_equal(names(out), K12_POSTING_COLUMNS)
+  expect_equal(nrow(out), 0)
 })
 
 test_that("build_k12_combinedclean reads feed columns, role hints for feed rows only, and feed counties", {
