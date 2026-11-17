@@ -787,6 +787,15 @@ classify_he_job_type_rules <- function(title) {
     # copy of the same words.
     grepl("Chef|Cook|Baker|Dining|Culinary|Barista|Caf[e\u00e9]|Dishwasher|Kitchen|Catering|Food Service|Line Server", title, ignore.case = TRUE) ~ "Culinary",
 
+    # Officers before Professional's "Officer" (2026-11-17 review, bug 11): a chief officer runs a division
+    # (Administration, like "Chief" below), and police and security officers are campus safety staff (Support
+    # Services' Police/Security). Information/cyber security officers stay with Professional/Technical.
+    # "Office of the CIO" names a unit, not the job; environmental/radiation safety officers are professional
+    # EHS staff, so only campus/public safety officers count here.
+    grepl("\\bChief\\b[^,;/]*\\bOfficer\\b|\\bC[FIMT]O\\b", title) & !grepl("Office of the", title, ignore.case = TRUE) ~ "Administration",
+    grepl("Police Officer|Patrol|Public Safety Officer|Campus Safety Officer|Security Officer|Security Guard", title, ignore.case = TRUE) &
+      !grepl("Information|Cyber|Data|Network|IT\\b", title, ignore.case = TRUE) ~ "Support Services",
+
     # Professional
     grepl("Admissions|Coordinator|\\bCoord\\b|Registrar|Executive Assistant|Professional|Statistician|Proctor|Exec Assistant|Grant Writer|Graphic Designer|Negotiator|Botanist|College Relations|Controller|Database|Officer|Auditor|Web Site|Special Assistant|Retention Mentor|Buyer Assistant|Buyer, Textbooks|GEAR UP Event & College Coordination|Ombudsperson|Data Analyst|Employee Relations Specialist|Finance Technician|Grant Support Specialist|Marketing & Comm Spec.|Program Specialist",
           title, ignore.case = TRUE) ~ "Professional",
@@ -801,13 +810,17 @@ classify_he_job_type_rules <- function(title) {
     grepl("Accountant|Receivable|Accounts|Payroll|Bursar|Accounting|Cashier|Financial Associate|Storekeeper", title, ignore.case = TRUE) ~ "Accounting/Finance",
 
     # Research & Science (only actual research/scientific roles)
-    grepl("Research Associate|Laboratory Technician|Research Scientist|Research Assistant|Lab Assistant|Laboratory Assistant|Lab/Clinical|Farm M|Researcher|ologist\\b|Research Pilot|Laboratory Aide|Lab Aide|Husbandry|Paleontolog|Fossil", title, ignore.case = TRUE) ~ "Research & Science",
+    grepl("Research Associate|Laboratory Technician|Lab Technician|Research Scientist|Research Assistant|Lab Assistant|Laboratory Assistant|Lab/Clinical|Farm M|Researcher|ologist\\b|Research Pilot|Laboratory Aide|Lab Aide|Husbandry|Paleontolog|Fossil", title, ignore.case = TRUE) ~ "Research & Science",
 
     # Technical -- bare "Specialist" excluded (it shadows later, more
     # specific buckets like Support Services' "Library Information
     # Specialist"; only qualified "<Thing> Specialist" phrases stay here).
     # A stationary engineer runs the heating plant; enterprise/solutions/data
     # architects are IT (golden set, 2026-11-09).
+    # Technicians whose work isn't buildings or equipment, before Maintenance & Service's "Technician"
+    # (2026-11-17 review, bug 11).
+    grepl("Pharmacy Tech", title, ignore.case = TRUE) ~ "Healthcare",
+    grepl("Library (Technician|Tech\\b|Assistant|Associate)", title, ignore.case = TRUE) ~ "Support Services",
     grepl("Stationary Engineer", title, ignore.case = TRUE) ~ "Maintenance & Service",
     grepl("(Enterprise|Solutions?|Data|Cloud|Software) Architect", title, ignore.case = TRUE) ~ "Technical",
 

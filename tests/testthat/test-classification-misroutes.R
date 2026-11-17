@@ -129,3 +129,17 @@ test_that("school and place names don't pick a subject (2026-11-17 review, bug 1
     "Language Education", "Language Education", "Mathematics Education", "English Language Arts Education",
     "English Language Arts Education"))
 })
+
+test_that("college officers and technicians land in their own job types (2026-11-17 review, bug 11)", {
+  t <- c("Chief Financial Officer (CFO) and Associate Vice President (AVP)", "WPBS Chief Technology Officer",
+         "Police Officer - University Police", "Campus Security Officer", "Police Patrol Officer",
+         "Pharmacy Technician - Casper", "Library Technician (Part-Time)", "Library Tech II", "Library Associate",
+         # stay where they were
+         "Hourly Pooled - Teldesk Aide, Office of the CIO", "Radiation Safety Officer - UW Safety Office",
+         "Occupational and Environmental Safety Officer", "Information Security Officer",
+         "Library Specialist - Studio Coe, UW Libraries User Services Division", "Police Records Coordinator")
+  expect_equal(classify_he_job_type(t), c(
+    "Administration", "Administration", "Support Services", "Support Services", "Support Services",
+    "Healthcare", "Support Services", "Support Services", "Support Services",
+    "Support Services", "Professional", "Professional", "Professional", "Professional", "Professional"))
+})
