@@ -97,3 +97,14 @@ test_that("place_he_postings uses title, department table and page places; sever
   expect_false("Page_Places" %in% names(out))
   expect_setequal(setdiff(names(out), names(p)), HE_PLACE_COLUMNS)
 })
+
+test_that("a town marked with another state's name isn't placed in this state (2026-11-17 review)", {
+  title <- c("Extension Agent (Big Horn, MT)", "Extension Agent (Big Horn, WY)", "Instructor (Rock Springs Campus)")
+  expect_equal(title_place_names(title, "WY"), list(character(0), "Big Horn", "Rock Springs"))
+  expect_equal(title_place_names(title, "MT"), list("Big Horn", character(0), "Rock Springs"))
+  expect_equal(title_place_names("Agent (Boise, Idaho)", "ID"), list("Boise"))
+  expect_equal(title_place_names("Agent (Boise, Idaho)", "WY"), list(character(0)))
+  # With no state given and no state config, any US state's name or abbreviation counts.
+  old <- current_state_config(); set_state_config(NULL); on.exit(set_state_config(old))
+  expect_equal(title_place_names(title[1:2]), list("Big Horn", "Big Horn"))
+})

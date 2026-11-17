@@ -4,10 +4,13 @@
 \alias{peopleadmin_page_places}
 \title{Places a PeopleAdmin posting page names}
 \usage{
-peopleadmin_page_places(html_text)
+peopleadmin_page_places(html_text, state_abbrev = NULL)
 }
 \arguments{
 \item{html_text}{A posting page, or NA.}
+
+\item{state_abbrev}{Two-letter abbreviation; by default the state config's (from its \code{state} name). With neither,
+any US state.}
 }
 \value{
 Character: the names found, "; "-separated, or NA.

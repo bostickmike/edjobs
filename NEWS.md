@@ -18,6 +18,9 @@ Fixes from the 2026-11-17 full review (workspace `claude-notes/2026-11-17_edjobs
 * `reference_table_problem()`: a refresh whose newest `year_col` is older than the current file's is rejected.
 * `googledoc_preview_text()`: reads each value as a JSON string, so an escaped quote no longer cuts off the rest
   of the document and every escape (`\u0026`, `\"`) is decoded. Victor's preview reads identically.
+* College places: a "Town, ST" title marker or page sentence counts only for the state being placed
+  (`place_state_rx()`, from `place_he_postings(state_abbrev = )` or the state config), not MT/WY in either state; a
+  third state's markers now read. Every archived MT and WY college title gives the same markers as before.
 
 # edjobs 0.37.0
 

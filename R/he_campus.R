@@ -66,7 +66,26 @@ read_state_places <- function(path) {
 # address) and application checkboxes ("Interested in Billings Campus"). Measured on 360 live PeopleAdmin pages and
 # MT's archives: claude-notes/2026-11-16_college-campus-locations.md, "Stage 2 measured".
 PLACE_NAME_RX <- "([A-Z][A-Za-z.'-]+(?: [A-Z][A-Za-z.'-]+){0,2})"
-PLACE_STATE_RX <- ",?\\s*(?:MT|Montana|WY|Wyoming)\\b"
+
+#' The ", ST" / ", State" that follows a town in a title marker or page sentence
+#'
+#' Only the state being placed: a Wyoming posting naming "(Big Horn, MT)" is not in Big Horn, Wyoming (twelve town
+#' names exist in both states). Until 2026-11-17 the pattern accepted MT, Montana, WY and Wyoming in either state and
+#' no other state at all.
+#' @param state_abbrev Two-letter abbreviation; by default the state config's (from its `state` name). With neither,
+#'   any US state.
+#' @return A regular expression.
+#' @export
+place_state_rx <- function(state_abbrev = NULL) {
+  if (is.null(state_abbrev)) {
+    config <- current_state_config()
+    if (!is.null(config)) state_abbrev <- datasets::state.abb[match(config$state, datasets::state.name)]
+  }
+  states <- if (is.null(state_abbrev) || all(is.na(state_abbrev))) c(datasets::state.abb, datasets::state.name) else
+    c(state_abbrev, datasets::state.name[match(state_abbrev, datasets::state.abb)])
+  # A comma or a space before the state: "(GJSSC)" is an acronym, not "GJS, SC".
+  paste0("(?:,\\s*|\\s+)(?:", paste(stats::na.omit(states), collapse = "|"), ")\\b")
+}
 
 # Every first capture group of `rx` in each string.
 all_captures <- function(x, rx) {
@@ -80,10 +99,11 @@ all_captures <- function(x, rx) {
 #' is a town and either a state or "Campus" inside asterisks or parentheses; a town elsewhere in a title doesn't
 #' count ("Director of ... the Green River Center").
 #' @param title Character vector of titles.
+#' @inheritParams place_state_rx
 #' @return A list of character vectors (candidate names, not yet checked against the state's places).
 #' @export
-title_place_names <- function(title) {
-  rx <- paste0("[*(]\\s*", PLACE_NAME_RX, "(?:", PLACE_STATE_RX, "|\\s+Campus)\\s*[*)]")
+title_place_names <- function(title, state_abbrev = NULL) {
+  rx <- paste0("[*(]\\s*", PLACE_NAME_RX, "(?:", place_state_rx(state_abbrev), "|\\s+Campus)\\s*[*)]")
   all_captures(coalesce_chr(title), rx)
 }
 
@@ -95,16 +115,17 @@ title_place_names <- function(title) {
 #' "main campus" in lower case (a site banner's "Main Campus" is not about the job), returned as "main campus".
 #' Names are not yet checked against the state's places.
 #' @param html_text A posting page, or NA.
+#' @inheritParams place_state_rx
 #' @return Character: the names found, "; "-separated, or NA.
 #' @export
-peopleadmin_page_places <- function(html_text) {
+peopleadmin_page_places <- function(html_text, state_abbrev = NULL) {
   if (is.na(html_text)) return(NA_character_)
   doc <- rvest::read_html(html_text)
   xml2::xml_remove(rvest::html_elements(doc, "script, style, nav, header, footer"))
   body <- rvest::html_element(doc, "body")
   if (inherits(body, "xml_missing")) return(NA_character_)
   txt <- gsub("\\s+", " ", rvest::html_text2(body))
-  rx <- c(paste0("\\bThis position is (?:located|based) in ", PLACE_NAME_RX, PLACE_STATE_RX),
+  rx <- c(paste0("\\bThis position is (?:located|based) in ", PLACE_NAME_RX, place_state_rx(state_abbrev)),
           paste0("\\bThe Extension office is located in ", PLACE_NAME_RX, "\\b"),
           paste0("\\b(?:at|on) the ", PLACE_NAME_RX, " (?:Campus|campus|Center)\\b"))
   found <- unlist(lapply(rx, function(r) all_captures(txt, r)[[1]]))
@@ -148,7 +169,7 @@ place_he_postings <- function(postings, institutions, places, state_abbrev, camp
     dept <- campus_departments$Town[match(paste(postings$Institution, postings$Location, sep = "\r"),
                                           paste(campus_departments$Institution, campus_departments$Location, sep = "\r"))]
   }
-  titles <- if ("Title" %in% names(postings)) title_place_names(postings$Title) else vector("list", n)
+  titles <- if ("Title" %in% names(postings)) title_place_names(postings$Title, state_abbrev) else vector("list", n)
   page <- if ("Page_Places" %in% names(postings)) strsplit(coalesce_chr(postings$Page_Places), "; ", fixed = TRUE) else vector("list", n)
   loc_town <- location_town(postings$Location, places, state_abbrev)
   towns <- lapply(seq_len(n), function(i) {
