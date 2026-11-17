@@ -13,9 +13,11 @@ test_that("the IPEDS fetchers put the state's FIPS code in the URL and walk back
   expect_equal(unique(out$Salary_Year), "2024")
 })
 
-test_that("a failing salary year counts as empty, but a failing enrollment year stops the search (both states' behavior)", {
+test_that("a failing year stops every IPEDS search; only a year with no rows moves it back (2026-11-17 review)", {
+  # Until 0.38.0 the salary search read any error as "no rows" and shipped the year before. Both states call it
+  # inside safe_scrape(), and an empty result keeps salarymap's current values.
   local_mocked_bindings(fetch_json_paginated = function(url, ...) stop("HTTP 524"))
-  expect_true(is.na(find_latest_ipeds_salary_year("56", start_year = 2024, years_back = 1)$year))
+  expect_error(find_latest_ipeds_salary_year("56", start_year = 2024, years_back = 1), "524")
   expect_error(find_latest_ipeds_enrollment_year("56", start_year = 2024, years_back = 1), "524")
 })
 

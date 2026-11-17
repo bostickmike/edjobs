@@ -11,6 +11,11 @@ Fixes from the 2026-11-17 full review (workspace `claude-notes/2026-11-17_edjobs
 * `attach_scrape_log_errors()`: a source matches its exact name or the name behind a platform prefix, not a
   substring ("... District 1" no longer takes "... District 14"'s error).
 * `summarize_central_safety_net()`: the feed total comes from the feed's own log row (exact label, latest).
+* Federal year searches (IPEDS staff and instructional salaries, the college directory, QCEW, ACS, SAIPE): only a
+  year that isn't published yet (a 404, or no rows) moves the search back; a 5xx or timeout on the newest year now
+  propagates, so the pipeline keeps last run's file and logs the failure instead of shipping an older year
+  (`try_federal_year()`; each API's answer for 2027 checked 2026-11-17).
+* `reference_table_problem()`: a refresh whose newest `year_col` is older than the current file's is rejected.
 
 # edjobs 0.37.0
 

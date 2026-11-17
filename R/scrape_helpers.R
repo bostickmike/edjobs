@@ -48,6 +48,24 @@ perform_with_retry <- function(req, max_tries = 3, path = NULL, is_transient = N
   httr2::req_perform(req, path = path)
 }
 
+#' Try one year of a federal source
+#'
+#' The year searches walk back from this calendar year to the newest year a
+#' source has published. Only "not published" may move the search on: a 404
+#' (BLS QCEW, the Census ACS for a vintage that doesn't exist yet) returns
+#' `empty`; Urban Institute's empty list and SAIPE's 204 already read as no
+#' rows. Any other error (a 5xx, a timeout) propagates, so the caller keeps
+#' last run's file and logs the failure instead of shipping an older year as
+#' if it were the newest (2026-11-17 review; responses for 2027 checked that
+#' day).
+#' @param expr The fetch for one year.
+#' @param empty What a not-yet-published year returns (`data.frame()`, `NULL`).
+#' @return `expr`'s value, or `empty` on a 404.
+#' @export
+try_federal_year <- function(expr, empty = data.frame()) {
+  tryCatch(expr, httr2_http_404 = function(e) empty)
+}
+
 #' Is transient gateway error
 #'
 #' httr2's default retries only 429/503, so a 502/504 or a Cloudflare
@@ -245,7 +263,8 @@ reference_rules_for <- function(path, rules = reference_table_rules()) {
 #'
 #' Why `new` shouldn't replace `old` (NULL when it's fine): fewer than
 #' `min_share` of the current rows, a required column missing or mostly
-#' blank, or a value out of bounds. With `old = NULL`, it checks a file on
+#' blank, a value out of bounds, or a newest `year_col` older than the
+#' current file's. With `old = NULL`, it checks a file on
 #' its own.
 #' @param new See the description.
 #' @param rules See the description.
@@ -270,6 +289,15 @@ reference_table_problem <- function(new, rules, old = NULL, min_share = 0.9) {
       return(sprintf("%d %s value(s) outside %s-%s (e.g. %s)", sum(out), col,
                      format(lim[1], big.mark = ",", scientific = FALSE),
                      format(lim[2], big.mark = ",", scientific = FALSE), v[out][1]))
+    }
+  }
+  # An older year never replaces a newer one: a year search that fell back past a failed newest year would
+  # otherwise overwrite the file and stamp today as its retrieval date (2026-11-17 review).
+  yc <- rules$year_col
+  if (!is.null(old) && length(yc) == 1 && !is.na(yc) && yc %in% names(new) && yc %in% names(old)) {
+    newest <- function(x) suppressWarnings(max(as.numeric(x), na.rm = TRUE))
+    if (is.finite(newest(old[[yc]])) && is.finite(newest(new[[yc]])) && newest(new[[yc]]) < newest(old[[yc]])) {
+      return(sprintf("%s %s is older than the current file's %s", yc, newest(new[[yc]]), newest(old[[yc]])))
     }
   }
   NULL

@@ -97,7 +97,7 @@ fetch_saipe_geography <- function(geocat, year, api_key = census_api_key(), fips
 latest_saipe_year <- function(start_year = as.integer(format(Sys.Date(), "%Y")), years_back = 4,
                               api_key = census_api_key(), fips = state_fips()) {
   for (year in seq(start_year, start_year - years_back)) {
-    result <- tryCatch(fetch_saipe_geography("unified", year, api_key, fips), error = function(e) data.frame())
+    result <- try_federal_year(fetch_saipe_geography("unified", year, api_key, fips))
     if (nrow(result) > 0) return(year)
   }
   stop("latest_saipe_year(): no working SAIPE vintage found in the last ", years_back, " years.")

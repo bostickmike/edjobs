@@ -88,7 +88,7 @@ fetch_ipeds_staff_year <- function(year, fips) {
 #' @export
 fetch_ipeds_staff_salaries <- function(fips, unitids, start_year = as.integer(format(Sys.Date(), "%Y")), lookback = 4) {
   for (year in seq(start_year, start_year - lookback)) {
-    results <- tryCatch(fetch_ipeds_staff_year(year, fips), error = function(e) data.frame())
+    results <- try_federal_year(fetch_ipeds_staff_year(year, fips))
     if (nrow(results) > 0) return(parse_ipeds_staff_salaries(results, unitids, year))
   }
   stop("No IPEDS non-instructional staff salary data for fips ", fips, " since ", start_year - lookback)
