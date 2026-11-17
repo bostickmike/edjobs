@@ -57,19 +57,21 @@ POOL_TITLE_PATTERN <- "\\bpool\\b|\\badjunct\\b|part[- ]time faculty|applicant (
 
 #' Frozen-board and partial-run thresholds
 #'
-#' A board whose whole posting set stayed identical for `FROZEN_MIN_RUNS`+ runs
-#' with `FROZEN_MIN_POSTINGS`+ postings is frozen (a stale page or cache:
-#' Fremont #38, WY, 2024-10 to 2025-11). A source that returned under half its
+#' A board whose whole posting set stayed identical, run after run, across
+#' `FROZEN_MIN_WEEKS`+ ISO weeks with `FROZEN_MIN_POSTINGS`+ postings is frozen
+#' (a stale page or cache: Fremont #38, WY, 2024-10 to 2025-11). Weeks, not runs
+#' (2026-11-17): 12 was set on weekly runs, and twice-weekly runs would reach it
+#' in 6 weeks. A source that returned under half its
 #' previous run's rows, with at least `PARTIAL_MIN_PREVIOUS` before, had a
 #' partial run (University of Wyoming: 208 rows on 2026-07-31, 25 on 08-04).
 #' @export
-FROZEN_MIN_RUNS <- 12
+FROZEN_MIN_WEEKS <- 12
 
-#' @rdname FROZEN_MIN_RUNS
+#' @rdname FROZEN_MIN_WEEKS
 #' @export
 FROZEN_MIN_POSTINGS <- 5
 
-#' @rdname FROZEN_MIN_RUNS
+#' @rdname FROZEN_MIN_WEEKS
 #' @export
 PARTIAL_MIN_PREVIOUS <- 10
 
@@ -387,19 +389,21 @@ split_posting_gaps <- function(panel) {
 #' Frozen boards
 #'
 #' A source whose whole posting set (titles, any case) was identical run after
-#' run. Real boards change; a set unchanged for `min_runs`+ runs with
-#' `min_postings`+ postings is a stale page or cache, and every posting on it
+#' run. Real boards change; a set unchanged across `min_weeks`+ ISO weeks
+#' (`week_start()`) with `min_postings`+ postings is a stale page or cache, and every posting on it
 #' looks listed for as long as the freeze. A run with no rows from the board
 #' breaks a stretch.
 #' @param rows Any frame with Run_Date, District, Posting_Source (or none: one
 #'   board per district) and title.
-#' @param min_runs,min_postings Thresholds.
+#' @param min_weeks,min_postings Thresholds.
 #' @return One row per frozen stretch: District, Posting_Source, From, To,
-#'   Runs, Postings, Ongoing (still frozen in the latest run).
+#'   Runs, Weeks (ISO weeks the stretch's runs fall in), Postings, Ongoing
+#'   (still frozen in the latest run).
 #' @export
-frozen_board_runs <- function(rows, min_runs = FROZEN_MIN_RUNS, min_postings = FROZEN_MIN_POSTINGS) {
+frozen_board_runs <- function(rows, min_weeks = FROZEN_MIN_WEEKS, min_postings = FROZEN_MIN_POSTINGS) {
   empty <- data.frame(District = character(0), Posting_Source = character(0), From = character(0), To = character(0),
-                      Runs = integer(0), Postings = integer(0), Ongoing = logical(0), stringsAsFactors = FALSE)
+                      Runs = integer(0), Weeks = integer(0), Postings = integer(0), Ongoing = logical(0),
+                      stringsAsFactors = FALSE)
   if (is.null(rows) || nrow(rows) == 0) return(empty)
   if (is.null(rows$Posting_Source)) rows$Posting_Source <- ""
   all_runs <- sort(unique(as.Date(rows$Run_Date)))
@@ -414,11 +418,11 @@ frozen_board_runs <- function(rows, min_runs = FROZEN_MIN_RUNS, min_postings = F
     dplyr::mutate(chg = c(TRUE, key[-1] != key[-dplyr::n()] | diff(run_idx) != 1), stretch = cumsum(chg)) %>%
     dplyr::group_by(District, Posting_Source, stretch) %>%
     dplyr::summarize(From = format(min(Run_Date)), To = format(max(Run_Date)), Runs = dplyr::n(),
-                     Postings = dplyr::first(n), .groups = "drop") %>%
-    dplyr::filter(Runs >= min_runs, Postings >= min_postings) %>%
+                     Weeks = dplyr::n_distinct(week_start(Run_Date)), Postings = dplyr::first(n), .groups = "drop") %>%
+    dplyr::filter(Weeks >= min_weeks, Postings >= min_postings) %>%
     dplyr::mutate(Ongoing = To == format(max(all_runs))) %>%
-    dplyr::select(District, Posting_Source, From, To, Runs, Postings, Ongoing) %>%
-    dplyr::arrange(dplyr::desc(Runs))
+    dplyr::select(District, Posting_Source, From, To, Runs, Weeks, Postings, Ongoing) %>%
+    dplyr::arrange(dplyr::desc(Weeks))
   as.data.frame(out)
 }
 
@@ -437,12 +441,12 @@ build_frozen_board_report_markdown <- function(frozen, date = Sys.Date()) {
   c(
     paste0("### Boards that haven't changed in weeks (", date, ")"),
     "",
-    paste("Each board below has listed exactly the same postings every week for the number of weeks shown.",
+    paste("Each board below has listed exactly the same postings in every run for the number of weeks shown.",
           "Real boards change; this is usually a stale page, a cache, or a scraper reading an old copy, and",
           "its postings keep counting as live in the weekly totals. Open the board and compare."),
     "",
     sprintf("- **%s**%s (%s): the same %d posting(s) for %d weeks, since %s",
-            frozen$District, board, frozen$Segment, frozen$Postings, frozen$Runs, frozen$From),
+            frozen$District, board, frozen$Segment, frozen$Postings, frozen$Weeks, frozen$From),
     ""
   )
 }
@@ -477,7 +481,7 @@ POSTING_SPELL_COLUMNS <- c(
   "Posted_Date", "First_Seen", "Last_Seen", "Runs_Seen", "Runs_Spanned", "Next_Run", "Next_Run_Source_Status",
   "Moved_Boards", "Page_Status", "Ending", "Event", "Start_Basis", "Start_Date", "School_Year", "Left_Censored",
   "Days_Before_First_Seen", "Stated_Close_Date", "End_Basis", "End_Date", "Days_Listed", "Advertised_Days",
-  "Evergreen", "Pool", "Frozen_Runs", "Frozen_Board", "Shared_Title", "In_Durations")
+  "Evergreen", "Pool", "Frozen_Weeks", "Frozen_Board", "Shared_Title", "In_Durations")
 
 #' Build posting spells from a panel
 #'
@@ -493,11 +497,11 @@ POSTING_SPELL_COLUMNS <- c(
 #' @param statuses posting_status.csv: what each posting's own page said after
 #'   it dropped off its board, or NULL.
 #' @param rules `spell_rules()`.
-#' @param frozen_min_runs Runs inside a frozen stretch that make a posting
-#'   `Frozen_Board`: the `min_runs` `frozen` was built with.
+#' @param frozen_min_weeks ISO weeks inside a frozen stretch that make a
+#'   posting `Frozen_Board`: the `min_weeks` `frozen` was built with.
 #' @export
 build_posting_spells <- function(panel, calendar = NULL, endings = NULL, frozen = NULL, statuses = NULL,
-                                 rules = spell_rules(), frozen_min_runs = FROZEN_MIN_RUNS) {
+                                 rules = spell_rules(), frozen_min_weeks = FROZEN_MIN_WEEKS) {
   if (is.null(panel$Close_Date)) panel$Close_Date <- NA_character_
   if (is.null(panel$Is_Feed)) panel$Is_Feed <- FALSE
   if (is.null(panel$Bridged_From)) panel$Bridged_From <- NA_character_
@@ -622,20 +626,22 @@ build_posting_spells <- function(panel, calendar = NULL, endings = NULL, frozen 
   sp$Evergreen <- match_pattern(rules$evergreen_pattern, sp$Title) | (!is.na(lag) & lag > 365)
   sp$Pool <- match_pattern(rules$pool_pattern, sp$Title)
 
-  # Frozen board: the posting spent frozen_min_runs+ runs inside one of its
-  # board's frozen stretches.
-  sp$Frozen_Runs <- 0L
+  # Frozen board: the posting spent frozen_min_weeks+ ISO weeks inside one of
+  # its board's frozen stretches.
+  sp$Frozen_Weeks <- 0L
   if (!is.null(frozen) && nrow(frozen) > 0) {
+    run_week <- week_start(runs)
     for (j in seq_len(nrow(frozen))) {
       f <- frozen[j, ]
       hit <- which(sp$District == f$District & sp$Posting_Source == f$Posting_Source)
       if (length(hit) == 0) next
       a <- pmax(match(sp$First_Seen[hit], runs), match(as.Date(f$From), runs))
       b <- pmin(match(sp$Last_Seen[hit], runs), match(as.Date(f$To), runs))
-      sp$Frozen_Runs[hit] <- pmax(sp$Frozen_Runs[hit], pmax(0L, b - a + 1L))
+      wk <- vapply(seq_along(hit), function(i) if (is.na(a[i]) || is.na(b[i]) || b[i] < a[i]) 0L else length(unique(run_week[a[i]:b[i]])), integer(1))
+      sp$Frozen_Weeks[hit] <- pmax(sp$Frozen_Weeks[hit], wk)
     }
   }
-  sp$Frozen_Board <- sp$Frozen_Runs >= frozen_min_runs
+  sp$Frozen_Board <- sp$Frozen_Weeks >= frozen_min_weeks
 
   close <- suppressWarnings(as.Date(substr(sp$Stated_Close_Date, 1, 10), format = "%Y-%m-%d"))
   on_close <- sp$Event & !is.na(close) & !is.na(sp$Next_Run) & close >= sp$Last_Seen & close <= sp$Next_Run

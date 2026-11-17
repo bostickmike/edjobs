@@ -26,7 +26,8 @@ the pipeline as it now is); defaults to the session's
 \description{
 \code{archive_snapshots}: a named list (run date -> data frame), one per archived run (a plain argument,
 not a directory scan, so it is testable on in-memory frames). Returns one row per source: \code{name},
-\code{mean_count}, \code{n_weeks}.
+\code{mean_count}, \code{n_weeks}. Only each ISO week's last run counts (\code{last_run_each_week()}, 2026-11-17), so with
+two runs a week \code{n_weeks} is still weeks and \code{mean_count} a weekly average.
 }
 \details{
 Zero weeks (Mike, 2026-11-13): a week a source had no rows counts as 0,

@@ -4,14 +4,17 @@
 \alias{posting_status_rechecks}
 \title{Posting status rechecks}
 \usage{
-posting_status_rechecks(previous, listed_check_urls)
+posting_status_rechecks(previous, listed_check_urls, run_date = Sys.Date())
 }
 \arguments{
 \item{previous}{See the description.}
 
 \item{listed_check_urls}{See the description.}
+
+\item{run_date}{This run's date.}
 }
 \description{
-Postings already in the table that are still open or unknown, checked fewer
-than POSTING_STATUS_MAX_CHECKS times, and not back on their board this run.
+Postings already in the table that are still open or unknown, first checked
+fewer than POSTING_STATUS_RECHECK_DAYS days before \code{run_date}, and not back on
+their board this run.
 }

@@ -27,8 +27,9 @@ on its board), Status (open / closed / unknown), Signal (what the page
 said), Stated_Close_Date (the deadline the posting states, where it does),
 First_Checked, Last_Checked, Status_Since (first check that found it
 closed), Checks.
-A closed status is kept; open and unknown are re-checked on later runs, up
-to POSTING_STATUS_MAX_CHECKS times. A failed check is "unknown", never closed.
+A closed status is kept; open and unknown are re-checked on later runs for
+POSTING_STATUS_RECHECK_DAYS days after the first check. A failed check is
+"unknown", never closed.
 }
 
 How each platform shows a closed posting (pages captured 2026-11-06 in

@@ -28,7 +28,8 @@ flag_pay_coverage_drop(
 }
 \description{
 current: pay_coverage_counts() for this run. history: a list of the same,
-one per archived week that had Pay_*. A source is flagged when it has at
+one per archived week that had Pay_* (the caller reads each week's last run,
+\code{last_run_each_week()}). A source is flagged when it has at
 least min_weeks weeks with min_postings or more postings, its average
 share with pay over those weeks is at least min_share, and this run --
 with min_postings or more postings, so a source that lost its postings is

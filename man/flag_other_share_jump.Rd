@@ -31,7 +31,8 @@ flag_other_share_jump(
 }
 \description{
 current: other_share_counts() for this run. history: a list of the same,
-one per recent archived week (the caller picks the window). A source is
+one per recent archived week (the caller picks the window and reads each
+week's last run, \code{last_run_each_week()}). A source is
 flagged when it has at least min_weeks weeks with min_postings or more
 postings, and this run has min_postings or more postings, at least
 min_other of them in Other, and an Other share at least \code{jump} above its

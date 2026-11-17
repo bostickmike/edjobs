@@ -26,7 +26,8 @@ pay_coverage_counts <- function(names, has_pay) {
 #' Flag pay coverage drop
 #'
 #' current: pay_coverage_counts() for this run. history: a list of the same,
-#' one per archived week that had Pay_*. A source is flagged when it has at
+#' one per archived week that had Pay_* (the caller reads each week's last run,
+#' `last_run_each_week()`). A source is flagged when it has at
 #' least min_weeks weeks with min_postings or more postings, its average
 #' share with pay over those weeks is at least min_share, and this run --
 #' with min_postings or more postings, so a source that lost its postings is
@@ -326,22 +327,81 @@ drop_standing_pool_titles <- function(llm_titles, history_titles = NULL) {
   llm_titles[!grepl(STANDING_POOL_PATTERN, llm_titles, perl = TRUE)]
 }
 
+#' Week of a date
+#'
+#' The Monday that starts each date's ISO week (Monday to Sunday), as a Date: the key every "week" in the
+#' history checks uses, whatever the run cadence.
+#' @param d Dates, or "YYYY-MM-DD" text.
+#' @return Dates, each a Monday.
+#' @export
+week_start <- function(d) {
+  d <- as.Date(d)
+  d - (as.POSIXlt(d)$wday + 6L) %% 7L
+}
+
+#' Each week's last run
+#'
+#' Of the dated runs in `x` (dates, or file names carrying a `YYYY-MM-DD` date), the last one in each ISO week
+#' (`week_start()`), oldest first; elements with no date are dropped. History checks whose thresholds and
+#' averages were measured on weekly runs (drift baselines, pay coverage, Other share) read one run a week
+#' through this, so their "weeks" stay weeks when the pipeline runs twice a week (2026-11-17). Weekly runs
+#' pass through unchanged, except a re-run in the same week, which now replaces the earlier run.
+#' @param x Dates, "YYYY-MM-DD" text, or paths whose base name holds one such date.
+#' @return The kept elements of `x`, as given.
+#' @export
+last_run_each_week <- function(x) {
+  if (!length(x)) return(x)
+  s <- if (inherits(x, "Date")) format(x) else basename(as.character(x))
+  m <- regexpr("\\d{4}-\\d{2}-\\d{2}", s)
+  x <- x[m > 0]
+  if (!length(x)) return(x)
+  d <- as.Date(regmatches(s, m))
+  o <- order(d)
+  x <- x[o]
+  x[!duplicated(week_start(d[o]), fromLast = TRUE)]
+}
+
+#' Archive files from the last days
+#'
+#' The dated archive files (`combined_YYYY-MM-DD.csv`, `hedata_YYYY-MM-DD.xlsx`) in `dir` matching `pattern`
+#' whose date is less than `days` days before the newest one's, oldest first, leaving out `exclude_date` (this
+#' run's own archive). History windows are counted in days, not files (2026-11-17): with two runs a week, the
+#' last 8 files cover only 4 weeks.
+#' @param dir The archive directory.
+#' @param pattern File-name pattern.
+#' @param days Window length in days (56 = the 8 weekly runs these windows were measured on).
+#' @param exclude_date A "YYYY-MM-DD" date to leave out, or NULL.
+#' @return Full paths, possibly empty.
+#' @export
+recent_archive_files <- function(dir, pattern, days = 56, exclude_date = NULL) {
+  files <- sort(list.files(dir, pattern = pattern, full.names = TRUE))
+  files <- files[grepl("\\d{4}-\\d{2}-\\d{2}", basename(files))]
+  run_date <- regmatches(basename(files), regexpr("\\d{4}-\\d{2}-\\d{2}", basename(files)))
+  if (!is.null(exclude_date)) {
+    files <- files[run_date != exclude_date]
+    run_date <- run_date[run_date != exclude_date]
+  }
+  if (!length(files)) return(character(0))
+  run_date <- as.Date(run_date)
+  files[run_date > max(run_date) - days]
+}
+
 #' Recent source titles
 #'
-#' The titles one source returned over its last `weeks` archived runs (K-12:
-#' Archivek12_Data District/title; "Higher Ed": Archived_HE_Data Institution/Title), or
-#' NULL when there are no archives to read.
+#' The titles one source returned in the archived runs of the last `days` days, counted back from the
+#' newest archive's date (K-12: Archivek12_Data District/title; "Higher Ed": Archived_HE_Data
+#' Institution/Title), or NULL when there are no archives to read. Days, not a number of files
+#' (2026-11-17): with two runs a week, the last 8 files would cover only 4 weeks.
 #' @param name See the description.
 #' @param type See the description.
-#' @param weeks See the description.
+#' @param days See the description. The default, 56, is the 8 weekly runs it used to read.
 #' @param k12_dir See the description.
 #' @param he_dir See the description.
 #' @export
-recent_source_titles <- function(name, type = "K-12", weeks = 8, k12_dir = "Archivek12_Data", he_dir = "Archived_HE_Data") {
+recent_source_titles <- function(name, type = "K-12", days = 56, k12_dir = "Archivek12_Data", he_dir = "Archived_HE_Data") {
   he <- type %in% c("Higher Ed", "HE")   # check_drift.R labels HE sources "Higher Ed"
-  files <- utils::tail(sort(list.files(if (he) he_dir else k12_dir,
-                                       pattern = if (he) "^hedata_\\d{4}-\\d{2}-\\d{2}\\.xlsx$" else "^combined_\\d{4}-\\d{2}-\\d{2}\\.csv$",
-                                       full.names = TRUE)), weeks)
+  files <- recent_archive_files(if (he) he_dir else k12_dir,
+                                if (he) "^hedata_\\d{4}-\\d{2}-\\d{2}\\.xlsx$" else "^combined_\\d{4}-\\d{2}-\\d{2}\\.csv$", days)
   if (!length(files)) return(NULL)
   unlist(lapply(files, function(f) tryCatch({
     x <- if (he) as.data.frame(readxl::read_excel(f, col_types = "text")) else utils::read.csv(f, colClasses = "character")
@@ -717,7 +777,8 @@ other_share_counts <- function(names, is_other) {
 #' Flag other share jump
 #'
 #' current: other_share_counts() for this run. history: a list of the same,
-#' one per recent archived week (the caller picks the window). A source is
+#' one per recent archived week (the caller picks the window and reads each
+#' week's last run, `last_run_each_week()`). A source is
 #' flagged when it has at least min_weeks weeks with min_postings or more
 #' postings, and this run has min_postings or more postings, at least
 #' min_other of them in Other, and an Other share at least `jump` above its
@@ -882,7 +943,8 @@ state_feed <- function(field, default = NULL) {
 #'
 #' `archive_snapshots`: a named list (run date -> data frame), one per archived run (a plain argument,
 #' not a directory scan, so it is testable on in-memory frames). Returns one row per source: `name`,
-#' `mean_count`, `n_weeks`.
+#' `mean_count`, `n_weeks`. Only each ISO week's last run counts (`last_run_each_week()`, 2026-11-17), so with
+#' two runs a week `n_weeks` is still weeks and `mean_count` a weekly average.
 #'
 #' Zero weeks (Mike, 2026-11-13): a week a source had no rows counts as 0,
 #' from the first snapshot it appears in on, so a district that posts only
@@ -909,17 +971,13 @@ build_historical_counts <- function(archive_snapshots, name_col,
   # dates, each data.frame has a `name_col` column of source names (one row
   # per posting, same shape as combinedclean.csv/hedata.xlsx).
   valid_dates <- names(archive_snapshots)[as.Date(names(archive_snapshots)) >= as.Date(valid_from)]
+  # One run a week (its last), so n_weeks and mean_count stay per week with two runs a week.
+  valid_dates <- last_run_each_week(valid_dates)
 
   if (length(valid_dates) == 0) {
     return(data.frame(name = character(0), n_weeks = integer(0), mean_count = numeric(0)))
   }
 
-  counts_by_week <- lapply(valid_dates, function(d) {
-    df <- archive_snapshots[[d]]
-    as.data.frame(table(df[[name_col]]), stringsAsFactors = FALSE)
-  })
-
-  valid_dates <- sort(valid_dates)
   counts_by_week <- lapply(valid_dates, function(d) {
     x <- as.data.frame(table(archive_snapshots[[d]][[name_col]]), stringsAsFactors = FALSE)
     if (nrow(x) > 0) x$week <- match(d, valid_dates)

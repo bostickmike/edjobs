@@ -86,8 +86,12 @@ test_that("the status table keeps closings, dates them by a passed closing date,
   expect_equal(t2$Checks, c("1", "2", "2"))
   expect_equal(t2$First_Checked, rep("2026-11-06", 3))
   # Closed postings and ones back on their board aren't re-checked.
-  expect_equal(posting_status_rechecks(t2, listed_check_urls = character(0))$Check_URL, "c")
-  expect_equal(nrow(posting_status_rechecks(t2, listed_check_urls = "c")), 0)
+  expect_equal(posting_status_rechecks(t2, listed_check_urls = character(0), "2026-11-20")$Check_URL, "c")
+  expect_equal(nrow(posting_status_rechecks(t2, listed_check_urls = "c", "2026-11-20")), 0)
+  # Re-checked for 28 days from the first check (11-06): weekly runs on 11-13, 11-20 and 11-27 (4 checks in all);
+  # twice-weekly runs get more checks in the same 4 weeks, not fewer weeks.
+  expect_equal(nrow(posting_status_rechecks(t2, character(0), "2026-12-03")), 1)
+  expect_equal(nrow(posting_status_rechecks(t2, character(0), "2026-12-04")), 0)
 })
 
 test_that("merge_posting_status merges by column name when the saved file's columns are in another order", {

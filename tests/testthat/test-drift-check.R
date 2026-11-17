@@ -494,13 +494,29 @@ test_that("an LLM read of only a standing substitute list no longer promotes to 
   expect_equal(combine_verdict_with_llm("inconclusive", c(pool, "Head Cook"), "Bus Driver")$verdict, "likely_broken")
 })
 
+test_that("recent_archive_files keeps the last days of dated archives, not a number of files", {
+  dir <- withr::local_tempdir()
+  for (d in c("2026-09-01", "2026-11-03", "2026-11-10", "2026-11-13", "2026-11-17")) file.create(file.path(dir, paste0("combined_", d, ".csv")))
+  file.create(file.path(dir, "combined_notes.csv"))
+  got <- function(...) basename(recent_archive_files(dir, "^combined_.*\\.csv$", ...))
+  expect_equal(got(days = 7), c("combined_2026-11-13.csv", "combined_2026-11-17.csv"))
+  # this run's own archive left out: the window counts back from the newest remaining one
+  expect_equal(got(days = 7, exclude_date = "2026-11-17"), c("combined_2026-11-10.csv", "combined_2026-11-13.csv"))
+  expect_equal(got(), c("combined_2026-11-03.csv", "combined_2026-11-10.csv", "combined_2026-11-13.csv", "combined_2026-11-17.csv"))
+  expect_equal(recent_archive_files(file.path(dir, "none"), "x"), character(0))
+})
+
 test_that("recent_source_titles reads one source's titles from the K-12 and HE archives", {
   dir <- withr::local_tempdir(); k <- file.path(dir, "k"); h <- file.path(dir, "h"); dir.create(k); dir.create(h)
   write.csv(data.frame(District = c("A", "B"), title = c("Math Teacher", "Substitute Teacher")), file.path(k, "combined_2026-11-03.csv"), row.names = FALSE)
   write.csv(data.frame(District = "A", title = "Bus Driver"), file.path(k, "combined_2026-11-10.csv"), row.names = FALSE)
   writexl::write_xlsx(data.frame(Institution = "U", Title = "Adjunct"), file.path(h, "hedata_2026-11-10.xlsx"))
   expect_setequal(recent_source_titles("A", "K-12", k12_dir = k, he_dir = h), c("Math Teacher", "Bus Driver"))
-  expect_equal(recent_source_titles("A", "K-12", weeks = 1, k12_dir = k, he_dir = h), "Bus Driver")
+  expect_equal(recent_source_titles("A", "K-12", days = 7, k12_dir = k, he_dir = h), "Bus Driver")
+  # two runs in the newest week and one 8 days before: days = 7 keeps both of the week's runs, not one file
+  write.csv(data.frame(District = "A", title = "Cook"), file.path(k, "combined_2026-11-13.csv"), row.names = FALSE)
+  expect_setequal(recent_source_titles("A", "K-12", days = 7, k12_dir = k, he_dir = h), c("Bus Driver", "Cook"))
+  expect_setequal(recent_source_titles("A", "K-12", days = 11, k12_dir = k, he_dir = h), c("Math Teacher", "Bus Driver", "Cook"))
   expect_equal(recent_source_titles("U", "Higher Ed", k12_dir = k, he_dir = h), "Adjunct")
   expect_null(recent_source_titles("A", "K-12", k12_dir = file.path(dir, "none"), he_dir = h))
 })
@@ -679,4 +695,30 @@ test_that("text_diff of the pre-fix Lone Rock fixture vs the CI capture shows th
   expect_true("+Bus Driver and Maintenance Director" %in% d)
   expect_lt(length(d), 40)
   expect_equal(text_diff("a\n\nb ", "a\nb"), character(0))
+})
+
+test_that("week_start and last_run_each_week key runs by ISO week (Monday to Sunday)", {
+  expect_equal(week_start(c("2026-11-16", "2026-11-19", "2026-11-22", "2026-11-23")),
+               as.Date(c("2026-11-16", "2026-11-16", "2026-11-16", "2026-11-23")))
+  # Twice-weekly (Mon + Thu): the Thursday run stands for its week.
+  expect_equal(last_run_each_week(c("2026-11-19", "2026-11-16", "2026-11-23", "2026-11-26", "2026-11-09")),
+               c("2026-11-09", "2026-11-19", "2026-11-26"))
+  # File paths keep their directory; names without a date are dropped; weekly runs pass through.
+  f <- c("A/combined_2026-11-06.csv", "A/combined_2026-11-13.csv", "A/README.md", "A/combined_2026-11-10.csv")
+  expect_equal(last_run_each_week(f), c("A/combined_2026-11-06.csv", "A/combined_2026-11-13.csv"))
+  expect_equal(last_run_each_week(as.Date(c("2026-11-06", "2026-11-13"))), as.Date(c("2026-11-06", "2026-11-13")))
+  expect_length(last_run_each_week(character(0)), 0)
+})
+
+test_that("build_historical_counts gives the same baseline from twice-weekly runs as from weekly ones", {
+  old <- current_state_config()
+  set_state_config(state_config("Test", "00", "app", drift_baseline_from = "2026-01-01"))
+  withr::defer(set_state_config(old))
+  thursdays <- format(as.Date("2026-10-01") + 7 * 0:3)
+  weekly <- setNames(lapply(c(3, 5, 0, 4), function(n) data.frame(name = c(rep("A", n), "B"))), thursdays)
+  # Monday runs in between, with other counts: they must not change the weekly baseline.
+  mondays <- format(as.Date(thursdays) - 3)
+  twice <- c(weekly, setNames(lapply(c(9, 9, 9, 9), function(n) data.frame(name = rep("A", n))), mondays))
+  expect_equal(build_historical_counts(twice, "name"), build_historical_counts(weekly, "name"))
+  expect_equal(build_historical_counts(twice, "name")$n_weeks[1], 4L)
 })
