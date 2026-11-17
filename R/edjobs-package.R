@@ -15,5 +15,6 @@
 #' was; the imports below cover what that code calls without a `pkg::` prefix.
 #' @keywords internal
 #' @importFrom magrittr %>%
+#' @importFrom dplyr arrange coalesce desc filter group_by pull slice summarize
 #' @importFrom httr2 request req_body_json req_error req_headers req_perform req_retry req_timeout req_url_query resp_body_json resp_body_string
 "_PACKAGE"

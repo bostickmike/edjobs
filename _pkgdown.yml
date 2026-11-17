@@ -369,6 +369,30 @@ reference:
   - add_saipe_range
   - acs_proportion_moe
   - surrounding_district_poverty
+- title: "Dashboard app helpers"
+  contents:
+  - build_current_trends_table
+  - classify_he_appointment
+  - compute_vacancy_rate_domain
+  - compute_wow_delta
+  - county_moe_summary
+  - fill_first_seen
+  - find_biggest_mover
+  - format_bls_estimate
+  - format_moe_dollars
+  - format_moe_points
+  - format_pay_estimate
+  - format_posted_or_listed_date
+  - format_posted_pay
+  - format_poverty_range
+  - he_map_name
+  - indistinct_from_zero
+  - latest_snapshot_per_week
+  - make_sparkline_svg
+  - make_sparkline_svg_light
+  - match_job_query
+  - posting_pay_value
+  - summarize_he_faculty_postings
 - title: "Package"
   contents:
   - 'edjobs-package'

@@ -1,0 +1,134 @@
+# Dashboard app helpers (phase 6, slice 1). The first tests moved from both states' test-app-reactives.R and
+# test-first-seen.R (they ran on the app's copies); the rest are new.
+
+test_that("higher-ed appointment classifier separates adjunct, faculty, and other roles", {
+  expect_identical(
+    classify_he_appointment(c("Adjunct Mathematics Instructor", "Biology Professor", "Admissions Specialist")),
+    c("Adjunct/part-time faculty", "Faculty/instructor (non-adjunct)", "Other / not faculty")
+  )
+  expect_equal(summarize_he_faculty_postings(c("Adjunct Instructor", "Professor", "Lecturer", "Registrar")),
+               list(faculty_instructor = 2L, adjunct_part_time = 1L))
+})
+
+test_that("make_sparkline_svg draws a rising trend with a green endpoint and a falling trend with a red one", {
+  rising <- make_sparkline_svg(c(10, 15, 20))
+  expect_match(rising, "^<svg")
+  expect_match(rising, "#1baf7a", fixed = TRUE)
+  expect_match(make_sparkline_svg(c(20, 15, 10)), "#e34948", fixed = TRUE)
+  expect_match(make_sparkline_svg(c(10, 10, 10)), "#999999", fixed = TRUE)
+  expect_match(make_sparkline_svg_light(c(1, 3, 2)), "^<svg width=\"160\"")
+})
+
+test_that("make_sparkline_svg handles too little data without erroring", {
+  expect_equal(make_sparkline_svg(numeric(0)), "")
+  expect_equal(make_sparkline_svg(c(5)), "")
+  expect_equal(make_sparkline_svg(c(NA, NA)), "")
+  # One real value plus NAs still isn't enough to draw a line between two points.
+  expect_equal(make_sparkline_svg(c(5, NA, NA)), "")
+  expect_equal(make_sparkline_svg_light(c(5, NA)), "")
+})
+
+test_that("compute_wow_delta skips an extra same-week snapshot instead of comparing against it", {
+  # A real week-old snapshot, plus an extra same-week re-run 1 day before "latest" (the failure mode min_days_back
+  # guards against; WY's archive has a real one, 2026-08-03). Without the guard: 111 - 108.
+  weekly <- data.frame(Archive_Date = as.Date(c("2026-07-30", "2026-08-05", "2026-08-06")), n = c(100, 108, 111))
+  expect_equal(compute_wow_delta(weekly), 111 - 100)
+})
+
+test_that("compute_wow_delta returns NA when no snapshot is old enough to count as 'last week'", {
+  weekly <- data.frame(Archive_Date = as.Date(c("2026-08-05", "2026-08-06")), n = c(50, 55))
+  expect_true(is.na(compute_wow_delta(weekly)))
+})
+
+test_that("compute_vacancy_rate_domain falls back to a placeholder range instead of Inf/-Inf when every rate is NA", {
+  expect_equal(compute_vacancy_rate_domain(c(NA_real_, NA_real_, NA_real_)), c(0, 1))
+  expect_equal(compute_vacancy_rate_domain(c(0.05, NA_real_, 0.20)), c(0.05, 0.20))
+})
+
+test_that("weekly-totals downloads keep only the latest snapshot in each week", {
+  weekly <- data.frame(District = c("A", "B", "A", "B", "A"),
+                       Archive_Date = c("2026-08-03", "2026-08-03", "2026-08-07", "2026-08-07", "2026-08-11"),
+                       n = c(5, 2, 6, 3, 7))
+  out <- latest_snapshot_per_week(weekly)
+  expect_equal(out$Archive_Date, c("2026-08-07", "2026-08-07", "2026-08-11"))
+  expect_equal(out$n, c(6, 3, 7))
+})
+
+test_that("fill_first_seen fills blanks from the first-seen table and keeps posted dates", {
+  lookup <- data.frame(Segment = c("K-12", "K-12", "HE"),
+                       Key = c(first_seen_key("Frazer Public Schools", "Head Cook", "u1"),
+                               first_seen_key("Frazer Public Schools", "Bus Driver", "u2"),
+                               first_seen_key("Montana Tech", "Lab Aide", "u3")),
+                       First_Seen = c("2026-10-27", "2026-08-18", "2026-09-01"), Left_Censored = c("FALSE", "TRUE", "FALSE"))
+  got <- fill_first_seen(c(NA, "", "2026-10-01", NA), c("Frazer Public Schools", " frazer  public schools", "Frazer Public Schools", "X"),
+                         c("Head Cook", "Bus Driver", "Head Cook", "Teacher"), c("u1", "u2", "u1", "u9"), "K-12", lookup)
+  expect_equal(got, c("First seen 2026-10-27", "On the board since at least 2026-08-18", "2026-10-01", NA))
+  # HE rows only match HE keys; no file means the column is unchanged.
+  expect_equal(fill_first_seen(NA, "Montana Tech", "Lab Aide", "u3", "K-12", lookup), NA_character_)
+  expect_equal(fill_first_seen(NA, "Montana Tech", "Lab Aide", "u3", "HE", lookup), "First seen 2026-09-01")
+  expect_equal(fill_first_seen(c(NA, "2026-10-01"), "a", "b", "c", "K-12", NULL), c(NA, "2026-10-01"))
+  expect_error(fill_first_seen(NA, "a", "b", "c", "K-12"), "lookup")
+})
+
+test_that("old posted dates read 'Listed since'", {
+  old <- format(Sys.Date() - 400, "%Y-%m-%d")
+  new <- format(Sys.Date() - 3, "%Y-%m-%d")
+  expect_equal(format_posted_or_listed_date(c(old, new, NA, "not a date")),
+               c(paste("Listed since", old), new, NA, "not a date"))
+})
+
+test_that("pay text keeps the posting's own unit", {
+  expect_equal(format_posted_pay(c(21.46, 46500, 3691, NA), c(22.81, 71803, NA, NA), c("hour", "year", "stipend", NA)),
+               c("$21.46\u2013$22.81/hr", "$46,500\u2013$71,803/yr", "$3,691 stipend", "\u2014"))
+  expect_equal(format_posted_pay(150, 150, "day"), "$150.00/day")
+  est <- format_bls_estimate(34750, "year", "Teaching Assistants", "West Montana nonmetro", FALSE)
+  expect_match(est, "title=\"BLS median for teaching assistants, West Montana nonmetro\"", fixed = TRUE)
+  expect_match(est, "$34,750/yr</span>", fixed = TRUE)
+  expect_equal(format_bls_estimate(34750, "year", "x", "y", TRUE), "\u2014")
+  expect_match(format_pay_estimate(10, "hour", "a \"quoted\" <tip>", FALSE), "&quot;quoted&quot; &lt;tip&gt;", fixed = TRUE)
+})
+
+test_that("posting_pay_value uses posted hourly/yearly pay, leaves other posted units blank, else the fallback", {
+  out <- posting_pay_value(c(20, 40000, 150, NA), c(22, NA, NA, NA), c("hour", "year", "day", NA), 55000, "year")
+  expect_equal(out$value, c(21, 40000, NA, 55000))
+  expect_equal(out$unit, c("hour", "year", NA, "year"))
+})
+
+test_that("ACS margins of error and the SAIPE range read as text", {
+  expect_equal(format_poverty_range(c(0, 0.1), c(0.32, NA)), c("about 0%\u201332%", NA))
+  expect_equal(format_moe_dollars(c(2190, NA)), c(" \u00b1$2,190", ""))
+  expect_equal(format_moe_points(0.004), " \u00b10.4 pts")
+  expect_equal(indistinct_from_zero(c(0.01, 0.05, NA), c(0.02, 0.01, 0.01)), c(TRUE, FALSE, FALSE))
+  expect_equal(county_moe_summary(c(2190, NA), c(85, NA), c(0.01, NA), c(0.02, NA)),
+               c("income \u00b1$2,190; rent \u00b1$85; mining \u00b12.0 pts (not distinguishable from 0)", NA))
+})
+
+test_that("college map dot names and job searches", {
+  expect_equal(he_map_name(c("MSU", "MSU", "MSU"), c(NA, "", "Havre")), c("MSU", "MSU", "MSU (Havre)"))
+  titles <- c("Special Education Teacher", "SPED Para", "Math Teacher", "Bus Driver", "PE Teacher", NA, "Teacher of Art")
+  expect_equal(match_job_query(titles, "sped"), c(TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE))
+  expect_equal(match_job_query(titles, "driver"), c(FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE))
+  expect_equal(match_job_query(titles, "pe"), c(FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE))
+  expect_equal(match_job_query(titles, "art teacher"), c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE))
+  expect_equal(match_job_query(titles, "  "), rep(TRUE, 7))
+})
+
+test_that("trends table and biggest mover compare against the nearest earlier snapshot", {
+  d <- as.Date("2026-11-09") - c(0, 7, 30, 100, 400)
+  h <- data.frame(Archive_Date = rep(d, each = 2), Category = rep(c("Teacher", "Para"), 5),
+                  n = c(10, 4, 8, 4, 6, 5, 9, 1, 2, 4))
+  t <- build_current_trends_table(h, "#2a78d6")
+  expect_equal(t$Category, c("Teacher", "Para"))
+  expect_equal(t$`Current Postings`, c(10, 4))
+  expect_equal(unname(t$`vs Month Ago`), c("<span style='color:#1baf7a;'>\u25b2 4</span>", "<span style='color:#e34948;'>\u25bc 1</span>"))
+  expect_equal(unname(t$`vs Year Ago`), c("<span style='color:#1baf7a;'>\u25b2 8</span>", "<span style='color:#999999;'>\u25b2 0</span>"))
+  expect_match(t$`Last 12 Weeks`[1], "^<svg")
+  expect_null(build_current_trends_table(h[0, ], "#000"))
+
+  w <- data.frame(District = rep(c("A", "B"), 3), Archive_Date = rep(as.Date(c("2026-10-01", "2026-10-20", "2026-11-09")), each = 2),
+                  n = c(5, 9, 6, 9, 7, 2))
+  m <- find_biggest_mover(w, "District")
+  expect_equal(m[c("name", "prior", "latest", "delta")], list(name = "B", prior = 9, latest = 2, delta = -7))
+  expect_equal(m$prior_date, as.Date("2026-10-01"))
+  expect_null(find_biggest_mover(w[5:6, ], "District"))
+})
