@@ -116,3 +116,16 @@ test_that("UW 'Hourly Pooled' postings are classified by the job after the prefi
   expect_equal(classify_he_job_type("Hourly Pooled - Basketball Table Crew"), "Staff")
   expect_equal(classify_he_job_type("Hourly Pooled - Part-Time Office Assistant, Senior"), "Staff")
 })
+
+test_that("school and place names don't pick a subject (2026-11-17 review, bug 10)", {
+  t <- c("Woods K/1 Classroom Teacher for the 2025-2026 School Year Only", "Woods Language Arts Teacher for the 2025-26 School Year Only",
+         "Woods Math Teacher beginning the 2025-26 School Year", "Woods 2/3 Grade Teacher for the 2025-2026 School Year Only",
+         "CTE Woods/CAD Teacher", "Woods and Metals Teacher", "Math Teacher - Cheyenne East High School", "Salish Teacher",
+         "Northern Cheyenne Language and Culture Teacher", "English as a Second Language (ESL) Teacher", "English Second Language",
+         "Title I Math Teacher - Sheridan Junior High School", "Title I Reading / Math Teacher", "Title I Teacher")
+  expect_equal(classify_k12_subject(t), c(
+    "Elementary Education", "English Language Arts Education", "Mathematics Education", "Elementary Education",
+    "Technical Education", "Technical Education", "Mathematics Education", "Language Education", "Language Education",
+    "Language Education", "Language Education", "Mathematics Education", "English Language Arts Education",
+    "English Language Arts Education"))
+})

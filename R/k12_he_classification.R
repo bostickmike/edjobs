@@ -313,20 +313,20 @@ k12_category_keywords <- list(
   # Bare "CTE" / "Career and Technical" live in "CTE Teacher" below, checked
   # last, so "CTE - Agricultural Education" / "CTE - Business and Marketing" /
   # "CTE - Family and Consumer Sciences" reach their specific subject first.
-  "Technical Education" = "\\b(Welding|Weld|WeldingTeacher|Automotive|Auto(?!nomy)|Wood|Woods|Woodworking|Industrial Arts|Industrial Tech(nology)?|Shop|Tech Ed|Technical Education|Trade and Technical|Drivers?\\s*Ed(ucation)?|Traffic Ed(ucation)?)\\b",
+  "Technical Education" = "\\b(Welding|Weld|WeldingTeacher|Automotive|Auto(?!nomy)|Woods?(?=\\s*(/|&|\\band\\b|Shop|Teacher|Instructor|Tech|Construction|Manufacturing|Products?\\b|$))|Woodworking|Industrial Arts|Industrial Tech(nology)?|Shop|Tech Ed|Technical Education|Trade and Technical|Drivers?\\s*Ed(ucation)?|Traffic Ed(ucation)?)\\b",
   "Agriculture Education" = "(\\b(Agricultur(e|al)|Ag Teacher|Ag Program|Agricultural teacher|FFA|Vo[-/]?Ag)\\b|\\(AG\\))",
   "Computer Science Education" = "\\b(Computer Science|Information Technology|\\bIT\\b|Technology Education(?! Teacher Assistant)|Technology Teacher)\\b",
   # Pre[- ]?school covers "Preschool"/"Pre-school"/"Pre school" in one
   # pattern; Head Start is a real, common federal early-childhood program
   # name that doesn't otherwise contain any of the other keywords here.
   "Early Childhood Education" = "\\b(Early Childhood|Pre\\s*[- ]?\\s*K(?!indergarten)|Pre\\s*[- ]?\\s*school|Birth to age|Ages 3-5|Head Start|Toddler|Daycare|Early Learning|\\bSACC\\b)\\b",
-  "Elementary Education" = "\\b(Elementary|Kindergarten|1st|2nd|3rd|4th|5th|First|Second|Third|Fourth|Fifth|Grade [1-7]|Grades?\\s*K-[1-7]|K-[1-7]\\s*Teacher|Classroom Teacher|Colony Teacher|Sixth Grade|6th Grade|Seventh Grade|7th Grade|Primary Grade|Primary Teacher)\\b",
+  "Elementary Education" = "\\b(Elementary|Kindergarten|1st|2nd|3rd|4th|5th|First|Second(?!\\s+Language)|Third|Fourth|Fifth|Grade [1-7]|[1-6](st|nd|rd|th)?\\s*/\\s*[1-6](st|nd|rd|th)?\\s+Grade|Grades?\\s*K-[1-7]|K-[1-7]\\s*Teacher|Classroom Teacher|Colony Teacher|Sixth Grade|6th Grade|Seventh Grade|7th Grade|Primary Grade|Primary Teacher)\\b",
   # "Literacy/Reading Interventionist" specifically (not bare "Interventionist"
   # or "Academic Interventionist" -- those don't name a subject and are
   # genuinely ambiguous, left as Uncategorized rather than guessed).
-  "English Language Arts Education" = "(?i)\\b(English(?!\\s+as\\s+a\\s+Second\\s+Language|\\s+Learner|\\s+Language\\s+Learner)|ELA|Language Arts(?!\\s*Coordinator)|(Literacy|Reading) Interventionist|Title\\s*(One|1|I)\\b|Reading Recovery|Literacy Teacher|Reading Teacher|Literacy Specialist|Reading and Writing|Intervention Teacher|Teacher Reading|Reading|Journalism)\\b",
+  "English Language Arts Education" = "(?i)\\b(English(?!\\s+as\\s+a\\s+Second\\s+Language|\\s+Second\\s+Language|\\s+Learner|\\s+Language\\s+Learner)|ELA|Language Arts(?!\\s*Coordinator)|(Literacy|Reading) Interventionist|Title\\s*(One|1|I)\\b|Reading Recovery|Literacy Teacher|Reading Teacher|Literacy Specialist|Reading and Writing|Intervention Teacher|Teacher Reading|Reading|Journalism)\\b",
   "Family and Consumer Science" = "\\b(Family and Consumer Sciences?|FCS|Home Economics|Culinary)\\b",
-  "Language Education" = "\\b(ESL|ELL|English as a Second Language|English Learner|Bilingual|Spanish|French|Dual Language|World Languages?|Foreign Languages?|English Language Learner|Arapaho|Arapahoe|Shoshone|Salish|Kootenai|Cree|Crow|Blackfeet|Cheyenne|Assiniboine|Lakota|Dakota|Native Language|Indigenous Language|Culture Teacher|\\bEL Teacher\\b|\\bELL Teacher\\b|\\bESL Teacher\\b)\\b",
+  "Language Education" = "\\b(ESL|ELL|English as a Second Language|English Learner|Bilingual|Spanish|French|Dual Language|World Languages?|Foreign Languages?|English Language Learner|(Arapaho|Arapahoe|Shoshone|Salish|Kootenai|Cree|Crow|Blackfeet|Cheyenne|Assiniboine|Lakota|Dakota|Nakoda|Gros Ventre|Ojibwe|Chippewa)\\s+(Language|Culture|Studies|Teacher|Instructor|Enhancement|Program|Immersion)|Native Language|Second Language|Indigenous Language|Culture Teacher|\\bEL Teacher\\b|\\bELL Teacher\\b|\\bESL Teacher\\b)\\b",
   "Mathematics Education" = "\\b(Mathematics|\\bMath\\b)\\b",
   "Music Education" = "\\b(Music|Orchestra|Band|Choir|Chorus|Vocal)\\b",
   "Health Science" = "(?i)\\b(Nurse Educator|Health Science(s)? Teacher|Health Science(s)?|Certified Nursing Assistant|Nursing Assistant|CNA)\\b",
@@ -371,6 +371,10 @@ classify_k12_subject <- function(title) {
     stringr::str_detect(title, stringr::regex(kw[["Computer Science Education"]], ignore_case = TRUE)) ~ "Computer Science Education",
     stringr::str_detect(title, stringr::regex(kw[["Early Childhood Education"]], ignore_case = TRUE)) ~ "Early Childhood Education",
     stringr::str_detect(title, stringr::regex(kw[["Elementary Education"]], ignore_case = TRUE)) ~ "Elementary Education",
+    # "Title I Math Teacher": Title I funds the post; the subject is math (2026-11-17 review).
+    stringr::str_detect(title, stringr::regex("\\bTitle\\s*(One|1|I)\\b", ignore_case = TRUE)) &
+      stringr::str_detect(title, stringr::regex(kw[["Mathematics Education"]], ignore_case = TRUE)) &
+      !stringr::str_detect(title, stringr::regex("Reading|Literacy|\\bELA\\b|English|Language Arts", ignore_case = TRUE)) ~ "Mathematics Education",
     stringr::str_detect(title, stringr::regex(kw[["English Language Arts Education"]], ignore_case = TRUE)) ~ "English Language Arts Education",
     stringr::str_detect(title, stringr::regex(kw[["Family and Consumer Science"]], ignore_case = TRUE)) ~ "Family and Consumer Science",
     stringr::str_detect(title, stringr::regex(kw[["Language Education"]], ignore_case = TRUE)) ~ "Language Education",
