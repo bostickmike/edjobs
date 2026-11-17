@@ -13,10 +13,14 @@
 #' @export
 classify_he_appointment <- function(titles) {
   titles <- as.character(titles)
+  faculty <- grepl("Instructor|Instructional|Teacher|Faculty|Professor|Lecturer|Post Doc|Subject Matter Expert|Librarian|Educator",
+                   titles, ignore.case = TRUE)
   dplyr::case_when(
-    grepl("Adjunct|Part[- ]?Time", titles, ignore.case = TRUE) ~ "Adjunct/part-time faculty",
-    grepl("Instructor|Instructional|Teacher|Faculty|Professor|Lecturer|Post Doc|Subject Matter Expert|Librarian|Educator",
-          titles, ignore.case = TRUE) ~ "Faculty/instructor (non-adjunct)",
+    # "Part-time" makes an adjunct only beside a faculty word, as in classify_he_job_type(): "Cook I - Part Time"
+    # and "Grounds Worker (Part-time & Student)" are staff (2026-11-17 review, bug 9).
+    grepl("Adjunct", titles, ignore.case = TRUE) |
+      (grepl("Part[- ]?Time", titles, ignore.case = TRUE) & faculty) ~ "Adjunct/part-time faculty",
+    faculty ~ "Faculty/instructor (non-adjunct)",
     TRUE ~ "Other / not faculty"
   )
 }
