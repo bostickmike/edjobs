@@ -46,12 +46,19 @@ district_page_text <- function(html_text) {
 
 CELL_END <- "\u241e"
 
-district_page_doc <- function(html_text) {
-  if (is.null(html_text) || length(html_text) == 0 || is.na(html_text[1]) || !nzchar(trimws(html_text[1]))) return(NULL)
-  # A 200 body with no HTML ("site under maintenance", Roberts 2026-11-04) is a failed fetch, not an empty
-  # page; read_html() would take it for a file path and the page would read as zero postings.
+# A 200 body with no HTML ("site under maintenance", Roberts 2026-11-04) is a failed fetch, not an empty page:
+# read_html() would take it for a file path and the page would read as zero postings, logged "empty" rather than
+# "error". Every family reader calls this (Google Sites, Finalsite, WordPress and CyberSchool lacked it until the
+# 2026-11-17 review).
+stop_if_no_html <- function(html_text) {
   if (!grepl("<", html_text[1], fixed = TRUE))
     stop("page returned no HTML: \"", substr(trimws(html_text[1]), 1, 80), "\"", call. = FALSE)
+  invisible(TRUE)
+}
+
+district_page_doc <- function(html_text) {
+  if (is.null(html_text) || length(html_text) == 0 || is.na(html_text[1]) || !nzchar(trimws(html_text[1]))) return(NULL)
+  stop_if_no_html(html_text)
   # Block ends (table cells, list items, paragraphs, divs, headings, <br>) get a marker that becomes a line
   # break after html_text2(), which can run them together ("CustodianFull Time Custodial ...", Roberts, Joliet).
   html_text <- gsub("(?i)(</(t[dh]|li|p|div|h[1-6])>|<br\\s*/?>|<li[\\s>])", paste0(CELL_END, "\\1"), html_text[1], perl = TRUE)

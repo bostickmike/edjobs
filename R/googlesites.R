@@ -48,6 +48,7 @@ parse_googlesites_postings <- function(html_text, url, location, start = NA, sto
 #' @export
 googlesites_page_text <- function(html_text) {
   if (is.null(html_text) || length(html_text) == 0 || is.na(html_text[1]) || !nzchar(trimws(html_text[1]))) return(NA_character_)
+  stop_if_no_html(html_text)
   doc <- tryCatch(rvest::read_html(html_text), error = function(e) NULL)
   if (is.null(doc)) return(NA_character_)
   xml2::xml_remove(rvest::html_elements(doc, "nav, header, footer, script, style, noscript, [role=navigation]"))
