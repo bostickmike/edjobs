@@ -326,22 +326,47 @@ drop_standing_pool_titles <- function(llm_titles, history_titles = NULL) {
   llm_titles[!grepl(STANDING_POOL_PATTERN, llm_titles, perl = TRUE)]
 }
 
+#' Archive files from the last days
+#'
+#' The dated archive files (`combined_YYYY-MM-DD.csv`, `hedata_YYYY-MM-DD.xlsx`) in `dir` matching `pattern`
+#' whose date is less than `days` days before the newest one's, oldest first, leaving out `exclude_date` (this
+#' run's own archive). History windows are counted in days, not files (2026-11-17): with two runs a week, the
+#' last 8 files cover only 4 weeks.
+#' @param dir The archive directory.
+#' @param pattern File-name pattern.
+#' @param days Window length in days (56 = the 8 weekly runs these windows were measured on).
+#' @param exclude_date A "YYYY-MM-DD" date to leave out, or NULL.
+#' @return Full paths, possibly empty.
+#' @export
+recent_archive_files <- function(dir, pattern, days = 56, exclude_date = NULL) {
+  files <- sort(list.files(dir, pattern = pattern, full.names = TRUE))
+  files <- files[grepl("\\d{4}-\\d{2}-\\d{2}", basename(files))]
+  run_date <- regmatches(basename(files), regexpr("\\d{4}-\\d{2}-\\d{2}", basename(files)))
+  if (!is.null(exclude_date)) {
+    files <- files[run_date != exclude_date]
+    run_date <- run_date[run_date != exclude_date]
+  }
+  if (!length(files)) return(character(0))
+  run_date <- as.Date(run_date)
+  files[run_date > max(run_date) - days]
+}
+
 #' Recent source titles
 #'
-#' The titles one source returned over its last `weeks` archived runs (K-12:
-#' Archivek12_Data District/title; "Higher Ed": Archived_HE_Data Institution/Title), or
-#' NULL when there are no archives to read.
+#' The titles one source returned in the archived runs of the last `days` days, counted back from the
+#' newest archive's date (K-12: Archivek12_Data District/title; "Higher Ed": Archived_HE_Data
+#' Institution/Title), or NULL when there are no archives to read. Days, not a number of files
+#' (2026-11-17): with two runs a week, the last 8 files would cover only 4 weeks.
 #' @param name See the description.
 #' @param type See the description.
-#' @param weeks See the description.
+#' @param days See the description. The default, 56, is the 8 weekly runs it used to read.
 #' @param k12_dir See the description.
 #' @param he_dir See the description.
 #' @export
-recent_source_titles <- function(name, type = "K-12", weeks = 8, k12_dir = "Archivek12_Data", he_dir = "Archived_HE_Data") {
+recent_source_titles <- function(name, type = "K-12", days = 56, k12_dir = "Archivek12_Data", he_dir = "Archived_HE_Data") {
   he <- type %in% c("Higher Ed", "HE")   # check_drift.R labels HE sources "Higher Ed"
-  files <- utils::tail(sort(list.files(if (he) he_dir else k12_dir,
-                                       pattern = if (he) "^hedata_\\d{4}-\\d{2}-\\d{2}\\.xlsx$" else "^combined_\\d{4}-\\d{2}-\\d{2}\\.csv$",
-                                       full.names = TRUE)), weeks)
+  files <- recent_archive_files(if (he) he_dir else k12_dir,
+                                if (he) "^hedata_\\d{4}-\\d{2}-\\d{2}\\.xlsx$" else "^combined_\\d{4}-\\d{2}-\\d{2}\\.csv$", days)
   if (!length(files)) return(NULL)
   unlist(lapply(files, function(f) tryCatch({
     x <- if (he) as.data.frame(readxl::read_excel(f, col_types = "text")) else utils::read.csv(f, colClasses = "character")

@@ -7,7 +7,7 @@
 recent_source_titles(
   name,
   type = "K-12",
-  weeks = 8,
+  days = 56,
   k12_dir = "Archivek12_Data",
   he_dir = "Archived_HE_Data"
 )
@@ -17,14 +17,15 @@ recent_source_titles(
 
 \item{type}{See the description.}
 
-\item{weeks}{See the description.}
+\item{days}{See the description. The default, 56, is the 8 weekly runs it used to read.}
 
 \item{k12_dir}{See the description.}
 
 \item{he_dir}{See the description.}
 }
 \description{
-The titles one source returned over its last \code{weeks} archived runs (K-12:
-Archivek12_Data District/title; "Higher Ed": Archived_HE_Data Institution/Title), or
-NULL when there are no archives to read.
+The titles one source returned in the archived runs of the last \code{days} days, counted back from the
+newest archive's date (K-12: Archivek12_Data District/title; "Higher Ed": Archived_HE_Data
+Institution/Title), or NULL when there are no archives to read. Days, not a number of files
+(2026-11-17): with two runs a week, the last 8 files would cover only 4 weeks.
 }
