@@ -1,3 +1,19 @@
+# edjobs 0.36.0
+
+Package phase 6, slice 1: the dashboard apps' shared helpers. 22 functions both states' `app.R` defined identically
+(measured in Jobs_Dash_repos claude-notes/2026-11-16_phase6/) move here with their code as it was; on both states'
+committed data the package versions return identical output to the app copies (64 checks, 0 differences).
+
+* `app_helpers.R`: `classify_he_appointment()`, `summarize_he_faculty_postings()`, `format_posted_or_listed_date()`,
+  `fill_first_seen()`, `format_poverty_range()`, `format_moe_dollars()`, `format_moe_points()`,
+  `indistinct_from_zero()`, `county_moe_summary()`, `format_posted_pay()`, `format_bls_estimate()`,
+  `format_pay_estimate()`, `posting_pay_value()`, `make_sparkline_svg()`, `make_sparkline_svg_light()`,
+  `build_current_trends_table()`, `latest_snapshot_per_week()`, `compute_wow_delta()`, `find_biggest_mover()`,
+  `he_map_name()`, `match_job_query()`, `compute_vacancy_rate_domain()`.
+* `fill_first_seen(lookup = )` is now required (the app's default was its own global table). The apps' copy of
+  `first_seen_key()` is retired: it was already here.
+* New Imports: htmltools, scales, tidyr (all already in the apps' deploy manifests).
+
 # edjobs 0.35.0
 
 A link to each district's and college's own page at its source (Mike 2026-11-16: "each row in each data set could

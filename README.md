@@ -40,6 +40,7 @@ general-purpose scraping tool.
 | `schema_check.R`, `history_checks.R` | File schema checks, totals-match-parts, rebuild parity |
 | `run_expectations.R` | Checks a run's files against a state's `run_expectations.csv` |
 | `bls_oews_scraper.R`, `qcew_school_pay.R`, `ipeds_staff_salaries.R` | Federal pay benchmarks (BLS OEWS, BLS QCEW, IPEDS) |
+| `app_helpers.R` | The dashboards' shared app helpers: pay, date and margin-of-error text, sparklines, trend and mover summaries, job search matching |
 
 ## Installing
 
