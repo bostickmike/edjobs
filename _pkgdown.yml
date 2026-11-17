@@ -12,6 +12,7 @@ reference:
   - empty_df
   - fetch_json_paginated
   - is_transient_gateway_error
+  - try_federal_year
   - log_reference_result
   - log_scrape_result
   - perform_with_retry
@@ -150,6 +151,7 @@ reference:
   - relisted_next_run
   - source_health
   - spell_rules
+  - split_posting_gaps
   - spell_text
   - summarize_posting_durations
   - use_earliest_posted_date
