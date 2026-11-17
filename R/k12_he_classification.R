@@ -193,8 +193,8 @@ classify_k12_position <- function(title, role_hint = NULL) {
     # postings in the subject-category trend charts.
     (grepl("Teacher|Instructor|Interventionist|English|Math|Library|Media|Language Arts|Science|Educator",
            title, ignore.case = TRUE) &
-       grepl("Part[- ]?Time|Half[- ]?Time|\\b1/[2-9]th\\b|\\b0?\\.[1-9]\\s*FTE\\b",
-             title, ignore.case = TRUE)) ~ "Part-Time Teacher",
+       grepl(paste0("Part[- ]?Time|Half[- ]?Time|\\b1/[2-9]th\\b|", PART_FTE_RX),
+             title, ignore.case = TRUE, perl = TRUE)) ~ "Part-Time Teacher",
 
     # Teacher-related positions
     grepl("Teacher|Instructor|Interventionist|English|Math|Library|Media|Language Arts|Science|Educator",
@@ -265,7 +265,7 @@ k12_role_hint <- function(description) {
   lead <- substr(gsub("\\s+", " ", fix_title_encoding(as.character(description))), 1, 250)
   lead[is.na(lead)] <- ""
   long_term_sub <- grepl("long[- ]?term sub", lead, ignore.case = TRUE)
-  part_time <- grepl("part[- ]time|half[- ]time|(?<![\\w.])0?\\.[1-9]\\s*FTE\\b", lead, ignore.case = TRUE, perl = TRUE) &
+  part_time <- grepl(paste0("part[- ]time|half[- ]time|", PART_FTE_RX), lead, ignore.case = TRUE, perl = TRUE) &
     !grepl("full[- ]time|1\\.0\\s*FTE", lead, ignore.case = TRUE)
   # The role named first in the opening.
   first <- vapply(lead, function(t) {
@@ -464,6 +464,14 @@ is_placeholder_posting <- function(title) {
 # ---------------------------------------------------------------------------
 # Posted pay
 # ---------------------------------------------------------------------------
+
+#' Part-time FTE pattern
+#'
+#' A fraction of a full-time post written as an FTE: ".5 FTE", "0.5 FTE", "0.50 FTE", ".75 FTE" (any nonzero
+#' decimal under 1, up to three digits), but not "1.0 FTE" or "10.5 FTE". Perl regex (2026-11-17 review: ".5 FTE",
+#' "0.50 FTE" and "0.75 FTE" titles stayed full Teacher).
+#' @export
+PART_FTE_RX <- "(?<![\\w.])0?\\.(?!0+\\b)\\d{1,3}\\s*FTE\\b"
 
 #' Extract posted pay
 #'

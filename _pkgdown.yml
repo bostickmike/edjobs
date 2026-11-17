@@ -128,6 +128,7 @@ reference:
   - drop_implausible_pay
   - ensure_posted_pay_columns
   - extract_posted_pay
+  - PART_FTE_RX
   - fix_title_encoding
   - is_implausible_pay
   - is_placeholder_posting

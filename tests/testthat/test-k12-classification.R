@@ -252,3 +252,10 @@ test_that("classify_k12_subject matches the plural 'Family and Consumer Sciences
 test_that("classify_k12_subject recognizes 'Vo/Ag' as Agriculture Education (MT examples)", {
   expect_equal(classify_k12_subject("RHS Teacher ~ Vo/Ag 2026-2027"), "Agriculture Education")
 })
+
+test_that("a fractional FTE in a title makes a part-time teacher (2026-11-17 review)", {
+  t <- c("Math Teacher MS2627_24 .5 FTE", "Middle School Title I Teacher - .5 FTE 1 year only", "Science Teacher 0.50 FTE",
+         "English Teacher (0.75 FTE)", "Teacher 1.0 FTE", "Teacher 10.5 FTE", "Teacher .0 FTE")
+  expect_equal(classify_k12_position(t), c(rep("Part-Time Teacher", 4), rep("Teacher", 3)))
+  expect_equal(k12_role_hint(c("A .5 FTE science teacher for 2026-27", "A 1.0 FTE teacher")), c("Part-Time", "Teacher"))
+})
