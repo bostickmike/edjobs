@@ -21,8 +21,9 @@ A title's block is its line up to the next title's line (at most 25 lines).
 The first line in it with a deadline cue (deadline, close/closing, due,
 until, no later than, accepted through, apply/received/submitted by)
 followed within 60 characters by a full date with its year ("October 29,
-2026", "10/29/2026") is the deadline. A date without a year, or "until
-filled" with no date, is no deadline. Measured 2026-11-14 on every MT and WY
+2026", "10/29/2026") is the deadline. A date without a year is no deadline,
+and neither is any date in a block that says the job is open until filled,
+or a first-review, priority or screening date (2026-11-17 review, item 4). Measured 2026-11-14 on every MT and WY
 Apptegy page (228 postings at 50 districts): one passed deadline, Weston
 County SD 7's School Maintenance Technician (closed 2026-10-29).
 }

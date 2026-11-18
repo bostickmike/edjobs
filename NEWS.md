@@ -1,3 +1,13 @@
+# edjobs 0.41.0
+
+* `classify_work_schedule()` (new): why a posting is clearly not a regular full-time job ("substitute", "extra
+  duty", "part-time", "student job", "temporary or seasonal"), or `NA` when nothing marks it, for the Home page's
+  job-type tables (Jobs_Dash_repos claude-notes `2026-11-17_home-job-types-plan.md`, piece A). Replayed over every
+  archived title in both states (`2026-11-18_not-full-time/`). Open postings not marked: MT K-12 855 of 1,374,
+  WY K-12 341 of 729; college (latest run) MT 256 of 380, WY 227 of 460. Applicant pools and a stipend pay unit
+  are not reasons (pool titles say nothing about the schedule; `\bpool\b` also names swimming-pool jobs).
+* `man/apptegy_passed_deadline.Rd` regenerated (0.40.0's roxygen change had not been written to it).
+
 # edjobs 0.40.0
 
 Classifier and pay fixes from the 2026-11-17 full review. Each was replayed over every archived title or pay
