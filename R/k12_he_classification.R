@@ -711,7 +711,10 @@ extract_posted_pay <- function(text) {
       unit <- dplyr::case_when(
         grepl("^[^a-z]{0,3}(/|per|an|a)?\\s*(hour|hr\\b)|^[^a-z]{0,3}hourly", after) ~ "hour",
         grepl("^[^a-z]{0,3}(/|per|a)?\\s*((whole|half|full) )?(day\\b|daily)|^[^a-z]{0,3}per diem", after) |
-          grepl("daily rate[^.]{0,60}$", before) ~ "day",
+          grepl("daily rate[^.]{0,60}$", before) |
+          # The unit before the amount: Melstone's "Full day/$100 and 1/2 day/$50" (2026-11-17). Only a full/half day
+          # right before the slash, so stipend tiers like "days worked/month = $100" don't match.
+          grepl("\\b(full|half|1/2|whole) day\\s*/\\s*$", before) ~ "day",
         grepl("^[^a-z]{0,3}(/|per|a)?\\s*(month|mo\\b)|^[^a-z]{0,3}monthly", after) ~ "month",
         grepl("^[^a-z]{0,3}(/|per|a)?\\s*(year|yr\\b|annum)|^[^a-z]{0,3}annual", after) ~ "year",
         grepl("^[^a-z]{0,3}(/|per|a)?\\s*(1\\s+)?(semester\\s+)?credit", after) ~ "credit hour",

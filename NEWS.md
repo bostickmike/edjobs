@@ -1,3 +1,9 @@
+# edjobs 0.42.0
+
+* `extract_posted_pay()` reads a full or half day written before the amount as a day rate ("Full day/$100 and 1/2
+  day/$50", Melstone 2026-11-17; MT's `k12_pay_has_unit` run expectation failed on it). Replayed over every archived
+  `Pay_Text` in both states (1,044 distinct texts): only that posting changes (unit NA -> "day").
+
 # edjobs 0.41.0
 
 * `classify_work_schedule()` (new): why a posting is clearly not a regular full-time job ("substitute", "extra
