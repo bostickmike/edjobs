@@ -539,6 +539,39 @@ split_full_time <- function(title) {
   }, logical(1))
 }
 
+#' Open postings per run by job type
+#'
+#' One row per job type and run date: `n`, every posting, and `n_not_marked`, the postings
+#' [classify_work_schedule()] does not mark (the Home page's job-type tables). The pipeline appends one run's rows
+#' to `k12_jobtype_weekly_totals.csv` / `he_jobtype_weekly_totals.csv`, and the archive rebuilds build every run's
+#' with the same call. Like the district and college totals, a type with no postings on a run has no row.
+#' @param df One or more runs' postings, with `Archive_Date`, the type column and the title column (K-12 rows may
+#'   carry `Role_Hint`).
+#' @param type_col The job-type column: K-12 `position`, college `Job_Type` ([classify_he_job_type()]).
+#' @param title_col The title column.
+#' @param sector `"k12"` or `"college"`.
+#' @param id_col Count distinct values of this column (MT K-12 counts `Posting_ID`, as its district totals do), or
+#'   NULL to count rows.
+#' @return A data frame: `Job_Type`, `Archive_Date`, `n`, `n_not_marked`.
+#' @export
+jobtype_run_totals <- function(df, type_col, title_col, sector = c("k12", "college"), id_col = NULL) {
+  sector <- match.arg(sector)
+  type <- as.character(df[[type_col]])
+  why <- if (sector == "k12") {
+    classify_work_schedule(df[[title_col]], k12_position = type,
+                           role_hint = if ("Role_Hint" %in% names(df)) df$Role_Hint else NULL)
+  } else {
+    classify_work_schedule(df[[title_col]], he_job_type = type)
+  }
+  d <- data.frame(Job_Type = type, Archive_Date = df$Archive_Date,
+                  id = if (is.null(id_col)) seq_len(nrow(df)) else df[[id_col]], unmarked = is.na(why),
+                  stringsAsFactors = FALSE)
+  d %>%
+    dplyr::group_by(Job_Type, Archive_Date) %>%
+    dplyr::summarize(n = dplyr::n_distinct(id), n_not_marked = dplyr::n_distinct(id[unmarked]), .groups = "drop") %>%
+    as.data.frame()
+}
+
 #' @rdname classify_work_schedule
 #' @export
 WORK_SCHEDULE_REASONS <- c("substitute", "extra duty", "part-time", "student job", "temporary or seasonal")

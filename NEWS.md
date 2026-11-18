@@ -6,6 +6,9 @@
   archived title in both states (`2026-11-18_not-full-time/`). Open postings not marked: MT K-12 855 of 1,374,
   WY K-12 341 of 729; college (latest run) MT 256 of 380, WY 227 of 460. Applicant pools and a stipend pay unit
   are not reasons (pool titles say nothing about the schedule; `\bpool\b` also names swimming-pool jobs).
+* `jobtype_run_totals()` (new): open postings per run by job type, all and not marked, for the new
+  `k12_jobtype_weekly_totals.csv` / `he_jobtype_weekly_totals.csv` (plan piece B); one call for the pipeline and
+  the archive rebuilds. Counts rows, or distinct `id_col` values (MT K-12 counts `Posting_ID`).
 * `man/apptegy_passed_deadline.Rd` regenerated (0.40.0's roxygen change had not been written to it).
 
 # edjobs 0.40.0

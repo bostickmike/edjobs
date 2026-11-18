@@ -8,4 +8,6 @@ utils::globalVariables(c("N_Rows", ".data", "parts_sum", "total_value", "Distric
                          # k12_history.R
                          "Broad_Category", "Archive_Date", "Category", "Role_Hint", "position",
                          # app_helpers.R
-                         "Current Postings", "Delta"))
+                         "Current Postings", "Delta",
+                         # k12_he_classification.R: jobtype_run_totals()
+                         "Job_Type", "id", "unmarked"))
