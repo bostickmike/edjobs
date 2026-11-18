@@ -1,3 +1,14 @@
+# edjobs 0.42.0
+
+* `extract_posted_pay()` reads a full or half day written before the amount as a day rate ("Full day/$100 and 1/2
+  day/$50", Melstone 2026-11-17; MT's `k12_pay_has_unit` run expectation failed on it). Replayed over every archived
+  `Pay_Text` in both states (1,044 distinct texts): only that posting changes (unit NA -> "day").
+* `write_csv_keep_quoting()` and `csv_quoted_columns()` (new): write a data frame with the quoting an existing CSV
+  file uses, so a file read with `colClasses = "character"` and written back changes only its changed rows. For the
+  states' `reclassify_committed_data.R`, whose `write.csv()` quoted every date and number (MT PR 66 was patched by
+  hand). Round-trip of the 9 files that script writes, both states: 18 of 18 byte-identical (plain `write.csv()`:
+  14 of 18 differ).
+
 # edjobs 0.41.0
 
 * `classify_work_schedule()` (new): why a posting is clearly not a regular full-time job ("substitute", "extra

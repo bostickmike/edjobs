@@ -206,3 +206,11 @@ test_that("K on the high end, a period as thousands separator, and hourly 'up to
   expect_equal(p$Pay_Max, c(48000, 45000, 19, 14, 22))
   expect_equal(p$Pay_Unit, c("year", "year", "hour", "hour", "hour"))
 })
+
+test_that("a full or half day written before the amount is a day rate", {
+  # Melstone 2026-11-17, the only case in either state's K-12 archives.
+  p <- extract_posted_pay(c("Certified (teacher) substitute - Full day/$100 and 1/2 day/$50",
+                            "Half day / $55", "Stipend tiers: 10-19 days worked/month = $100"))
+  expect_equal(p$Pay_Min, c(100, 55, 100))
+  expect_equal(p$Pay_Unit, c("day", "day", NA))
+})
