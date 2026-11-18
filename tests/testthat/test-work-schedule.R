@@ -90,3 +90,33 @@ test_that("jobtype_run_totals() counts every posting and the unmarked ones, per 
   h <- jobtype_run_totals(he, "Job_Type", "Title", "college")
   expect_equal(h$n_not_marked[match(c("Adjunct/Part-Time Faculty", "Instructor/Teacher/Faculty"), h$Job_Type)], c(0, 1))
 })
+
+test_that("posting_run_totals() groups by district or institution on the same basis", {
+  d <- data.frame(
+    District = c("A", "A", "A", "B", "A", NA),
+    title = c("Elementary Teacher", "Substitute Teacher", "Para", "Head Football Coach", "Para", "Teacher"),
+    position = c("Teacher", "Substitute", "Paraprofessional", "Athletics", "Paraprofessional", "Teacher"),
+    Archive_Date = as.Date(c(rep("2026-11-10", 4), "2026-11-10", "2026-11-17")),
+    Posting_ID = c("a", "s", "p", "c", "p", "t"), stringsAsFactors = FALSE)
+  r <- posting_run_totals(d, "District", "position", "title", "k12")
+  expect_equal(names(r), c("District", "Archive_Date", "n", "n_not_marked"))
+  a <- r[r$District %in% "A", ]
+  expect_equal(c(a$n, a$n_not_marked), c(4, 3))  # rows; the substitute isn't counted in n_not_marked
+  expect_equal(r$n_not_marked[r$District %in% "B"], 0)
+  expect_true(any(is.na(r$District)))  # a missing district keeps its row, as count() does
+  # n is the district totals' own count: rows (WY) and distinct Posting_ID (MT).
+  expect_equal(r[, c("District", "Archive_Date", "n")],
+               as.data.frame(dplyr::count(d, District, Archive_Date, name = "n")), ignore_attr = TRUE)
+  m <- posting_run_totals(d, "District", "position", "title", "k12", id_col = "Posting_ID")
+  expect_equal(m$n[m$District %in% "A"], 3)
+  expect_equal(m$n_not_marked[m$District %in% "A"], 2)
+  # jobtype_run_totals() is the same count grouped by the type.
+  j <- jobtype_run_totals(d, "position", "title", "k12")
+  expect_equal(j, setNames(posting_run_totals(d, "position", "position", "title", "k12"),
+                           c("Job_Type", "Archive_Date", "n", "n_not_marked")))
+  he <- data.frame(Institution = c("U", "U"), Title = c("Adjunct Faculty - Biology", "Assistant Professor of Biology"),
+                   Archive_Date = as.Date("2026-11-17"), stringsAsFactors = FALSE)
+  he$Job_Type <- classify_he_job_type(he$Title)
+  h <- posting_run_totals(he, "Institution", "Job_Type", "Title", "college")
+  expect_equal(c(h$n, h$n_not_marked), c(2, 1))
+})

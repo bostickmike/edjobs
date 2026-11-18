@@ -9,5 +9,7 @@ utils::globalVariables(c("N_Rows", ".data", "parts_sum", "total_value", "Distric
                          "Broad_Category", "Archive_Date", "Category", "Role_Hint", "position",
                          # app_helpers.R
                          "Current Postings", "Delta",
-                         # k12_he_classification.R: jobtype_run_totals()
-                         "Job_Type", "id", "unmarked"))
+                         # k12_he_classification.R: posting_run_totals()
+                         "Job_Type", "id", "unmarked", ".group",
+                         # posting_spells.R: frozen_board_runs()
+                         "Weeks"))

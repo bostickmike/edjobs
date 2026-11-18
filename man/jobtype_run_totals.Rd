@@ -13,10 +13,11 @@ jobtype_run_totals(
 )
 }
 \arguments{
-\item{df}{One or more runs' postings, with \code{Archive_Date}, the type column and the title column (K-12 rows may
-carry \code{Role_Hint}).}
+\item{df}{One or more runs' postings, with \code{Archive_Date}, the group, type and title columns (K-12 rows may carry
+\code{Role_Hint}).}
 
-\item{type_col}{The job-type column: K-12 \code{position}, college \code{Job_Type} (\code{\link[=classify_he_job_type]{classify_he_job_type()}}).}
+\item{type_col}{The job-type column the classifier reads: K-12 \code{position}, college \code{Job_Type}
+(\code{\link[=classify_he_job_type]{classify_he_job_type()}}).}
 
 \item{title_col}{The title column.}
 
@@ -29,8 +30,6 @@ NULL to count rows.}
 A data frame: \code{Job_Type}, \code{Archive_Date}, \code{n}, \code{n_not_marked}.
 }
 \description{
-One row per job type and run date: \code{n}, every posting, and \code{n_not_marked}, the postings
-\code{\link[=classify_work_schedule]{classify_work_schedule()}} does not mark (the Home page's job-type tables). The pipeline appends one run's rows
-to \code{k12_jobtype_weekly_totals.csv} / \code{he_jobtype_weekly_totals.csv}, and the archive rebuilds build every run's
-with the same call. Like the district and college totals, a type with no postings on a run has no row.
+\code{\link[=posting_run_totals]{posting_run_totals()}} grouped by the job type itself, with the type column named \code{Job_Type}: the rows of
+\code{k12_jobtype_weekly_totals.csv} / \code{he_jobtype_weekly_totals.csv}.
 }

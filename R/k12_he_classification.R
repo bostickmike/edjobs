@@ -523,7 +523,7 @@ classify_work_schedule <- function(title, k12_position = NULL, he_job_type = NUL
     pos %in% "Part-Time Teacher" | rh %in% "Part-Time" | het %in% "Adjunct/Part-Time Faculty" |
       (part_time & !full_time) ~ "part-time",
     het %in% "Student Positions" |
-      (!college & has("^\\s*student\\s+(sweeper|custodian|worker|store)|[-(–]\\s*(HS\\s+|high school\\s+)?students?\\s*\\)?\\s*$")) ~
+      (!college & has("^\\s*student\\s+(sweeper|custodian|worker|store)|[-(\u2013]\\s*(HS\\s+|high school\\s+)?students?\\s*\\)?\\s*$")) ~
       "student job",
     het %in% "Temporary Position" | has("\\btemporary\\b|\\btemp\\b|seasonal|(?<!after school and )\\bsummer\\b") ~
       "temporary or seasonal",
@@ -539,23 +539,27 @@ split_full_time <- function(title) {
   }, logical(1))
 }
 
-#' Open postings per run by job type
+#' Open postings per run, all and not marked
 #'
-#' One row per job type and run date: `n`, every posting, and `n_not_marked`, the postings
-#' [classify_work_schedule()] does not mark (the Home page's job-type tables). The pipeline appends one run's rows
-#' to `k12_jobtype_weekly_totals.csv` / `he_jobtype_weekly_totals.csv`, and the archive rebuilds build every run's
-#' with the same call. Like the district and college totals, a type with no postings on a run has no row.
-#' @param df One or more runs' postings, with `Archive_Date`, the type column and the title column (K-12 rows may
-#'   carry `Role_Hint`).
-#' @param type_col The job-type column: K-12 `position`, college `Job_Type` ([classify_he_job_type()]).
+#' One row per group and run date: `n`, every posting, and `n_not_marked`, the postings [classify_work_schedule()]
+#' does not mark. Group by job type for the Home page's job-type tables ([jobtype_run_totals()]), or by district or
+#' institution for the top district/college tables, so their sparklines count on the same basis as the table. The
+#' pipeline appends one run's rows to the accumulated totals files and the archive rebuilds build every run's with
+#' the same call. A group with no postings on a run has no row.
+#' @param df One or more runs' postings, with `Archive_Date`, the group, type and title columns (K-12 rows may carry
+#'   `Role_Hint`).
+#' @param by The column to group by (`District`, `Institution`, or the type column itself). Kept under its own name.
+#' @param type_col The job-type column the classifier reads: K-12 `position`, college `Job_Type`
+#'   ([classify_he_job_type()]).
 #' @param title_col The title column.
 #' @param sector `"k12"` or `"college"`.
 #' @param id_col Count distinct values of this column (MT K-12 counts `Posting_ID`, as its district totals do), or
 #'   NULL to count rows.
-#' @return A data frame: `Job_Type`, `Archive_Date`, `n`, `n_not_marked`.
+#' @return A data frame: the `by` column, `Archive_Date`, `n`, `n_not_marked`.
 #' @export
-jobtype_run_totals <- function(df, type_col, title_col, sector = c("k12", "college"), id_col = NULL) {
+posting_run_totals <- function(df, by, type_col, title_col, sector = c("k12", "college"), id_col = NULL) {
   sector <- match.arg(sector)
+  stopifnot(by %in% names(df), type_col %in% names(df), title_col %in% names(df), "Archive_Date" %in% names(df))
   type <- as.character(df[[type_col]])
   why <- if (sector == "k12") {
     classify_work_schedule(df[[title_col]], k12_position = type,
@@ -563,13 +567,29 @@ jobtype_run_totals <- function(df, type_col, title_col, sector = c("k12", "colle
   } else {
     classify_work_schedule(df[[title_col]], he_job_type = type)
   }
-  d <- data.frame(Job_Type = type, Archive_Date = df$Archive_Date,
+  d <- data.frame(.group = df[[by]], Archive_Date = df$Archive_Date,
                   id = if (is.null(id_col)) seq_len(nrow(df)) else df[[id_col]], unmarked = is.na(why),
                   stringsAsFactors = FALSE)
-  d %>%
-    dplyr::group_by(Job_Type, Archive_Date) %>%
+  out <- d %>%
+    dplyr::group_by(.group, Archive_Date) %>%
     dplyr::summarize(n = dplyr::n_distinct(id), n_not_marked = dplyr::n_distinct(id[unmarked]), .groups = "drop") %>%
     as.data.frame()
+  names(out)[1] <- by
+  out
+}
+
+#' Open postings per run by job type
+#'
+#' [posting_run_totals()] grouped by the job type itself, with the type column named `Job_Type`: the rows of
+#' `k12_jobtype_weekly_totals.csv` / `he_jobtype_weekly_totals.csv`.
+#' @inheritParams posting_run_totals
+#' @return A data frame: `Job_Type`, `Archive_Date`, `n`, `n_not_marked`.
+#' @export
+jobtype_run_totals <- function(df, type_col, title_col, sector = c("k12", "college"), id_col = NULL) {
+  out <- posting_run_totals(df, by = type_col, type_col = type_col, title_col = title_col, sector = sector,
+                            id_col = id_col)
+  names(out)[1] <- "Job_Type"
+  out
 }
 
 #' @rdname classify_work_schedule

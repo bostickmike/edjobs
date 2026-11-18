@@ -9,6 +9,9 @@
 * `jobtype_run_totals()` (new): open postings per run by job type, all and not marked, for the new
   `k12_jobtype_weekly_totals.csv` / `he_jobtype_weekly_totals.csv` (plan piece B); one call for the pipeline and
   the archive rebuilds. Counts rows, or distinct `id_col` values (MT K-12 counts `Posting_ID`).
+* `posting_run_totals()` (new): the same per-run `n` and `n_not_marked`, grouped by any column (district,
+  institution), so the Home page's top district/college sparklines count on the same basis as their tables
+  (`2026-11-18_sparkline-basis/PLAN.md`). `jobtype_run_totals()` is now this grouped by the type.
 * `man/apptegy_passed_deadline.Rd` regenerated (0.40.0's roxygen change had not been written to it).
 
 # edjobs 0.40.0
