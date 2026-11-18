@@ -1,3 +1,19 @@
+# edjobs 0.41.0
+
+* `classify_work_schedule()` (new): why a posting is clearly not a regular full-time job ("substitute", "extra
+  duty", "part-time", "student job", "temporary or seasonal"), or `NA` when nothing marks it, for the Home page's
+  job-type tables (Jobs_Dash_repos claude-notes `2026-11-17_home-job-types-plan.md`, piece A). Replayed over every
+  archived title in both states (`2026-11-18_not-full-time/`). Open postings not marked: MT K-12 855 of 1,374,
+  WY K-12 341 of 729; college (latest run) MT 256 of 380, WY 227 of 460. Applicant pools and a stipend pay unit
+  are not reasons (pool titles say nothing about the schedule; `\bpool\b` also names swimming-pool jobs).
+* `jobtype_run_totals()` (new): open postings per run by job type, all and not marked, for the new
+  `k12_jobtype_weekly_totals.csv` / `he_jobtype_weekly_totals.csv` (plan piece B); one call for the pipeline and
+  the archive rebuilds. Counts rows, or distinct `id_col` values (MT K-12 counts `Posting_ID`).
+* `posting_run_totals()` (new): the same per-run `n` and `n_not_marked`, grouped by any column (district,
+  institution), so the Home page's top district/college sparklines count on the same basis as their tables
+  (`2026-11-18_sparkline-basis/PLAN.md`). `jobtype_run_totals()` is now this grouped by the type.
+* `man/apptegy_passed_deadline.Rd` regenerated (0.40.0's roxygen change had not been written to it).
+
 # edjobs 0.40.0
 
 Classifier and pay fixes from the 2026-11-17 full review. Each was replayed over every archived title or pay

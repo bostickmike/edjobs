@@ -477,6 +477,144 @@ is_placeholder_posting <- function(title) {
 #' @export
 PART_FTE_RX <- "(?<![\\w.])0?\\.(?!0+\\b)\\d{1,3}\\s*FTE\\b"
 
+#' Why a posting is not counted as a full-time job
+#'
+#' The reason a posting is clearly not a regular full-time job, from its title and classified type, or `NA` when
+#' nothing marks it. Sources never confirm full-time, so `NA` means "not marked", not "full-time". Reasons, first
+#' match wins:
+#' * `"substitute"`: K-12 position Substitute; a college title naming a substitute.
+#' * `"extra duty"`: K-12 Athletics or Activities/Extracurricular, a title naming a stipend or extracurricular
+#'   positions.
+#' * `"part-time"`: K-12 Part-Time Teacher or an OPI part-time role hint; college Adjunct/Part-Time Faculty; any
+#'   title saying part-time, half-time, PT, 1/2 time, a fraction of an FTE (".5 FTE", "(.33)"), on-call, under 30
+#'   hours a week, under 6 hours a day or under 5 days a week. A title that also says full-time ("Night Custodian -
+#'   Full-time or Part Time") is not marked: a candidate can apply for the full-time job.
+#' * `"student job"`: college Student Positions; K-12 jobs for students ("Student Sweeper", "Lifeguard - HS
+#'   Student", "Student Worker").
+#' * `"temporary or seasonal"`: college Temporary Position; a title saying temporary, temp, seasonal or summer.
+#'
+#' Measured 2026-11-18 on every archived MT and WY title, K-12 and college (Jobs_Dash_repos claude-notes
+#' `2026-11-18_not-full-time/`). Applicant pools are not a reason: a pool title says nothing about the schedule
+#' ("Custodian I - Full Time (Applicant Pool)"), and `\bpool\b` also names swimming-pool jobs ("Pool Lifeguard").
+#' A stipend pay unit is not one either: OPI teacher postings that mention a signing stipend carry it.
+#' @param title Posting titles.
+#' @param k12_position K-12 position ([classify_k12_position()]), or NULL for college postings.
+#' @param he_job_type College job type ([classify_he_job_type()]), or NULL for K-12 postings.
+#' @param role_hint OPI role hint ([k12_role_hint()]), or NULL.
+#' @return A character vector of reasons, `NA` where nothing marks the posting.
+#' @export
+classify_work_schedule <- function(title, k12_position = NULL, he_job_type = NULL, role_hint = NULL) {
+  title <- fix_title_encoding(as.character(title))
+  title[is.na(title)] <- ""
+  n <- length(title)
+  pos <- if (is.null(k12_position)) rep(NA_character_, n) else as.character(k12_position)
+  het <- if (is.null(he_job_type)) rep(NA_character_, n) else as.character(he_job_type)
+  rh <- if (is.null(role_hint)) rep(NA_character_, n) else as.character(role_hint)
+  college <- is.null(k12_position)
+  has <- function(rx) grepl(rx, title, ignore.case = TRUE, perl = TRUE)
+  full_time <- has("full\\s*[- ]?\\s*time|\\b1(\\.0+)?\\s*FTE\\b") | split_full_time(title)
+  part_time <- has(paste0(
+    "part\\s*[- ]?\\s*time|half\\s*[- ]?\\s*time|\\bPT\\b|\\b1/[2-9]\\s*[- ]?\\s*time\\b|\\b1/[2-9]th\\b|on[- ]call|",
+    PART_FTE_RX, "|", WORK_SCHEDULE_BARE_FTE_RX)) | short_schedule(title)
+  dplyr::case_when(
+    pos %in% "Substitute" | (college & has("\\bsub(stitute)?s?\\b")) ~ "substitute",
+    pos %in% c("Athletics", "Activities/Extracurricular") | has("stipend|extra[- ]?curricular positions") ~
+      "extra duty",
+    pos %in% "Part-Time Teacher" | rh %in% "Part-Time" | het %in% "Adjunct/Part-Time Faculty" |
+      (part_time & !full_time) ~ "part-time",
+    het %in% "Student Positions" |
+      (!college & has("^\\s*student\\s+(sweeper|custodian|worker|store)|[-(\u2013]\\s*(HS\\s+|high school\\s+)?students?\\s*\\)?\\s*$")) ~
+      "student job",
+    het %in% "Temporary Position" | has("\\btemporary\\b|\\btemp\\b|seasonal|(?<!after school and )\\bsummer\\b") ~
+      "temporary or seasonal",
+    TRUE ~ NA_character_)
+}
+
+# One job split into FTE fractions that add up to a whole post: "0.6 Custodian/0.4 Assistant Cook", "Primary .5 Sped
+# Paraprofessional/.5 Academic Coach".
+split_full_time <- function(title) {
+  vapply(regmatches(title, gregexpr(FTE_FRACTION_RX, title, perl = TRUE)), function(f) {
+    f <- as.numeric(f)
+    length(f) >= 2 && sum(f) >= 0.99
+  }, logical(1))
+}
+
+#' Open postings per run, all and not marked
+#'
+#' One row per group and run date: `n`, every posting, and `n_not_marked`, the postings [classify_work_schedule()]
+#' does not mark. Group by job type for the Home page's job-type tables ([jobtype_run_totals()]), or by district or
+#' institution for the top district/college tables, so their sparklines count on the same basis as the table. The
+#' pipeline appends one run's rows to the accumulated totals files and the archive rebuilds build every run's with
+#' the same call. A group with no postings on a run has no row.
+#' @param df One or more runs' postings, with `Archive_Date`, the group, type and title columns (K-12 rows may carry
+#'   `Role_Hint`).
+#' @param by The column to group by (`District`, `Institution`, or the type column itself). Kept under its own name.
+#' @param type_col The job-type column the classifier reads: K-12 `position`, college `Job_Type`
+#'   ([classify_he_job_type()]).
+#' @param title_col The title column.
+#' @param sector `"k12"` or `"college"`.
+#' @param id_col Count distinct values of this column (MT K-12 counts `Posting_ID`, as its district totals do), or
+#'   NULL to count rows.
+#' @return A data frame: the `by` column, `Archive_Date`, `n`, `n_not_marked`.
+#' @export
+posting_run_totals <- function(df, by, type_col, title_col, sector = c("k12", "college"), id_col = NULL) {
+  sector <- match.arg(sector)
+  stopifnot(by %in% names(df), type_col %in% names(df), title_col %in% names(df), "Archive_Date" %in% names(df))
+  type <- as.character(df[[type_col]])
+  why <- if (sector == "k12") {
+    classify_work_schedule(df[[title_col]], k12_position = type,
+                           role_hint = if ("Role_Hint" %in% names(df)) df$Role_Hint else NULL)
+  } else {
+    classify_work_schedule(df[[title_col]], he_job_type = type)
+  }
+  d <- data.frame(.group = df[[by]], Archive_Date = df$Archive_Date,
+                  id = if (is.null(id_col)) seq_len(nrow(df)) else df[[id_col]], unmarked = is.na(why),
+                  stringsAsFactors = FALSE)
+  out <- d %>%
+    dplyr::group_by(.group, Archive_Date) %>%
+    dplyr::summarize(n = dplyr::n_distinct(id), n_not_marked = dplyr::n_distinct(id[unmarked]), .groups = "drop") %>%
+    as.data.frame()
+  names(out)[1] <- by
+  out
+}
+
+#' Open postings per run by job type
+#'
+#' [posting_run_totals()] grouped by the job type itself, with the type column named `Job_Type`: the rows of
+#' `k12_jobtype_weekly_totals.csv` / `he_jobtype_weekly_totals.csv`.
+#' @inheritParams posting_run_totals
+#' @return A data frame: `Job_Type`, `Archive_Date`, `n`, `n_not_marked`.
+#' @export
+jobtype_run_totals <- function(df, type_col, title_col, sector = c("k12", "college"), id_col = NULL) {
+  out <- posting_run_totals(df, by = type_col, type_col = type_col, title_col = title_col, sector = sector,
+                            id_col = id_col)
+  names(out)[1] <- "Job_Type"
+  out
+}
+
+#' @rdname classify_work_schedule
+#' @export
+WORK_SCHEDULE_REASONS <- c("substitute", "extra duty", "part-time", "student job", "temporary or seasonal")
+
+# A fraction of an FTE written without "FTE": "Foreign Language Teacher (.33)", ".5 Paraprofessional Position". Not
+# a price or a frequency ("$16.50/hr", "88.1 Radio").
+FTE_FRACTION_RX <- "(?<![\\w.$])0?\\.[1-9]\\d?(?![\\d.%])"
+WORK_SCHEDULE_BARE_FTE_RX <- paste0(FTE_FRACTION_RX, "(?!\\s*(hrs?|hours|/))")
+
+# Fewer than 30 hours a week, 6 hours a day or 5 days a week, stated in the title ("20 hrs/week", "2 hours per day",
+# "2 Days/Week"). "Up to 32 hours per week" is not short.
+short_schedule <- function(title) {
+  m <- regmatches(title, regexec(
+    "(?i)\\b(\\d{1,2}(?:\\.\\d+)?)\\s*(hours|hrs?|days?)\\.?\\s*(?:per|/|a|each)\\s*(week|wk|day)\\b", title,
+    perl = TRUE))
+  vapply(m, function(x) {
+    if (length(x) < 4) return(FALSE)
+    k <- as.numeric(x[2]); unit <- tolower(x[3]); per <- tolower(x[4])
+    if (grepl("^day", unit)) return(per %in% c("week", "wk") && k < 5)
+    if (per %in% c("week", "wk")) k < 30 else k < 6
+  }, logical(1))
+}
+
 #' Extract posted pay
 #'
 #' Pulls the advertised pay out of a posting's free text: the amount (or
