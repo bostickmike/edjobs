@@ -80,3 +80,11 @@ test_that("expectations step: all-pass writes the table but no report; a failure
   capture.output(run_expectations_step(run_date = as.Date("2026-11-13"), out_csv = "out.csv", report_path = "report.md"))
   expect_equal(readLines("report.md"), c(first, "", "---", "", first))
 })
+
+test_that("render_with_stack renders in the global environment, as the top-level script did", {
+  seen <- NULL
+  local_mocked_bindings(render = function(input, envir = parent.frame(), ...) { seen <<- envir; "out.html" },
+                        .package = "rmarkdown")
+  expect_equal(render_with_stack("x.Rmd"), "out.html")
+  expect_identical(seen, globalenv())
+})

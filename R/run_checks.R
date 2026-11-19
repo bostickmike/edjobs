@@ -15,13 +15,15 @@ run_app_dir <- function(app_dir) {
 #' limit), the call stack goes to stderr first, so the run says where it was stuck instead of just "The operation
 #' was canceled" (WY, 2026-11-13).
 #' @param rmd The Rmd file.
+#' @param envir Where the chunks run: the global environment, as when the script called [rmarkdown::render()] at top
+#'   level (its own default, `parent.frame()`, would be this function's frame, inside the package namespace).
 #' @param ... Passed to [rmarkdown::render()].
 #' @return What [rmarkdown::render()] returns.
 #' @export
-render_with_stack <- function(rmd, ...) {
+render_with_stack <- function(rmd, envir = globalenv(), ...) {
   if (!requireNamespace("rmarkdown", quietly = TRUE)) stop("render_with_stack() needs the rmarkdown package", call. = FALSE)
   withCallingHandlers(
-    rmarkdown::render(rmd, ...),
+    rmarkdown::render(rmd, envir = envir, ...),
     interrupt = function(e) {
       cat("\n=== Render interrupted at ", format(Sys.time(), "%H:%M:%S"),
           " (time budget). R call stack, innermost last:\n", sep = "", file = stderr())

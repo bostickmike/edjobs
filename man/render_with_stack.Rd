@@ -4,10 +4,13 @@
 \alias{render_with_stack}
 \title{Render the weekly Rmd, printing R's call stack if the render is interrupted}
 \usage{
-render_with_stack(rmd, ...)
+render_with_stack(rmd, envir = globalenv(), ...)
 }
 \arguments{
 \item{rmd}{The Rmd file.}
+
+\item{envir}{Where the chunks run: the global environment, as when the script called \code{\link[rmarkdown:render]{rmarkdown::render()}} at top
+level (its own default, \code{parent.frame()}, would be this function's frame, inside the package namespace).}
 
 \item{...}{Passed to \code{\link[rmarkdown:render]{rmarkdown::render()}}.}
 }
