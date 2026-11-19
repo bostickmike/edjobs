@@ -1,3 +1,13 @@
+# edjobs 0.54.0
+
+* **The auto-fix issue step as a function (2026-11-17 package review, step 6, slice 5).** `file_autofix_issues_step()`
+  replaces the states' `file_autofix_issues.R`, which differed only in comments and in the scraper files they sourced
+  (the state sources them before the call; `resolve_scraper_call()` needs them). The unused registry read is gone.
+  Parity: five scenarios per state (Claude dispatch; Copilot assignment and its PR; an edjobs companion issue;
+  escalation to Claude; Copilot refusing; recovery closes with the companion; a confirmed_broken comment; no results
+  file; the cap) through a fake `gh` that logs every call: the old script and the function make identical calls,
+  bodies and tokens, and print the same lines.
+
 # edjobs 0.53.0
 
 * **The Census check and the auto-fix PR's live check as functions (2026-11-17 package review, step 6, slice 4).**
