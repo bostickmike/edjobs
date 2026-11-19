@@ -1,3 +1,15 @@
+# edjobs 0.56.0
+
+* **A drift corroboration with no LLM reading no longer drops a source from the report.** `llm_titles_from_page_text()`
+  returned `character(0)` both when the model read the page and found nothing and when no reading happened (no
+  `GEMINI_API_KEY`, a blank page, a failed or quota-limited call, a count the guardrails reject), and
+  `combine_verdict_with_llm()` turned every such "inconclusive" page into "looks_genuinely_empty" ("an LLM read no
+  postings off the live page either"), which the drift report leaves out. A Gemini outage on a run day would have
+  hidden every inconclusive source, and with no key the step was not the no-op it is documented as. It now returns
+  NULL when no reading happened, and `combine_verdict_with_llm()` leaves the verdict as it was. A real empty reading
+  still downgrades. (MT's 11-19 run had one such note, University of Providence; which case it was can't be told
+  from the log.)
+
 # edjobs 0.55.0
 
 * **The drift corroboration as a function (2026-11-17 package review, step 6, slice 6).** `corroborate_drift_step()`

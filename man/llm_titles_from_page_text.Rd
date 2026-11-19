@@ -22,7 +22,10 @@ llm_titles_from_page_text(
 corroborate_drift.R already renders a flagged source's live page and has
 its innerText in hand. Given that text, what job titles does the model
 read off it? Lets an "inconclusive" text-signal verdict become "the
-scraper returned ~0 but these postings are on the page." Returns
-character(0) with no key / blank page / any failure -- never throws,
-never fabricates (same guardrails as the shadow pilot).
+scraper returned ~0 but these postings are on the page." Returns NULL
+when no reading happened (no key, a blank page, the call failed, or an
+implausible count the guardrails reject) and character(0) only when the
+model read the page and found no postings: \code{\link[=combine_verdict_with_llm]{combine_verdict_with_llm()}}
+treats the two differently (edjobs 0.56.0). Never throws, never
+fabricates (same guardrails as the shadow pilot).
 }

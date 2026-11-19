@@ -397,7 +397,7 @@ corroborate_drift_step <- function(flagged_path = "/tmp/drift_flagged.csv", resu
       text <- tryCatch(render(url), error = function(e) NA_character_)
       verdict <- score_page_text_for_job_signal(text)
       # The page is already rendered: ask an LLM what postings it sees (no key -> no-op).
-      llm_titles <- tryCatch(llm_titles_from_page_text(text, url = url), error = function(e) character(0))
+      llm_titles <- tryCatch(llm_titles_from_page_text(text, url = url), error = function(e) NULL)
       combined <- combine_verdict_with_llm(verdict, llm_titles,
                                            tryCatch(recent_source_titles(row$name, row$type), error = function(e) NULL),
                                            current_titles = tryCatch(current_titles_for(row$name, row$type),

@@ -375,9 +375,12 @@ fetch_llm_extracted_postings <- function(chromote_session, url,
 #' corroborate_drift.R already renders a flagged source's live page and has
 #' its innerText in hand. Given that text, what job titles does the model
 #' read off it? Lets an "inconclusive" text-signal verdict become "the
-#' scraper returned ~0 but these postings are on the page." Returns
-#' character(0) with no key / blank page / any failure -- never throws,
-#' never fabricates (same guardrails as the shadow pilot).
+#' scraper returned ~0 but these postings are on the page." Returns NULL
+#' when no reading happened (no key, a blank page, the call failed, or an
+#' implausible count the guardrails reject) and character(0) only when the
+#' model read the page and found no postings: [combine_verdict_with_llm()]
+#' treats the two differently (edjobs 0.56.0). Never throws, never
+#' fabricates (same guardrails as the shadow pilot).
 #' @param page_text See the description.
 #' @param url See the description.
 #' @param max_titles See the description.
@@ -387,15 +390,16 @@ llm_titles_from_page_text <- function(page_text,
                                       max_titles = 40L) {
   if (!nzchar(llm_extract_token()) ||
       length(page_text) != 1 || is.na(page_text) || !nzchar(trimws(page_text))) {
-    return(character(0))
+    return(NULL)
   }
   postings <- tryCatch(
     llm_extract_call(substr(as.character(page_text), 1L, LLM_EXTRACT_MAX_CHARS)),
     error = function(e) NULL
   )
+  if (is.null(postings) || length(postings) > max_titles) return(NULL)   # no answer, or one the ceiling rejects
   df <- parse_llm_extracted_postings(page_text, postings, url,
                                      max_plausible = max_titles)
-  df$Title
+  as.character(df$Title)
 }
 
 # --- 5. all shadow-pilot districts, one shared chromote session ----------

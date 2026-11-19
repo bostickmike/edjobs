@@ -292,7 +292,8 @@ score_page_text_for_job_signal <- function(page_text) {
 #'   "looks_genuinely_empty" / "inconclusive"), or "confirmed_broken" /
 #'   "no_url_available" set upstream in corroborate_drift.R.
 #' llm_titles: from llm_titles_from_page_text() -- character(0) when the LLM
-#'   step was skipped (no key) or found nothing.
+#'   read the page and found nothing; NULL when no reading happened (no key,
+#'   blank page, a failed call), which leaves the verdict as it was.
 #' 
 #' Returns list(verdict, note):
 #'   - LLM found real postings and we weren't already at confirmed_broken ->
@@ -461,6 +462,9 @@ drop_titles_already_scraped <- function(llm_titles, current_titles = NULL) {
 #' @param current_titles See the description.
 #' @export
 combine_verdict_with_llm <- function(verdict, llm_titles, history_titles = NULL, current_titles = NULL) {
+  # No reading (no key, a failed or rejected call): nothing to fold in. Before 0.56.0 this was character(0), which
+  # read as "the LLM found nothing" and downgraded an inconclusive page to genuinely empty, out of the report.
+  if (is.null(llm_titles)) return(list(verdict = verdict, note = NA_character_))
   kept <- drop_standing_pool_titles(llm_titles, history_titles)
   pooled <- length(llm_titles) - length(kept)
   unscraped <- drop_titles_already_scraped(kept, current_titles)
