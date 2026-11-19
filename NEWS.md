@@ -1,3 +1,12 @@
+# edjobs 0.50.0
+
+* **The weekly run's checks as functions (2026-11-17 package review, step 6, slice 1).** Four `.github/scripts`
+  that were the same in both states apart from the app folder: `check_run_row_counts()` (the sanity check: stop when
+  K-12 or college rows fell by more than half), `check_app_schemas(csv_schemas, xlsx_schemas)` (the blocking schema
+  check), `run_expectations_step()` and `render_with_stack(rmd)`. The app folder comes from `state_config()`. Output
+  and failure messages are the scripts' own: run on both states' committed data, each prints exactly what the
+  script printed (and writes the same expectations table and drift-report section).
+
 # edjobs 0.49.0
 
 * `refresh_file_columns(then = , relationship = )`: a step after the join, before the write (`add_saipe_range()`, a
