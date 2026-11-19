@@ -4,7 +4,7 @@
 #' wrapped in double quotes. Quoted fields may hold commas, doubled quotes and line breaks.
 #' @param path A CSV file with a header row.
 #' @return A named logical vector, one element per column (named by the header).
-#' @export
+#' @keywords internal
 csv_quoted_columns <- function(path) {
   txt <- readChar(path, file.size(path), useBytes = TRUE)
   # Records, not lines: a line ending inside a quoted field (an odd running count of quotes) continues the record.

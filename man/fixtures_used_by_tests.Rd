@@ -21,3 +21,4 @@ Fixture files referenced by the tests of \code{fetch_fn} or its \verb{parse_*} t
 newest first: dated names by date, then undated ones in file order. For
 fixtures whose names don't carry the source.
 }
+\keyword{internal}

@@ -18,3 +18,4 @@ Postings already in the table that are still open or unknown, first checked
 fewer than POSTING_STATUS_RECHECK_DAYS days before \code{run_date}, and not back on
 their board this run.
 }
+\keyword{internal}

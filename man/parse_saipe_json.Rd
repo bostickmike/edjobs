@@ -13,3 +13,4 @@ parse_saipe_json(json_text)
 Header row to column names, values kept as text. An empty or header-only
 response gives an empty data frame.
 }
+\keyword{internal}

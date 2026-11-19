@@ -24,3 +24,4 @@ fetch_saipe_geography(
 SD_NAME, the rate, both counts and the total population for every district of one geography in
 the state. A 204 (no districts of that kind) gives an empty data frame.
 }
+\keyword{internal}

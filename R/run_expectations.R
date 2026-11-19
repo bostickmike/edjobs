@@ -22,7 +22,7 @@
 # repo's own file; they never see scraped text as code.
 
 #' Columns of run_expectations.csv
-#' @export
+#' @keywords internal
 RUN_EXPECTATION_COLUMNS <- c("id", "applies_from", "expires", "file", "filter", "measure", "min", "max", "note")
 
 #' Read run_expectations.csv
@@ -94,7 +94,7 @@ read_expectation_file <- function(path) {
 #' @param df Data frame.
 #' @param filter,measure R expressions as text (base R only).
 #' @return `list(value, error)`.
-#' @export
+#' @keywords internal
 measure_expectation <- function(df, filter, measure) {
   tryCatch({
     d <- df

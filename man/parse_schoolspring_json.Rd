@@ -17,3 +17,4 @@ exposes its own example vacancies ("Sample Certified Position") as active
 records; they are placeholder text, not jobs a candidate can apply for, and
 are dropped.
 }
+\keyword{internal}

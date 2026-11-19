@@ -12,3 +12,4 @@ parse_status_date(x)
 \description{
 Month-name or numeric dates ("November 6, 2026", "11/4/2026") as Date.
 }
+\keyword{internal}

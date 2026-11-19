@@ -16,3 +16,4 @@ A named logical vector, one element per column (named by the header).
 Reads a CSV file as written by \code{write.csv()} and reports, for each column, whether any of its data fields is
 wrapped in double quotes. Quoted fields may hold commas, doubled quotes and line breaks.
 }
+\keyword{internal}

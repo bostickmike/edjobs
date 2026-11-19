@@ -14,11 +14,11 @@
 #' "Open Until Filled" is also Yes (it is then the first-review deadline,
 #' like AppliTrack's "Closing Date"); with no close date, "Open Until Filled:
 #' Yes" gives Close_Date "Open Until Filled". Blank fields are NA.
-#' @export
+#' @keywords internal
 PEOPLEADMIN_OPEN_LABELS <- c("Open Date", "Posting Date", "Job Posting Date")
 
 #' `PEOPLEADMIN_CLOSE_LABELS`
-#' @export
+#' @keywords internal
 PEOPLEADMIN_CLOSE_LABELS <- c("Close Date", "Closing Date", "Initial Review Date")
 
 #' Parse peopleadmin posting dates
@@ -56,7 +56,7 @@ parse_peopleadmin_posting_dates <- function(html_text) {
 #' description ("Salary Hire Range: $60,598 - 66,889 annually"), so a page
 #' with no pay field is read from all its fields' text instead; a page that has
 #' one but states no amount ("commensurate with experience") stays NA.
-#' @export
+#' @keywords internal
 PEOPLEADMIN_PAY_LABELS <- c("Salary", "Estimated Salary", "Hiring Range", "Starting Salary Range",
                             "Hourly Rate (if applicable)", "Full Salary Range")
 
@@ -163,7 +163,7 @@ parse_neogov_card_pay <- function(html_text) {
 #' displayDate (the listing's posted date, kept as Posted_Date) stays the
 #' start date: postDate is when the record was created, often a few days
 #' before it went public and sometimes re-saved years later.
-#' @export
+#' @keywords internal
 SCHOOLSPRING_STATUS <- c(`30` = "posted", `40` = "review", `50` = "filled", `60` = "canceled")
 
 #' Parse schoolspring job json
@@ -206,11 +206,11 @@ parse_schoolspring_job_json <- function(json_text) {
 
 #' Format pay amount
 #' @param x See the description.
-#' @export
+#' @keywords internal
 format_pay_amount <- function(x) paste0("$", formatC(x, format = "f", digits = if (x %% 1 == 0) 0 else 2, big.mark = ","))
 
 #' `SCHOOLSPRING_DETAIL_EMPTY`
-#' @export
+#' @keywords internal
 SCHOOLSPRING_DETAIL_EMPTY <- data.frame(job_id = character(0), Close_Date = character(0), Job_Status = character(0),
                                          Pay_Min = numeric(0), Pay_Max = numeric(0), Pay_Unit = character(0),
                                          Pay_Text = character(0), stringsAsFactors = FALSE)
@@ -275,12 +275,12 @@ add_schoolspring_details <- function(postings, ...) {
 #' listed), Job_Status, Status_Since (first check that saw this status) and
 #' Last_Checked. Last_Seen is the last weekly sighting, so the true end lies
 #' between Last_Seen and the next run.
-#' @export
+#' @keywords internal
 SCHOOLSPRING_FINAL_STATUS <- c("filled", "canceled")
 
 #' Schoolspring job id
 #' @param url See the description.
-#' @export
+#' @keywords internal
 schoolspring_job_id <- function(url) {
   url <- as.character(url)
   ifelse(!is.na(url) & grepl("schoolspring\\.com/jobs/\\d+$", url), sub("^.*/jobs/", "", url), NA_character_)
@@ -295,7 +295,7 @@ schoolspring_job_id <- function(url) {
 #' @param archive_dir See the description.
 #' @param since See the description.
 #' @param canonicalize See the description.
-#' @export
+#' @keywords internal
 schoolspring_sightings <- function(archive_dir = "Archivek12_Data", since = Sys.Date() - 365,
                                    canonicalize = get0("canonicalize_k12_district", envir = globalenv(), mode = "function",
                                                        ifnotfound = identity)) {
@@ -325,7 +325,7 @@ schoolspring_sightings <- function(archive_dir = "Archivek12_Data", since = Sys.
 }
 
 #' `SCHOOLSPRING_ENDINGS_EMPTY`
-#' @export
+#' @keywords internal
 SCHOOLSPRING_ENDINGS_EMPTY <- data.frame(
   job_id = character(0), District = character(0), Title = character(0), Posted_Date = character(0),
   First_Seen = character(0), Last_Seen = character(0), Job_Status = character(0),
@@ -342,7 +342,7 @@ SCHOOLSPRING_ENDINGS_EMPTY <- data.frame(
 #' @param today See the description.
 #' @param fetch See the description.
 #' @param recheck_days See the description.
-#' @export
+#' @keywords internal
 update_schoolspring_endings <- function(sightings, endings = SCHOOLSPRING_ENDINGS_EMPTY, today = Sys.Date(),
                                         fetch = fetch_schoolspring_details, recheck_days = 365) {
   endings <- dplyr::bind_rows(SCHOOLSPRING_ENDINGS_EMPTY, dplyr::mutate(endings, dplyr::across(dplyr::everything(), as.character)))

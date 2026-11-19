@@ -46,3 +46,4 @@ SchoolSpring postings have their own record (schoolspring_endings.csv) and
 PeopleAdmin's feed is complete (a dropped posting's page stays up), so
 neither is checked here.
 }
+\keyword{internal}

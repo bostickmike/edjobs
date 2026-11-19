@@ -38,7 +38,7 @@ parse_finalsite_postings <- function(html_text, url, location, start = NA, stop 
 #'
 #' @param html_text The page's HTML.
 #' @return One string, or NA when the HTML can't be read.
-#' @export
+#' @keywords internal
 finalsite_page_text <- function(html_text) {
   doc <- finalsite_doc(html_text)
   if (is.null(doc)) NA_character_ else finalsite_doc_text(doc)

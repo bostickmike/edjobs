@@ -22,18 +22,18 @@
 # state agencies and districts with no schools have no staff of their own.
 
 #' `CCD_DISTRICT_DIRECTORY_ENDPOINT`
-#' @export
+#' @keywords internal
 CCD_DISTRICT_DIRECTORY_ENDPOINT <- "https://educationdata.urban.org/api/v1/school-districts/ccd/directory"
 
 #' `CCD_SCHOOL_DIRECTORY_ENDPOINT`
-#' @export
+#' @keywords internal
 CCD_SCHOOL_DIRECTORY_ENDPOINT <- "https://educationdata.urban.org/api/v1/schools/ccd/directory"
 
 #' `FRL_MIN_REPORTED_SHARE`
 #'
 #' A free/reduced-price lunch share is shown only when the schools reporting
 #' counts hold at least this share of the entity's enrollment.
-#' @export
+#' @keywords internal
 FRL_MIN_REPORTED_SHARE <- 0.8
 
 #' Find the latest CCD district directory year for a state
@@ -107,7 +107,7 @@ fetch_ccd_school_directory <- function(fips, year) {
 #' of the entity's enrollment.
 #' @param schools Rows from [fetch_ccd_school_directory()].
 #' @param id_map See the description.
-#' @export
+#' @keywords internal
 parse_ccd_frl_share <- function(schools, id_map) {
   empty <- data.frame(District = character(0), Free_Reduced_Lunch_Share = numeric(0),
                       FRL_Schools_Reporting = integer(0), stringsAsFactors = FALSE)

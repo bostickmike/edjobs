@@ -9,3 +9,4 @@ IPEDS_COLLEGE_DIRECTORY_ENDPOINT
 \description{
 \code{IPEDS_COLLEGE_DIRECTORY_ENDPOINT}
 }
+\keyword{internal}

@@ -16,3 +16,4 @@ presence_summary_markdown(day_checks, stats, today)
 \description{
 Markdown summary of one day's check
 }
+\keyword{internal}

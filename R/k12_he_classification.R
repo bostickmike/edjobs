@@ -252,7 +252,7 @@ classify_k12_position <- function(title, role_hint = NULL) {
 #' listed there, so a hint can never send a posting to Administration or away
 #' from a bucket the title names specifically. Identical in the MT and WY repos
 #' (WY has no descriptions and never passes a hint).
-#' @export
+#' @keywords internal
 K12_ROLE_NOUNS <- c(
   "Paraprofessional" = "para-?professional|para-?educator|para educator|teacher'?s? aide|instructional aide",
   "Administration" = "principal|superintendent|director|coordinator|administrator|dean|business manager",
@@ -288,7 +288,7 @@ k12_role_hint <- function(description) {
 #' Apply k12 role hint
 #' @param position See the description.
 #' @param role_hint See the description.
-#' @export
+#' @keywords internal
 apply_k12_role_hint <- function(position, role_hint) {
   h <- if (is.null(role_hint)) rep(NA_character_, length(position)) else as.character(role_hint)
   dplyr::case_when(
@@ -308,7 +308,7 @@ apply_k12_role_hint <- function(position, role_hint) {
 #' bucket (14.7\% of all Teacher postings historically). Additions below are
 #' each backed by real observed titles, not speculative -- see the audit
 #' notes in the project's memory/commit history for the specific samples.
-#' @export
+#' @keywords internal
 k12_category_keywords <- list(
   # Bare "CTE" / "Career and Technical" live in "CTE Teacher" below, checked
   # last, so "CTE - Agricultural Education" / "CTE - Business and Marketing" /
@@ -474,7 +474,7 @@ is_placeholder_posting <- function(title) {
 #' A fraction of a full-time post written as an FTE: ".5 FTE", "0.5 FTE", "0.50 FTE", ".75 FTE" (any nonzero
 #' decimal under 1, up to three digits), but not "1.0 FTE" or "10.5 FTE". Perl regex (2026-11-17 review: ".5 FTE",
 #' "0.50 FTE" and "0.75 FTE" titles stayed full Teacher).
-#' @export
+#' @keywords internal
 PART_FTE_RX <- "(?<![\\w.])0?\\.(?!0+\\b)\\d{1,3}\\s*FTE\\b"
 
 #' Why a posting is not counted as a full-time job
@@ -593,7 +593,6 @@ jobtype_run_totals <- function(df, type_col, title_col, sector = c("k12", "colle
 }
 
 #' @rdname classify_work_schedule
-#' @export
 WORK_SCHEDULE_REASONS <- c("substitute", "extra duty", "part-time", "student job", "temporary or seasonal")
 
 # A fraction of an FTE written without "FTE": "Foreign Language Teacher (.33)", ".5 Paraprofessional Position". Not
@@ -861,7 +860,7 @@ classify_he_job_type <- function(title) {
 
 #' Classify he job type rules
 #' @param title See the description.
-#' @export
+#' @keywords internal
 classify_he_job_type_rules <- function(title) {
   dplyr::case_when(
     # Campus child-center / classroom aides and instructional support staff
@@ -1084,7 +1083,7 @@ classify_he_faculty_category <- function(title) {
 #' title at the first separator (" - ", "- ", " (", ", ") whose remainder opens
 #' with such detail and returns the job's name and the detail. Titles with no
 #' such remainder come back unchanged.
-#' @export
+#' @keywords internal
 TITLE_DETAIL_OPENING <- paste0(
   "^(?i)(must\\b|required\\b|requires\\b|requirements?\\b|open until filled|until filled|ouf\\b|",
   "\\$\\s?\\d)")

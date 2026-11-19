@@ -37,7 +37,7 @@ parse_wordpress_postings <- function(html_text, url, location, start = NA, stop 
 #'
 #' @param html_text The page's HTML.
 #' @return One string, or NA when the HTML can't be read.
-#' @export
+#' @keywords internal
 wordpress_page_text <- function(html_text) {
   doc <- wordpress_doc(html_text)
   if (is.null(doc)) NA_character_ else wordpress_doc_text(doc)

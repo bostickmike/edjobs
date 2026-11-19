@@ -29,6 +29,9 @@
 #' @param scraper_sources Where the state's sources are listed and how each
 #'   is scraped: a list of `scraper_registry()` and `scraper_calls()`, in
 #'   lookup order (`resolve_scraper_call()`, `build_source_url_lookup()`).
+#' @param timezone The state's time zone (an `OlsonNames()` entry, "America/Denver"): the day a check counts for
+#'   and a JSON-LD date-time's local day are in the boards' own time, not the runner's UTC (`state_timezone()`).
+#'   NULL is allowed for code that never needs it.
 #' @param autofix Settings for the auto-fix issue: `scraper_files` (the
 #'   state's scraper files, read as text), `fixtures_by` (`"name"` or
 #'   `"tests"`, see `gather_autofix_evidence()`) and `fixture_example` (a path
@@ -36,7 +39,7 @@
 #' @return A list of class `edjobs_state_config`.
 #' @export
 state_config <- function(state, fips, app_dir, reference_tables = list(), feed = NULL, drift_baseline_from = NULL,
-                         scraper_sources = list(), autofix = list()) {
+                         scraper_sources = list(), autofix = list(), timezone = NULL) {
   stopifnot(is.character(state), length(state) == 1, nzchar(state),
             is.character(fips), grepl("^\\d{2}$", fips), is.character(app_dir), length(app_dir) == 1,
             is.list(reference_tables))
@@ -55,7 +58,10 @@ state_config <- function(state, fips, app_dir, reference_tables = list(), feed =
   extra <- setdiff(names(autofix), c("scraper_files", "fixtures_by", "fixture_example"))
   if (!is.list(autofix) || length(extra) > 0) stop("autofix takes scraper_files, fixtures_by, fixture_example")
   if (!is.null(autofix$fixtures_by) && !autofix$fixtures_by %in% c("name", "tests")) stop("autofix$fixtures_by must be \"name\" or \"tests\"")
-  structure(list(state = state, fips = fips, app_dir = app_dir, reference_tables = reference_tables, feed = feed,
+  if (!is.null(timezone) && !(is.character(timezone) && length(timezone) == 1 && timezone %in% OlsonNames())) {
+    stop("timezone must be one OlsonNames() entry (an Area/City name)")
+  }
+  structure(list(state = state, fips = fips, timezone = timezone, app_dir = app_dir, reference_tables = reference_tables, feed = feed,
                  scraper_sources = scraper_sources, autofix = autofix,
                  drift_baseline_from = if (is.null(drift_baseline_from)) NULL else as.Date(drift_baseline_from)),
             class = "edjobs_state_config")
@@ -88,11 +94,22 @@ reference_table_rules <- function(config = current_state_config()) {
   c(REFERENCE_TABLE_RULES, if (!is.null(config)) config$reference_tables)
 }
 
+#' The current state's time zone
+#'
+#' `current_state_config()$timezone`, with a clear error when no state config (or no time zone) is set. The default
+#' `tz` of `presence_today()` and of the JSON-LD date reader.
+#' @export
+state_timezone <- function() {
+  tz <- current_state_config()$timezone
+  if (is.null(tz)) stop("No state time zone set: give state_config(timezone = ) in the state's state_config.R, or pass tz")
+  tz
+}
+
 #' The current state's FIPS code
 #'
 #' `current_state_config()$fips`, with a clear error when no state config is
 #' set. The default `fips` for the federal-data fetchers.
-#' @export
+#' @keywords internal
 state_fips <- function() {
   config <- current_state_config()
   if (is.null(config)) stop("No state config set: source the state's state_config.R (set_state_config()) or pass fips")

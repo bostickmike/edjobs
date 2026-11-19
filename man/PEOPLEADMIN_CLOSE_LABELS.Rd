@@ -9,3 +9,4 @@ PEOPLEADMIN_CLOSE_LABELS
 \description{
 \code{PEOPLEADMIN_CLOSE_LABELS}
 }
+\keyword{internal}

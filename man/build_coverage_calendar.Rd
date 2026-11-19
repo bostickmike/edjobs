@@ -38,3 +38,4 @@ build_coverage_calendar(
 \description{
 Build coverage calendar
 }
+\keyword{internal}

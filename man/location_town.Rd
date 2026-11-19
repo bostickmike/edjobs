@@ -22,3 +22,4 @@ Returns the state place a Location names, or NA. A town counts only where a plac
 "US-\if{html}{\out{<ST>}}-", or either side of " - " ("Wind River - Ft. Washakie"). Never a word inside other text, so a street
 address ("1115 N Roberts St") is not a town. "Ft." reads as "Fort". A name two places share is not placed.
 }
+\keyword{internal}

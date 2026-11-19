@@ -18,3 +18,4 @@ clean_fsa_value(x)
 \description{
 Negative sentinel codes and NA become NA; everything else is kept.
 }
+\keyword{internal}

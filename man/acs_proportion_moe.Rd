@@ -20,3 +20,4 @@ square root is negative, then substitute a 'plus' for the 'minus' sign"
 (the ratio formula). Same confidence level as the inputs (90\% for the API).
 NA when any input is missing or \code{den} is not positive.
 }
+\keyword{internal}

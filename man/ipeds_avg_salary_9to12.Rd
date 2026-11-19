@@ -15,3 +15,4 @@ ipeds_avg_salary_9to12(df, rank = 99)
 Per unitid: salary outlays / staff over contract_length 9-12 (both sexes, the given rank), using only
 contract groups that report both a positive count and positive outlays. NA when none do.
 }
+\keyword{internal}

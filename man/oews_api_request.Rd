@@ -14,3 +14,4 @@ oews_api_request(series_ids, api_key = Sys.getenv("BLS_API_KEY"))
 \description{
 Oews api request
 }
+\keyword{internal}

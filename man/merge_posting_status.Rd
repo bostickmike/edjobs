@@ -17,3 +17,4 @@ merge_posting_status(previous, checks, run_date)
 Merges this run's checks into the status table. checks: check_posting_pages()
 output plus Segment, District, Title, Last_Listed.
 }
+\keyword{internal}

@@ -16,3 +16,4 @@ llm_extract_render_text(chromote_session, url, settle_seconds = 4)
 \description{
 Llm extract render text
 }
+\keyword{internal}

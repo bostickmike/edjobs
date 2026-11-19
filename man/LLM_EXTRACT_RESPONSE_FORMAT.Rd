@@ -13,3 +13,4 @@ on a nested json_schema with additionalProperties). The exact shape is
 pinned by the system prompt above, and parse_llm_extracted_postings() is
 fully defensive about missing/extra/mistyped fields regardless.
 }
+\keyword{internal}

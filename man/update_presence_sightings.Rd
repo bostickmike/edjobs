@@ -25,3 +25,4 @@ stretch reached the board's previous answered check (ok or empty);
 otherwise, including when the board answered a check without it, a new
 stretch starts. Days the board errored or wasn't checked are skipped over.
 }
+\keyword{internal}

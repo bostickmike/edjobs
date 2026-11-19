@@ -12,3 +12,4 @@ read_source_retrieved(app_dir)
 \description{
 Reads \code{source_retrieved_dates.csv} (columns Source, Retrieved); an empty frame when the file is missing.
 }
+\keyword{internal}

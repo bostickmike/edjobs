@@ -14,14 +14,14 @@
 # Shared verbatim by the Montana and Wyoming dashboards.
 
 #' `IPEDS_STAFF_ENDPOINT`
-#' @export
+#' @keywords internal
 IPEDS_STAFF_ENDPOINT <- "https://educationdata.urban.org/api/v1/college-university/ipeds/salaries-noninstructional-staff"
 
 #' `IPEDS_STAFF_CATEGORIES`
 #'
 #' Urban's staff_category codes (api/v1/api-values/?format_name=staff_category),
 #' shortened for display.
-#' @export
+#' @keywords internal
 IPEDS_STAFF_CATEGORIES <- c(
   "2" = "research", "3" = "public service", "4" = "education services (library, advising, academic affairs)",
   "5" = "management", "6" = "business and financial operations", "7" = "computer, engineering and science",
@@ -33,7 +33,7 @@ IPEDS_STAFF_CATEGORIES <- c(
 #' `IPEDS_STAFF_MIN_COUNT`
 #'
 #' Averages from fewer full-time staff than this are too noisy to show.
-#' @export
+#' @keywords internal
 IPEDS_STAFF_MIN_COUNT <- 3
 
 #' Parse ipeds staff salaries
@@ -44,7 +44,7 @@ IPEDS_STAFF_MIN_COUNT <- 3
 #' @param results See the description.
 #' @param unitids See the description.
 #' @param year See the description.
-#' @export
+#' @keywords internal
 parse_ipeds_staff_salaries <- function(results, unitids, year) {
   df <- as.data.frame(results, stringsAsFactors = FALSE)
   keep <- df$unitid %in% unitids & as.character(df$staff_category) %in% names(IPEDS_STAFF_CATEGORIES) &
@@ -65,7 +65,7 @@ parse_ipeds_staff_salaries <- function(results, unitids, year) {
 #' Fetch ipeds staff year
 #' @param year See the description.
 #' @param fips See the description.
-#' @export
+#' @keywords internal
 fetch_ipeds_staff_year <- function(year, fips) {
   url <- paste0(IPEDS_STAFF_ENDPOINT, "/", year, "/?fips=", fips)
   pages <- list()
@@ -102,7 +102,7 @@ fetch_ipeds_staff_salaries <- function(fips, unitids, start_year = as.integer(fo
 #' Part-time, temporary and seasonal jobs and attendants too: a full-time
 #' annual average overstates them ("Cook I - Part Time" showed MSU's $57K
 #' service average, a $11/hr "Fitness Center Attendant" Gillette's $59K).
-#' @export
+#' @keywords internal
 HOURLY_OR_STUDENT_TITLE <- paste0("pooled|work[- ]?study|\\bintern(ship)?s?\\b|student (employee|worker|technician|assistant|aide|staff|position)|\\bfws\\b|",
                                   "\\(student|(&|\\+|\\bor) student|part[- ]?time|\\btemp(orary)?\\b|seasonal|attendant")
 
@@ -123,10 +123,10 @@ is_salaried_staff_posting <- function(title) {
 #' chief earns $177K, AVP/associate dean $162K and executive director $148K
 #' (UW's IPEDS management average: $159K), but a director $106K, an assistant
 #' director $82K and a manager $66K.
-#' @export
+#' @keywords internal
 SENIOR_MANAGEMENT_TITLE <- "president|provost|chancellor|\\bdean\\b|\\bchief\\b|(executive|senior|sr\\.?) director|director, senior"
 #' `NOT_SENIOR_TITLE`
-#' @export
+#' @keywords internal
 NOT_SENIOR_TITLE <- "(assistant|associate|deputy) chief|assistant to\\b"
 
 #' Ipeds staff category for title
@@ -141,7 +141,7 @@ NOT_SENIOR_TITLE <- "(assistant|associate|deputy) chief|assistant to\\b"
 #' business, "Facilities Manager" -> maintenance) when one fits; "Project
 #' Manager" and other titles naming no function get none.
 #' @param title See the description.
-#' @export
+#' @keywords internal
 ipeds_staff_category_for_title <- function(title) {
   t <- tolower(as.character(title))
   # A lab manager, coordinator or technician is lab staff; a lab assistant

@@ -17,7 +17,7 @@ general-purpose scraping tool.
 |---|---|
 | Understand how the package and the state repos fit together | `vignette("edjobs")` ([source](vignettes/edjobs.Rmd)) |
 | Understand posting spells and listing durations | `vignette("posting-spells")` ([source](vignettes/posting-spells.Rmd)) |
-| Look up a function | `?function_name`, or `help(package = "edjobs")` |
+| Look up a function | `?function_name`, or `help(package = "edjobs")`. Exported: what a state calls (about 250 names); helpers no state calls are internal (`edjobs:::name`, documented with `@keywords internal`) |
 | See what changed in each version | [NEWS.md](NEWS.md) |
 | See the migration plan and phase status | the workspace's `claude-notes/2026-11-10_r-package-migration-plan.md` |
 
@@ -41,11 +41,18 @@ general-purpose scraping tool.
 | `run_expectations.R` | Checks a run's files against a state's `run_expectations.csv` |
 | `bls_oews_scraper.R`, `qcew_school_pay.R`, `ipeds_staff_salaries.R` | Federal pay benchmarks (BLS OEWS, BLS QCEW, IPEDS) |
 | `app_helpers.R` | The dashboards' shared app helpers: pay, date and margin-of-error text, sparklines, trend and mover summaries, job search matching |
+| `apptegy.R`, `cyberschool.R`, `edlio.R`, `finalsite.R`, `googledoc.R`, `googlesites.R`, `joomla.R`, `wordpress.R` | CMS-family routines: one reader per site family (district employment pages), with per-district list rules in the registry (`List_Start` / `List_Stop` / `List_Skip`) |
+| `presence_check.R` | The daily presence check: each board with stable posting IDs and each statewide feed read once a day, for day-precision endings |
+| `he_campus.R` | Which town a college posting is in (branch campuses, outreach sites), from its location text, title, a department table or its own page |
+| `ccd.R`, `saipe.R`, `census_acs.R`, `ipeds_he.R` | Federal context: NCES CCD staffing and enrollment, Census SAIPE child poverty, Census ACS county context, IPEDS faculty salaries, enrollment and Pell share |
+| `k12_salary_archive.R` | Yearly snapshots of a state's current-year K-12 salary source, so a multi-year trend exists |
+| `source_links.R`, `source_retrieved.R` | A link to each record's own page at its source; when each outside source was last retrieved |
+| `csv_quoting.R` | Write a data frame with the quoting an existing CSV uses, so a rewrite changes only its changed rows |
 
 ## Installing
 
 ```r
-pak::pak("bostickmike/edjobs@v0.7.0")      # the version a state pins
+pak::pak(paste0("bostickmike/edjobs@v", readLines("EDJOBS_VERSION")))   # from a state repo: the version it pins
 devtools::load_all("../edjobs")             # from a local checkout while changing it
 ```
 

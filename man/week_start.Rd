@@ -16,3 +16,4 @@ Dates, each a Monday.
 The Monday that starts each date's ISO week (Monday to Sunday), as a Date: the key every "week" in the
 history checks uses, whatever the run cadence.
 }
+\keyword{internal}

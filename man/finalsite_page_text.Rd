@@ -15,3 +15,4 @@ One string, or NA when the HTML can't be read.
 \description{
 A Finalsite page's text
 }
+\keyword{internal}

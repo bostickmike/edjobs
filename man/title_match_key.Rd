@@ -14,3 +14,4 @@ A title reduced for comparing an LLM's reading of a page with what a scraper
 returned: lower case, a trailing file extension (".docx", ".pdf") dropped,
 runs of anything but letters and digits made one space.
 }
+\keyword{internal}

@@ -14,3 +14,4 @@ POOL_TITLE_PATTERN
 standing ads. \code{POOL_TITLE_PATTERN}: applicant pools, adjunct and part-time
 faculty listings. Both are excluded from durations (case-insensitive, perl).
 }
+\keyword{internal}

@@ -17,3 +17,4 @@ fetch_posting_page_text(check_url, platform, session = NULL)
 The page's visible text: a plain request (html_text2) or, for platforms that
 render in the browser, the rendered body text.
 }
+\keyword{internal}

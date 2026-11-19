@@ -11,3 +11,4 @@ Cap the visible text sent to the model. Gemini's context is huge so this
 is really a latency/noise guard, not a hard limit -- 20k chars covers even
 a district page with several full job descriptions.
 }
+\keyword{internal}

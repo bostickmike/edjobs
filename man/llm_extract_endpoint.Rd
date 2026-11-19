@@ -11,3 +11,4 @@ Google Gemini's OpenAI-compatible endpoint. Any other OpenAI-compatible
 provider works too -- set LLM_EXTRACT_ENDPOINT / LLM_EXTRACT_MODEL and the
 matching key in LLM_EXTRACT_KEY_ENV.
 }
+\keyword{internal}

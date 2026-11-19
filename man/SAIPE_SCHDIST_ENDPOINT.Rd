@@ -9,3 +9,4 @@ SAIPE_SCHDIST_ENDPOINT
 \description{
 \code{SAIPE_SCHDIST_ENDPOINT}
 }
+\keyword{internal}

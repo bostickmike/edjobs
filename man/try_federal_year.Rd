@@ -24,3 +24,4 @@ last run's file and logs the failure instead of shipping an older year as
 if it were the newest (2026-11-17 review; responses for 2027 checked that
 day).
 }
+\keyword{internal}

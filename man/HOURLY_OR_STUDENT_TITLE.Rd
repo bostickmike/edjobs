@@ -14,3 +14,4 @@ Part-time, temporary and seasonal jobs and attendants too: a full-time
 annual average overstates them ("Cook I - Part Time" showed MSU's $57K
 service average, a $11/hr "Fitness Center Attendant" Gillette's $59K).
 }
+\keyword{internal}

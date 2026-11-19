@@ -26,3 +26,4 @@ listed), Job_Status, Status_Since (first check that saw this status) and
 Last_Checked. Last_Seen is the last weekly sighting, so the true end lies
 between Last_Seen and the next run.
 }
+\keyword{internal}

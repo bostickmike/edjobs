@@ -17,3 +17,4 @@ Markdown lines (none when there is nothing to show).
 \description{
 The "What CI saw" section of the auto-fix issue
 }
+\keyword{internal}

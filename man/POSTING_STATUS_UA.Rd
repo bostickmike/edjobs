@@ -9,3 +9,4 @@ POSTING_STATUS_UA
 \description{
 \code{POSTING_STATUS_UA}
 }
+\keyword{internal}

@@ -20,3 +20,4 @@ The town in a title marker: \verb{*Havre, MT*}, \verb{(Conrad, MT)}, \verb{**Hav
 is a town and either a state or "Campus" inside asterisks or parentheses; a town elsewhere in a title doesn't
 count ("Director of ... the Green River Center").
 }
+\keyword{internal}

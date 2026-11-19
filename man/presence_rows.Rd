@@ -21,3 +21,4 @@ weekly run stores, \code{\link[=applitrack_posting_url]{applitrack_posting_url()
 call's first argument). Rows whose link isn't a per-posting one keep an NA
 \code{Link_Key}; a key repeated on the board is kept once.
 }
+\keyword{internal}

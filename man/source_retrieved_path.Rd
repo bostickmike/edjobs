@@ -12,3 +12,4 @@ source_retrieved_path(app_dir)
 \description{
 Path of the file holding each source's last retrieval date in an app folder.
 }
+\keyword{internal}

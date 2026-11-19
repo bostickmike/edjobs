@@ -2,12 +2,12 @@
 % Please edit documentation in R/presence_check.R
 \name{presence_today}
 \alias{presence_today}
-\title{Today's date in Mountain time}
+\title{Today's date in the state's time zone}
 \usage{
-presence_today(tz = "America/Denver")
+presence_today(tz = state_timezone())
 }
 \arguments{
-\item{tz}{Time zone.}
+\item{tz}{Time zone; defaults to \code{state_timezone()}.}
 }
 \description{
 GitHub starts a scheduled job hours late; the day a check counts for is the

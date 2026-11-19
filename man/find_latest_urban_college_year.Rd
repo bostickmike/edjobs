@@ -28,3 +28,4 @@ With \code{quiet_errors = TRUE} a 404 counts as no rows (\code{\link[=try_federa
 any other failed request propagates either way (until 2026-11-17 every
 error counted as no rows, so a 5xx on the newest year shipped an older one).
 }
+\keyword{internal}

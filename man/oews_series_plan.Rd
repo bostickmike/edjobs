@@ -15,3 +15,4 @@ oews_series_plan(state, occupations = OEWS_OCCUPATIONS)
 All series one state needs: annual medians for every occupation, hourly
 medians for the hourly ones.
 }
+\keyword{internal}

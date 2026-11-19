@@ -15,3 +15,4 @@ source_retrieved_label(dates, sources)
 Footer text for one or more source keys: "retrieved 2026-11-10", "retrieved 2026-11-03 to 2026-11-10" when the
 sources' dates differ, or "" when none is recorded.
 }
+\keyword{internal}

@@ -10,3 +10,4 @@ IPEDS_STAFF_CATEGORIES
 Urban's staff_category codes (api/v1/api-values/?format_name=staff_category),
 shortened for display.
 }
+\keyword{internal}

@@ -155,13 +155,13 @@ PRESENCE_SEEN_EMPTY <- data.frame(Board = character(0), Platform = character(0),
                                   Link_Key = character(0), List_Key = character(0), title = character(0),
                                   url = character(0), stringsAsFactors = FALSE)
 
-#' Today's date in Mountain time
+#' Today's date in the state's time zone
 #'
 #' GitHub starts a scheduled job hours late; the day a check counts for is the
 #' day in the boards' own time zone, not UTC.
-#' @param tz Time zone.
+#' @param tz Time zone; defaults to `state_timezone()`.
 #' @export
-presence_today <- function(tz = "America/Denver") as.Date(format(Sys.time(), tz = tz))
+presence_today <- function(tz = state_timezone()) as.Date(format(Sys.time(), tz = tz))
 
 #' One board's fetch result as title, link and key
 #'
@@ -173,7 +173,7 @@ presence_today <- function(tz = "America/Denver") as.Date(format(Sys.time(), tz 
 #' @param result A `fetch_*` result.
 #' @param call The `resolve_scraper_call()` it came from.
 #' @return data.frame(title, url, Link_Key).
-#' @export
+#' @keywords internal
 presence_rows <- function(result, call) {
   empty <- data.frame(title = character(0), url = character(0), Link_Key = character(0), stringsAsFactors = FALSE)
   if (is.null(result) || nrow(result) == 0) return(empty)
@@ -225,7 +225,7 @@ presence_check_row <- function(today, board, platform, rows, secs, error = NULL)
 #' @param envir Where the state's own `fetch_*` functions are defined.
 #' @return list(checks = one row per board, seen = one row per keyed posting:
 #'   Board, Platform, District, Link_Key, List_Key, title, url).
-#' @export
+#' @keywords internal
 run_presence_check <- function(platforms, feeds = list(), today = presence_today(), sources = state_scraper_sources(),
                                sightings = PRESENCE_SIGHTINGS_EMPTY, delay = 1, envir = globalenv()) {
   stopifnot(all(vapply(feeds, inherits, logical(1), "edjobs_presence_feed")))
@@ -314,7 +314,7 @@ run_presence_check <- function(platforms, feeds = list(), today = presence_today
 #' @param today The day of `seen`.
 #' @return The updated stretches, with attributes `extended` and `started`
 #'   (counts).
-#' @export
+#' @keywords internal
 update_presence_sightings <- function(sightings, seen, checks, today) {
   if (nrow(seen) == 0) return(structure(sightings, extended = 0L, started = 0L))
   answered <- checks[checks$Status %in% c("ok", "empty") & checks$Date < today, , drop = FALSE]
@@ -365,7 +365,7 @@ PRESENCE_README <- c(
   "",
   "Written by the daily presence workflow (bostickmike/edjobs, `.github/workflows/presence.yml`); never edit by hand.",
   "Each day, every board on a platform with stable posting IDs is read once (list pages only), with the same call",
-  "the weekly run makes, and so is each statewide feed (MT's OPI, WY's WSBA), keyed by a fingerprint.",
+  "the weekly run makes, and so is each statewide feed (the state's `feed`), keyed by a fingerprint.",
   "",
   "- `presence_checks.csv`: one row per board per day. `Status`: ok, empty (answered with no postings) or error.",
   "  `N_Keyed`: postings with a key (`Link_Key`).",
@@ -419,7 +419,7 @@ refresh_presence <- function(dir, platforms, feeds = list(), today = presence_to
 #' @param day_checks That day's rows of `presence_checks.csv`.
 #' @param stats Named counts `extended`, `started`.
 #' @param today The day.
-#' @export
+#' @keywords internal
 presence_summary_markdown <- function(day_checks, stats, today) {
   n <- function(s) sum(day_checks$Status == s)
   postings <- sum(day_checks$N_Postings, na.rm = TRUE)

@@ -26,3 +26,4 @@ fetch_acs_counties(
 \description{
 Fetch ACS variables for every county in a state
 }
+\keyword{internal}

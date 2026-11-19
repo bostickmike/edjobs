@@ -18,3 +18,4 @@ site's menu repeats every page name), ending at Google's "Report abuse"
 footer. Google Sites' \code{role=main} element is only a skip-link target, so
 the body is used.
 }
+\keyword{internal}

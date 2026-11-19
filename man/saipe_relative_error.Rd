@@ -28,3 +28,4 @@ district and calls this table "an approximate upper bound on the
 uncertainty". \code{saipe_relative_error()} gives the band's median CV; NA for a
 missing or negative population.
 }
+\keyword{internal}

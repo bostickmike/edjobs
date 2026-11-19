@@ -9,3 +9,4 @@ IPEDS_SALARY_ENDPOINT
 \description{
 \code{IPEDS_SALARY_ENDPOINT}
 }
+\keyword{internal}

@@ -63,10 +63,10 @@ OEWS_OCCUPATIONS <- data.frame(
 )
 
 #' `OEWS_ANNUAL_MEDIAN`
-#' @export
+#' @keywords internal
 OEWS_ANNUAL_MEDIAN <- "13"
 #' `OEWS_HOURLY_MEDIAN`
-#' @export
+#' @keywords internal
 OEWS_HOURLY_MEDIAN <- "08"
 
 #' Oews state areas
@@ -90,7 +90,7 @@ oews_state_areas <- function(state) {
 #' @param type See the description.
 #' @param soc See the description.
 #' @param datatype See the description.
-#' @export
+#' @keywords internal
 oews_series_id <- function(area_code, type, soc, datatype) {
   paste0(ifelse(type == "state", "OEUS", "OEUM"), area_code, "000000", soc, datatype)
 }
@@ -101,7 +101,7 @@ oews_series_id <- function(area_code, type, soc, datatype) {
 #' medians for the hourly ones.
 #' @param state See the description.
 #' @param occupations See the description.
-#' @export
+#' @keywords internal
 oews_series_plan <- function(state, occupations = OEWS_OCCUPATIONS) {
   areas <- oews_state_areas(state)
   grid <- merge(areas, occupations, by = NULL)
@@ -117,7 +117,7 @@ oews_series_plan <- function(state, occupations = OEWS_OCCUPATIONS) {
 #' Parses one API response into series_id / year / value. "-" (suppressed or
 #' not published) and "#" (above the published ceiling) become NA.
 #' @param json_text See the description.
-#' @export
+#' @keywords internal
 parse_oews_response <- function(json_text) {
   parsed <- jsonlite::fromJSON(json_text, simplifyVector = FALSE)
   if (!identical(parsed$status, "REQUEST_SUCCEEDED")) {
@@ -138,7 +138,7 @@ parse_oews_response <- function(json_text) {
 #' Oews api request
 #' @param series_ids See the description.
 #' @param api_key See the description.
-#' @export
+#' @keywords internal
 oews_api_request <- function(series_ids, api_key = Sys.getenv("BLS_API_KEY")) {
   body <- list(seriesid = as.list(series_ids), latest = TRUE)
   if (nzchar(api_key)) body$registrationkey <- api_key
@@ -153,7 +153,7 @@ oews_api_request <- function(series_ids, api_key = Sys.getenv("BLS_API_KEY")) {
 #' Latest OEWS year the API serves, from one statewide series.
 #' @param state See the description.
 #' @param api_key See the description.
-#' @export
+#' @keywords internal
 fetch_oews_latest_year <- function(state, api_key = Sys.getenv("BLS_API_KEY")) {
   areas <- oews_state_areas(state)
   id <- oews_series_id(areas$code[1], "state", "252021", OEWS_ANNUAL_MEDIAN)
@@ -167,7 +167,7 @@ fetch_oews_latest_year <- function(state, api_key = Sys.getenv("BLS_API_KEY")) {
 #' @param state See the description.
 #' @param api_key See the description.
 #' @param pause See the description.
-#' @export
+#' @keywords internal
 fetch_oews_wages <- function(state, api_key = Sys.getenv("BLS_API_KEY"), pause = 1) {
   plan <- oews_series_plan(state)
   batch_size <- if (nzchar(api_key)) 50 else 25
@@ -228,7 +228,7 @@ refresh_oews_wages <- function(state, path, api_key = Sys.getenv("BLS_API_KEY"),
 #' not comparable to an annual coaching wage) and unclassified postings.
 #' @param position See the description.
 #' @param title See the description.
-#' @export
+#' @keywords internal
 oews_occupation_for_posting <- function(position, title) {
   p <- tolower(as.character(position))
   t <- tolower(as.character(title))
@@ -308,5 +308,5 @@ attach_oews_estimates <- function(postings, wages, county, state,
 }
 
 #' `OEWS_ESTIMATE_COLUMNS`
-#' @export
+#' @keywords internal
 OEWS_ESTIMATE_COLUMNS <- c("Est_Pay", "Est_Pay_Unit", "Est_Occupation", "Est_Area", "Est_Year")

@@ -18,3 +18,4 @@ Only the state being placed: a Wyoming posting naming "(Big Horn, MT)" is not in
 names exist in both states). Until 2026-11-17 the pattern accepted MT, Montana, WY and Wyoming in either state and
 no other state at all.
 }
+\keyword{internal}

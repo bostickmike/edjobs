@@ -29,3 +29,4 @@ The coverage calendar where it covers the run (\code{Entity} = the district, or
 \code{feed_entity} for feed rows); before the calendar starts, whether the
 district returned any rows from that source ("ok_proxy" / "no_rows").
 }
+\keyword{internal}

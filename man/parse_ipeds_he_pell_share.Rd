@@ -20,3 +20,4 @@ Name, Pell_Recipient_Share (Pell recipients / FTE enrollment), Pell_Year,
 per map row. \code{enrollment_df} must be \code{\link[=parse_ipeds_he_enrollment]{parse_ipeds_he_enrollment()}} for the
 same year as \code{grants_df}.
 }
+\keyword{internal}

@@ -14,7 +14,7 @@
 #' @param places The state's places (column `Town`), from [read_state_places()].
 #' @param state_abbrev Two-letter state abbreviation.
 #' @return Character vector: the place's `Town`, or NA.
-#' @export
+#' @keywords internal
 location_town <- function(location, places, state_abbrev) {
   towns <- places$Town[!places$Town %in% places$Town[duplicated(tolower(places$Town))]]
   key <- tolower(towns)
@@ -40,7 +40,7 @@ location_town <- function(location, places, state_abbrev) {
 #' TRUE when a Location writes another state's abbreviation as a place ("Denver, CO, US", "US-HI-Honolulu",
 #' "St. Clair County, IL").
 #' @inheritParams location_town
-#' @export
+#' @keywords internal
 location_out_of_state <- function(location, state_abbrev) {
   other <- setdiff(c(datasets::state.abb, "DC"), state_abbrev)
   grepl(paste0("(^|, |US-)(", paste(other, collapse = "|"), ")(,|-| |$)"), coalesce_chr(location))
@@ -75,7 +75,7 @@ PLACE_NAME_RX <- "([A-Z][A-Za-z.'-]+(?: [A-Z][A-Za-z.'-]+){0,2})"
 #' @param state_abbrev Two-letter abbreviation; by default the state config's (from its `state` name). With neither,
 #'   any US state.
 #' @return A regular expression.
-#' @export
+#' @keywords internal
 place_state_rx <- function(state_abbrev = NULL) {
   if (is.null(state_abbrev)) {
     config <- current_state_config()
@@ -101,7 +101,7 @@ all_captures <- function(x, rx) {
 #' @param title Character vector of titles.
 #' @inheritParams place_state_rx
 #' @return A list of character vectors (candidate names, not yet checked against the state's places).
-#' @export
+#' @keywords internal
 title_place_names <- function(title, state_abbrev = NULL) {
   rx <- paste0("[*(]\\s*", PLACE_NAME_RX, "(?:", place_state_rx(state_abbrev), "|\\s+Campus)\\s*[*)]")
   all_captures(coalesce_chr(title), rx)
@@ -117,7 +117,7 @@ title_place_names <- function(title, state_abbrev = NULL) {
 #' @param html_text A posting page, or NA.
 #' @inheritParams place_state_rx
 #' @return Character: the names found, "; "-separated, or NA.
-#' @export
+#' @keywords internal
 peopleadmin_page_places <- function(html_text, state_abbrev = NULL) {
   if (is.na(html_text)) return(NA_character_)
   doc <- rvest::read_html(html_text)

@@ -17,3 +17,4 @@ parse_ipeds_he_enrollment(df, year, unitid_map)
 Name, Enrollment (FTE summed over levels of study; NA when no level has a
 real figure), Enrollment_Year, per map row.
 }
+\keyword{internal}

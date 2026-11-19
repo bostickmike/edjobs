@@ -17,3 +17,4 @@ measure_expectation(df, filter, measure)
 \description{
 Evaluate one expectation's filter and measure on a data frame
 }
+\keyword{internal}

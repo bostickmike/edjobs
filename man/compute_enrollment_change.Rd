@@ -13,3 +13,4 @@ compute_enrollment_change(current, prior)
 Name, Enrollment_Change_Pct ((current - prior) / prior; NA when either is
 missing or the prior is 0), for names in both frames.
 }
+\keyword{internal}

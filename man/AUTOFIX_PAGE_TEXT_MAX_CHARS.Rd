@@ -9,3 +9,4 @@ AUTOFIX_PAGE_TEXT_MAX_CHARS
 \description{
 \code{AUTOFIX_PAGE_TEXT_MAX_CHARS}
 }
+\keyword{internal}

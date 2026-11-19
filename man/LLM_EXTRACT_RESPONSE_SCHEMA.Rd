@@ -10,3 +10,4 @@ LLM_EXTRACT_RESPONSE_SCHEMA
 Kept for reference / for a provider that does support strict json_schema
 (set LLM_EXTRACT_ENDPOINT at it and swap this in):
 }
+\keyword{internal}

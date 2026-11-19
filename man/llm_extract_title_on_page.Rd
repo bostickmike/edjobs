@@ -18,3 +18,4 @@ Does (a leading chunk of) each title literally appear in the page text?
 The single strongest anti-hallucination check: the model can only return
 a title that a person could have read off the page.
 }
+\keyword{internal}

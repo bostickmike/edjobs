@@ -13,3 +13,4 @@ chief earns $177K, AVP/associate dean $162K and executive director $148K
 (UW's IPEDS management average: $159K), but a director $106K, an assistant
 director $82K and a manager $66K.
 }
+\keyword{internal}

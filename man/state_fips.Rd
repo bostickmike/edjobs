@@ -10,3 +10,4 @@ state_fips()
 \code{current_state_config()$fips}, with a clear error when no state config is
 set. The default \code{fips} for the federal-data fetchers.
 }
+\keyword{internal}

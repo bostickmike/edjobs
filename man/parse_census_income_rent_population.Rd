@@ -19,3 +19,4 @@ County, Median_Household_Income, Median_Gross_Rent, Population, ACS_Year,
 and the 90\% margins of error Median_Household_Income_MOE and
 Median_Gross_Rent_MOE (NA when \code{raw} has no B19013_001M / B25064_001M).
 }
+\keyword{internal}

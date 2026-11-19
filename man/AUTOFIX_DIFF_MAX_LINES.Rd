@@ -9,3 +9,4 @@ AUTOFIX_DIFF_MAX_LINES
 \description{
 \code{AUTOFIX_DIFF_MAX_LINES}
 }
+\keyword{internal}

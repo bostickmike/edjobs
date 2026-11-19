@@ -49,40 +49,38 @@
 #   fetch_json_paginated() (simplifyVector = TRUE turns nulls into NA).
 
 #' `IPEDS_SALARY_ENDPOINT`
-#' @export
+#' @keywords internal
 IPEDS_SALARY_ENDPOINT <- "https://educationdata.urban.org/api/v1/college-university/ipeds/salaries-instructional-staff"
 
 #' `IPEDS_ENROLLMENT_ENDPOINT`
-#' @export
+#' @keywords internal
 IPEDS_ENROLLMENT_ENDPOINT <- "https://educationdata.urban.org/api/v1/college-university/ipeds/fall-enrollment"
 
 #' `IPEDS_COLLEGE_DIRECTORY_ENDPOINT`
-#' @export
+#' @keywords internal
 IPEDS_COLLEGE_DIRECTORY_ENDPOINT <- "https://educationdata.urban.org/api/v1/college-university/ipeds/directory"
 
 #' `FSA_GRANTS_ENDPOINT`
-#' @export
+#' @keywords internal
 FSA_GRANTS_ENDPOINT <- "https://educationdata.urban.org/api/v1/college-university/fsa/grants"
 
 #' `FSA_PELL_GRANT_TYPE`
 #'
 #' FSA's grant_type code for Pell Grants.
-#' @export
+#' @keywords internal
 FSA_PELL_GRANT_TYPE <- 4L
 
 #' Clean an IPEDS or FSA value
 #'
 #' Negative sentinel codes and NA become NA; everything else is kept.
 #' @param x A numeric vector.
-#' @export
+#' @keywords internal
 clean_ipeds_value <- function(x) ifelse(is.na(x) | x < 0, NA_real_, x)
 
 #' @rdname clean_ipeds_value
-#' @export
 clean_ipeds_enrollment_value <- clean_ipeds_value
 
 #' @rdname clean_ipeds_value
-#' @export
 clean_fsa_value <- clean_ipeds_value
 
 #' Fetch one Urban Institute IPEDS/FSA endpoint for one year and state
@@ -90,7 +88,7 @@ clean_fsa_value <- clean_ipeds_value
 #' @param endpoint One of the `*_ENDPOINT` constants.
 #' @param year Survey year.
 #' @param fips Two-digit state FIPS code; defaults to the current state config's.
-#' @export
+#' @keywords internal
 fetch_urban_college_year <- function(endpoint, year, fips = state_fips()) {
   fetch_json_paginated(paste0(endpoint, "/", year, "/?fips=", fips))
 }
@@ -106,7 +104,7 @@ fetch_urban_college_year <- function(endpoint, year, fips = state_fips()) {
 #' @param fips See [fetch_urban_college_year()].
 #' @param start_year,years_back Years searched: `start_year` down to `start_year - years_back`.
 #' @param quiet_errors See the description.
-#' @export
+#' @keywords internal
 find_latest_urban_college_year <- function(endpoint, fips = state_fips(),
                                            start_year = as.integer(format(Sys.Date(), "%Y")),
                                            years_back = 5, quiet_errors = FALSE) {
@@ -132,7 +130,7 @@ check_unitid_map <- function(unitid_map) {
 
 #' Find the latest IPEDS instructional staff salary year
 #' @inheritParams find_latest_urban_college_year
-#' @export
+#' @keywords internal
 find_latest_ipeds_salary_year <- function(fips = state_fips(), start_year = as.integer(format(Sys.Date(), "%Y")),
                                           years_back = 5) {
   find_latest_urban_college_year(IPEDS_SALARY_ENDPOINT, fips, start_year, years_back, quiet_errors = TRUE)
@@ -144,7 +142,7 @@ find_latest_ipeds_salary_year <- function(fips = state_fips(), start_year = as.i
 #' contract groups that report both a positive count and positive outlays. NA when none do.
 #' @param df Rows from the salaries-instructional-staff endpoint.
 #' @param rank academic_rank (99 = all ranks, 1 = Professor).
-#' @export
+#' @keywords internal
 ipeds_avg_salary_9to12 <- function(df, rank = 99) {
   x <- df[which(df$sex == 99 & df$academic_rank == rank & df$contract_length %in% 9:12 &
                   df$instruc_staff_count > 0 & df$salary_outlays > 0), , drop = FALSE]
@@ -201,7 +199,7 @@ fetch_ipeds_he_salaries <- function(unitid_map, fips = state_fips()) {
 #'
 #' Name, Year, Faculty_Avg_Salary (the all-ranks, 9-12-month-contract figure) per map row.
 #' @inheritParams parse_ipeds_he_salaries
-#' @export
+#' @keywords internal
 parse_ipeds_salary_trend_year <- function(df, year, unitid_map) {
   check_unitid_map(unitid_map)
   if (nrow(df) == 0) {
@@ -237,7 +235,7 @@ fetch_ipeds_he_salary_trend <- function(unitid_map, fips = state_fips(), n_years
 
 #' Find the latest IPEDS fall enrollment year
 #' @inheritParams find_latest_urban_college_year
-#' @export
+#' @keywords internal
 find_latest_ipeds_enrollment_year <- function(fips = state_fips(), start_year = as.integer(format(Sys.Date(), "%Y")),
                                               years_back = 5) {
   find_latest_urban_college_year(IPEDS_ENROLLMENT_ENDPOINT, fips, start_year, years_back)
@@ -248,7 +246,7 @@ find_latest_ipeds_enrollment_year <- function(fips = state_fips(), start_year = 
 #' Name, Enrollment (FTE summed over levels of study; NA when no level has a
 #' real figure), Enrollment_Year, per map row.
 #' @inheritParams parse_ipeds_he_salaries
-#' @export
+#' @keywords internal
 parse_ipeds_he_enrollment <- function(df, year, unitid_map) {
   check_unitid_map(unitid_map)
   if (nrow(df) == 0) {
@@ -276,7 +274,7 @@ fetch_ipeds_he_enrollment <- function(unitid_map, fips = state_fips()) {
 #' Name, Enrollment_Change_Pct ((current - prior) / prior; NA when either is
 #' missing or the prior is 0), for names in both frames.
 #' @param current,prior Outputs of [parse_ipeds_he_enrollment()].
-#' @export
+#' @keywords internal
 compute_enrollment_change <- function(current, prior) {
   if (nrow(current) == 0 || nrow(prior) == 0) {
     return(data.frame(Name = character(0), Enrollment_Change_Pct = numeric(0), stringsAsFactors = FALSE))
@@ -313,7 +311,7 @@ fetch_ipeds_he_enrollment_trend <- function(unitid_map, fips = state_fips(), tre
 
 #' Find the latest FSA grants year
 #' @inheritParams find_latest_urban_college_year
-#' @export
+#' @keywords internal
 find_latest_fsa_grants_year <- function(fips = state_fips(), start_year = as.integer(format(Sys.Date(), "%Y")),
                                         years_back = 6) {
   find_latest_urban_college_year(FSA_GRANTS_ENDPOINT, fips, start_year, years_back)
@@ -327,7 +325,7 @@ find_latest_fsa_grants_year <- function(fips = state_fips(), start_year = as.int
 #' @param grants_df Rows from the fsa/grants endpoint.
 #' @param enrollment_df See the description.
 #' @inheritParams parse_ipeds_he_salaries
-#' @export
+#' @keywords internal
 parse_ipeds_he_pell_share <- function(grants_df, enrollment_df, year, unitid_map) {
   check_unitid_map(unitid_map)
   if (nrow(grants_df) == 0 || nrow(enrollment_df) == 0) {

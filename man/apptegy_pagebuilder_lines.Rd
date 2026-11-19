@@ -19,3 +19,4 @@ heading names a kind of job and its text lists the openings: titles in the
 text are read under the heading; a text with no titles gives the heading
 itself ("Bus Driver"); a card saying "No current openings" gives nothing.
 }
+\keyword{internal}
