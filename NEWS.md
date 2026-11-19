@@ -1,3 +1,16 @@
+# edjobs 0.53.0
+
+* **The Census check and the auto-fix PR's live check as functions (2026-11-17 package review, step 6, slice 4).**
+  `check_census_step()` replaces the states' `check_census_drift.R`, and `live_check_autofix_step()` their
+  `live_check_autofix.R` (the state sources its scraper files first; `gh` and the browser session can be stubbed).
+* **The Census coverage check's expected counts come from the files.** The scripts hard-coded them, and they had gone
+  stale as the registries grew: Montana expected 19 counties and SAIPE for 32 districts against 56 and 201 in
+  `salarymap2.csv` (2026-11-19), and Wyoming 48 districts against 57, so a source could lose most of its coverage
+  before the check fired. Now every county in `salarymap2.csv` / `salarymap.csv` should have ACS context and every
+  district a SAIPE rate, except `state_config(saipe_gaps = )` (new: districts SAIPE has no rate for by design). A
+  flagged SAIPE count lists the districts missing one. On both states' committed data the output is unchanged
+  (healthy); on a copy with two SAIPE rates blanked, the old Montana script passed and the new check flags both.
+
 # edjobs 0.52.0
 
 * **The pre-flight canary and the rebuild-parity report as functions (2026-11-17 package review, step 6, slice 3).**

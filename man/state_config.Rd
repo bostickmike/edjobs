@@ -18,7 +18,8 @@ state_config(
   county_suffix = NULL,
   k12_source_names = NULL,
   drift_min_mean = 3,
-  direct_registry = NULL
+  direct_registry = NULL,
+  saipe_gaps = character(0)
 )
 }
 \arguments{
@@ -75,6 +76,9 @@ week (\code{flag_drift(min_mean_count = )}).}
 
 \item{direct_registry}{The registry the drift report's statewide-feed section counts as "registered
 districts": a function of no arguments returning it, or NULL to read \code{k12_district_registry.csv}.}
+
+\item{saipe_gaps}{Districts in \code{salarymap2.csv} with no Census SAIPE child poverty rate, by design (a BOCES, a
+state institution's school): the Census check (\code{\link[=check_census_step]{check_census_step()}}) expects one for every other district.}
 }
 \value{
 A list of class \code{edjobs_state_config}.
