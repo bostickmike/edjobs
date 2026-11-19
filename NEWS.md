@@ -1,3 +1,9 @@
+# edjobs 0.49.0
+
+* `refresh_file_columns(then = , relationship = )`: a step after the join, before the write (`add_saipe_range()`, a
+  source label), and the join's `relationship` ("many-to-one"). Needed for MT's K-12 SAIPE, district finance and
+  free/reduced lunch blocks (step 5, slice 3); a test replays the SAIPE block byte for byte. No change without them.
+
 # edjobs 0.48.0
 
 * **Pipeline stages, slice 2 (review step 5).** `refresh_file_columns(file, source_name, fetch, expected_cols, by)`:

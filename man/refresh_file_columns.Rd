@@ -13,6 +13,8 @@ refresh_file_columns(
   retrieved_source = NULL,
   replace = setdiff(expected_cols, by),
   fail_message = NULL,
+  then = NULL,
+  relationship = NULL,
   config = current_state_config()
 )
 }
@@ -32,6 +34,11 @@ refresh_file_columns(
 \item{replace}{The file's columns this fetch replaces: \code{expected_cols} without \code{by} unless given.}
 
 \item{fail_message}{The message on a failed fetch; a default naming the file and the columns.}
+
+\item{then}{A function of the joined frame, applied before the write (a derived column such as
+\code{\link[=add_saipe_range]{add_saipe_range()}}, or a source label), or NULL.}
+
+\item{relationship}{Passed to \code{\link[dplyr:left_join]{dplyr::left_join()}} ("many-to-one" where several keys share one row), or NULL.}
 
 \item{config}{The state's config; the session's by default (its \code{app_dir}).}
 }

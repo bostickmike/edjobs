@@ -110,3 +110,34 @@ test_that("refresh_file_columns writes what the old per-fetch chunk wrote, keyed
   expect_error(refresh_file_columns("salarymap.csv", "x", fetch = function() enr, expected_cols = "Enrollment",
                                     by = "Name", config = f$config))
 })
+
+test_that("refresh_file_columns' then and relationship reproduce the SAIPE and lunch blocks byte for byte", {
+  f <- stage_fixture()
+  withr::local_dir(f$dir)
+  prof <- data.frame(District = c("A SD", "B SD", "C SD"), Child_Poverty_Rate = c(0.1, 0.2, NA),
+                     Child_Poverty_Low = 0, Child_Poverty_High = 1, Free_Reduced_Lunch_Share = 0.5, stringsAsFactors = FALSE)
+  utils::write.csv(prof, file.path(f$app, "salarymap2.csv"), row.names = FALSE)
+  saipe <- data.frame(District = c("A SD", "B SD"), Child_Poverty_Rate = c(0.153, 0.287), SAIPE_Year = 2024L,
+                      SAIPE_Population = c(15000, 900))
+  expected <- file.path(f$dir, "expected.csv")
+  file.copy(file.path(f$app, "salarymap2.csv"), expected)
+  x <- utils::read.csv(expected, fileEncoding = "UTF-8") %>%
+    dplyr::select(-dplyr::any_of(c("Child_Poverty_Rate", "SAIPE_Year", "SAIPE_Population", "Child_Poverty_Low", "Child_Poverty_High"))) %>%
+    dplyr::left_join(saipe, by = "District") %>%
+    add_saipe_range()
+  utils::write.csv(x, expected, row.names = FALSE)
+  refresh_file_columns("salarymap2.csv", "SAIPE (TY)", fetch = function() saipe, by = "District",
+                       expected_cols = c("District", "Child_Poverty_Rate", "SAIPE_Year", "SAIPE_Population"),
+                       replace = c("Child_Poverty_Rate", "SAIPE_Year", "SAIPE_Population", "Child_Poverty_Low", "Child_Poverty_High"),
+                       then = add_saipe_range, config = f$config)
+  expect_identical(readLines(file.path(f$app, "salarymap2.csv")), readLines(expected))
+  # many-to-one: two districts share one lunch row; a duplicated key in the fetch is an error.
+  frl <- data.frame(District = c("A SD", "B SD", "C SD"), Free_Reduced_Lunch_Share = c(0.4, 0.6, 0.3))
+  refresh_file_columns("salarymap2.csv", "FRL (TY)", fetch = function() frl, by = "District",
+                       expected_cols = c("District", "Free_Reduced_Lunch_Share"), relationship = "many-to-one",
+                       config = f$config)
+  expect_equal(utils::read.csv(file.path(f$app, "salarymap2.csv"))$Free_Reduced_Lunch_Share, c(0.4, 0.6, 0.3))
+  expect_error(refresh_file_columns("salarymap2.csv", "FRL (TY)", fetch = function() rbind(frl, frl), by = "District",
+                                    expected_cols = c("District", "Free_Reduced_Lunch_Share"), relationship = "many-to-one",
+                                    config = f$config))
+})

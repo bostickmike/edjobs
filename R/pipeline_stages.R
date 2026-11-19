@@ -2,7 +2,8 @@
 # function taking the state's config. A state's Rmd calls the stage; what differs by state comes from
 # state_config(). Slice 1 (0.47.0): the federal county context and the source record links. Slice 2 (0.48.0):
 # refresh_file_columns(), the fetch-then-swap-columns step the context chunks repeat (IPEDS enrollment and its
-# trend, FSA Pell share; the county context is now one of its uses).
+# trend, FSA Pell share; the county context is now one of its uses). 0.49.0: `then` (a step after the join, such as
+# add_saipe_range() or a source label) and `relationship`, for the K-12 SAIPE, finance and lunch blocks.
 
 #' The county-context columns a refresh replaces
 #'
@@ -41,21 +42,26 @@ join_county_context <- function(profile, context) {
 #' @param retrieved_source The source-retrieved name ("Urban IPEDS"), or NULL.
 #' @param replace The file's columns this fetch replaces: `expected_cols` without `by` unless given.
 #' @param fail_message The message on a failed fetch; a default naming the file and the columns.
+#' @param then A function of the joined frame, applied before the write (a derived column such as
+#'   [add_saipe_range()], or a source label), or NULL.
+#' @param relationship Passed to [dplyr::left_join()] ("many-to-one" where several keys share one row), or NULL.
 #' @param config The state's config; the session's by default (its `app_dir`).
 #' @return The fetched table (zero rows when the fetch failed), invisibly.
 #' @export
 refresh_file_columns <- function(file, source_name, fetch, expected_cols, by, retrieved_source = NULL,
-                                 replace = setdiff(expected_cols, by), fail_message = NULL,
-                                 config = current_state_config()) {
+                                 replace = setdiff(expected_cols, by), fail_message = NULL, then = NULL,
+                                 relationship = NULL, config = current_state_config()) {
   if (is.null(config)) stop("refresh_file_columns(): no state config (set_state_config())")
-  stopifnot(is.character(by), length(by) >= 1, by %in% expected_cols)
+  stopifnot(is.character(by), length(by) >= 1, by %in% expected_cols, is.null(then) || is.function(then))
   path <- file.path(config$app_dir, file)
   new <- safe_scrape(source_name, retrieved_source = retrieved_source, app_dir = config$app_dir, scrape_fn = fetch,
                      expected_cols = expected_cols)
   if (nrow(new) > 0) {
     old <- utils::read.csv(path, fileEncoding = "UTF-8")
     old <- old[, setdiff(names(old), replace), drop = FALSE]
-    utils::write.csv(dplyr::left_join(old, new, by = by), path, row.names = FALSE)
+    joined <- dplyr::left_join(old, new, by = by, relationship = relationship)
+    if (!is.null(then)) joined <- then(joined)
+    utils::write.csv(joined, path, row.names = FALSE)
   } else {
     message(if (is.null(fail_message)) {
       paste0(source_name, " fetch failed -- leaving ", file, "'s ", paste(replace, collapse = ", "), " untouched this run.")
