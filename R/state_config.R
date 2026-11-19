@@ -48,6 +48,8 @@
 #'   week (`flag_drift(min_mean_count = )`).
 #' @param direct_registry The registry the drift report's statewide-feed section counts as "registered
 #'   districts": a function of no arguments returning it, or NULL to read `k12_district_registry.csv`.
+#' @param saipe_gaps Districts in `salarymap2.csv` with no Census SAIPE child poverty rate, by design (a BOCES, a
+#'   state institution's school): the Census check ([check_census_step()]) expects one for every other district.
 #' @param autofix Settings for the auto-fix issue: `scraper_files` (the
 #'   state's scraper files, read as text), `fixtures_by` (`"name"` or
 #'   `"tests"`, see `gather_autofix_evidence()`) and `fixture_example` (a path
@@ -56,7 +58,8 @@
 #' @export
 state_config <- function(state, fips, app_dir, reference_tables = list(), feed = NULL, drift_baseline_from = NULL,
                          scraper_sources = list(), autofix = list(), timezone = NULL, oews_areas = NULL,
-                         county_suffix = NULL, k12_source_names = NULL, drift_min_mean = 3, direct_registry = NULL) {
+                         county_suffix = NULL, k12_source_names = NULL, drift_min_mean = 3, direct_registry = NULL,
+                         saipe_gaps = character(0)) {
   stopifnot(is.character(state), length(state) == 1, nzchar(state),
             is.character(fips), grepl("^\\d{2}$", fips), is.character(app_dir), length(app_dir) == 1,
             is.list(reference_tables))
@@ -87,10 +90,12 @@ state_config <- function(state, fips, app_dir, reference_tables = list(), feed =
   if (!is.null(k12_source_names) && !is.function(k12_source_names)) stop("k12_source_names must be a function or NULL")
   if (!is.null(direct_registry) && !is.function(direct_registry)) stop("direct_registry must be a function or NULL")
   if (!(is.numeric(drift_min_mean) && length(drift_min_mean) == 1 && drift_min_mean >= 0)) stop("drift_min_mean must be one number >= 0")
+  if (!is.character(saipe_gaps)) stop("saipe_gaps must be a character vector of district names")
   structure(list(state = state, fips = fips, timezone = timezone, oews_areas = oews_areas, county_suffix = county_suffix,
                  app_dir = app_dir, reference_tables = reference_tables, feed = feed,
                  scraper_sources = scraper_sources, autofix = autofix,
                  k12_source_names = k12_source_names, drift_min_mean = drift_min_mean, direct_registry = direct_registry,
+                 saipe_gaps = saipe_gaps,
                  drift_baseline_from = if (is.null(drift_baseline_from)) NULL else as.Date(drift_baseline_from)),
             class = "edjobs_state_config")
 }
