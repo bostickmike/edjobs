@@ -13,3 +13,4 @@ compute_population_change(current, prior)
 County, Population_Change_Pct ((current - prior) / prior; NA when either
 is missing or the prior is 0), for counties in both frames.
 }
+\keyword{internal}

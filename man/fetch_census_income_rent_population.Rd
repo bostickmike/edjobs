@@ -24,3 +24,4 @@ fetch_census_income_rent_population(
 \description{
 Fetch ACS income, rent and population
 }
+\keyword{internal}

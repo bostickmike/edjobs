@@ -11,3 +11,4 @@ A fraction of a full-time post written as an FTE: ".5 FTE", "0.5 FTE", "0.50 FTE
 decimal under 1, up to three digits), but not "1.0 FTE" or "10.5 FTE". Perl regex (2026-11-17 review: ".5 FTE",
 "0.50 FTE" and "0.75 FTE" titles stayed full Teacher).
 }
+\keyword{internal}

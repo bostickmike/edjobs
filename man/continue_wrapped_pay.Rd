@@ -19,3 +19,4 @@ A title's line that ends partway through a pay range ("Custodian/Light Maintenan
 with "$13.82/hour DOE." on the next line, Townsend 2026-11-17) gets the page's next non-empty line appended, so
 \code{\link[=extract_posted_pay]{extract_posted_pay()}} reads the whole range and its unit. Other lines are returned as they are.
 }
+\keyword{internal}

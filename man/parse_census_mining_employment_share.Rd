@@ -17,3 +17,4 @@ County, Mining_Employment_Share (S2403 line 4, mining, quarrying, and oil and
 gas extraction, over all civilian employed 16 and over) and its 90\% margin of
 error Mining_Employment_Share_MOE (\code{\link[=acs_proportion_moe]{acs_proportion_moe()}}; NA without the _M columns).
 }
+\keyword{internal}

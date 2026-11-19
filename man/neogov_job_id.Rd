@@ -13,3 +13,4 @@ neogov_job_id(url)
 The number in /careers/\if{html}{\out{<agency>}}/jobs/\if{html}{\out{<id>}}/...: the posting's identity on
 both NEOGOV domains, its Attract sites and its own page.
 }
+\keyword{internal}

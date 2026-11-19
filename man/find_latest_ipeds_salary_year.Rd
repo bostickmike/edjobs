@@ -18,3 +18,4 @@ find_latest_ipeds_salary_year(
 \description{
 Find the latest IPEDS instructional staff salary year
 }
+\keyword{internal}

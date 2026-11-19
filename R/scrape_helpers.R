@@ -61,7 +61,7 @@ perform_with_retry <- function(req, max_tries = 3, path = NULL, is_transient = N
 #' @param expr The fetch for one year.
 #' @param empty What a not-yet-published year returns (`data.frame()`, `NULL`).
 #' @return `expr`'s value, or `empty` on a 404.
-#' @export
+#' @keywords internal
 try_federal_year <- function(expr, empty = data.frame()) {
   tryCatch(expr, httr2_http_404 = function(e) empty)
 }
@@ -259,7 +259,7 @@ REFERENCE_TABLE_RULES <- list(
 #' `.csv`), from `reference_table_rules()`.
 #' @param path See the description.
 #' @param rules All rules to look in.
-#' @export
+#' @keywords internal
 reference_rules_for <- function(path, rules = reference_table_rules()) {
   r <- rules[[sub("\\.csv$", "", basename(path))]]
   if (is.null(r)) stop("No reference-table rules for ", basename(path),

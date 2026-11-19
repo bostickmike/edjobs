@@ -8,7 +8,7 @@
 #' The rows of `snapshot` whose District and Salary_Year pair is not already in `existing` (one per pair).
 #' @param existing The archive so far (columns District, Salary_Year, ...).
 #' @param snapshot This run's rows for the current salary year.
-#' @export
+#' @keywords internal
 missing_k12_salary_snapshot_rows <- function(existing, snapshot) {
   snapshot <- snapshot[!duplicated(snapshot[, c("District", "Salary_Year")]), , drop = FALSE]
   existing_keys <- paste(existing$District, existing$Salary_Year, sep = "\r")

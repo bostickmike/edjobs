@@ -15,3 +15,4 @@ location_out_of_state(location, state_abbrev)
 TRUE when a Location writes another state's abbreviation as a place ("Denver, CO, US", "US-HI-Honolulu",
 "St. Clair County, IL").
 }
+\keyword{internal}

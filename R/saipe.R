@@ -46,11 +46,11 @@
 # Ratio Estimate".
 
 #' `SAIPE_SCHDIST_ENDPOINT`
-#' @export
+#' @keywords internal
 SAIPE_SCHDIST_ENDPOINT <- "https://api.census.gov/data/timeseries/poverty/saipe/schdist"
 
 #' `SAIPE_GEOGRAPHIES`
-#' @export
+#' @keywords internal
 SAIPE_GEOGRAPHIES <- c("unified", "elementary", "secondary")
 
 #' Parse a SAIPE API response
@@ -58,7 +58,7 @@ SAIPE_GEOGRAPHIES <- c("unified", "elementary", "secondary")
 #' Header row to column names, values kept as text. An empty or header-only
 #' response gives an empty data frame.
 #' @param json_text The response body.
-#' @export
+#' @keywords internal
 parse_saipe_json <- function(json_text) {
   if (is.null(json_text) || !nzchar(trimws(json_text))) return(data.frame())
   raw <- jsonlite::fromJSON(json_text)
@@ -76,7 +76,7 @@ parse_saipe_json <- function(json_text) {
 #' @param year SAIPE year.
 #' @param api_key See [census_api_key()].
 #' @param fips Two-digit state FIPS code; defaults to the current state config's.
-#' @export
+#' @keywords internal
 fetch_saipe_geography <- function(geocat, year, api_key = census_api_key(), fips = state_fips()) {
   resp <- httr2::request(SAIPE_SCHDIST_ENDPOINT) %>%
     httr2::req_url_query(get = "SD_NAME,SAEPOVRAT5_17RV_PT,SAEPOV5_17RV_PT,SAEPOV5_17V_PT,SAEPOVALL_PT",
@@ -93,7 +93,7 @@ fetch_saipe_geography <- function(geocat, year, api_key = census_api_key(), fips
 #' the years answers.
 #' @param start_year,years_back Years tried.
 #' @inheritParams fetch_saipe_geography
-#' @export
+#' @keywords internal
 latest_saipe_year <- function(start_year = as.integer(format(Sys.Date(), "%Y")), years_back = 4,
                               api_key = census_api_key(), fips = state_fips()) {
   for (year in seq(start_year, start_year - years_back)) {
@@ -110,7 +110,7 @@ latest_saipe_year <- function(start_year = as.integer(format(Sys.Date(), "%Y")),
 #' SAEPOVALL_PT; it sets the estimate's error band, [saipe_relative_error()]).
 #' @param geos A named list of [fetch_saipe_geography()] results (names from [SAIPE_GEOGRAPHIES]).
 #' @param fips State FIPS code, the LEAID prefix.
-#' @export
+#' @keywords internal
 saipe_rows_by_leaid <- function(geos, fips) {
   rows <- lapply(names(geos), function(g) {
     df <- geos[[g]]
@@ -246,7 +246,6 @@ surrounding_district_poverty <- function(lat, lon, saipe, district_names = NULL,
 #' @rdname saipe_relative_error
 #' @format `SAIPE_RELATIVE_ERROR`: data frame, one row per size band:
 #'   `min_population` (the band's lower bound) and `median_cv`.
-#' @export
 SAIPE_RELATIVE_ERROR <- data.frame(min_population = c(0, 2500, 5000, 10000, 20000, 65000),
                                    median_cv = c(0.67, 0.42, 0.35, 0.28, 0.23, 0.15))
 
@@ -263,7 +262,7 @@ SAIPE_RELATIVE_ERROR <- data.frame(min_population = c(0, 2500, 5000, 10000, 2000
 #' uncertainty". `saipe_relative_error()` gives the band's median CV; NA for a
 #' missing or negative population.
 #' @param population SAIPE total population (SAEPOVALL_PT).
-#' @export
+#' @keywords internal
 saipe_relative_error <- function(population) {
   band <- findInterval(population, SAIPE_RELATIVE_ERROR$min_population)
   out <- rep(NA_real_, length(population))

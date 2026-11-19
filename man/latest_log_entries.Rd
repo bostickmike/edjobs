@@ -14,3 +14,4 @@ latest_log_entries(scrape_log, run_date)
 \description{
 The latest logged attempt per source on run_date.
 }
+\keyword{internal}

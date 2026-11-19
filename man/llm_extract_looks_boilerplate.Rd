@@ -15,3 +15,4 @@ title that merely \emph{mentions} a form -- e.g. Apptegy's
 "Assistant Cook | Classified Application | 2026-2027" -- is kept (the
 "| ..." suffix is stripped before matching).
 }
+\keyword{internal}

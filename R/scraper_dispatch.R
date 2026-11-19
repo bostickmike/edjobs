@@ -268,7 +268,7 @@ scraper_fetch_fn <- function(call, scraper_lines) {
 #'   blocks name it in their description (a family routine's per-district
 #'   tests, "parse_apptegy_postings: Melstone Public Schools"), only those
 #'   blocks' fixtures.
-#' @export
+#' @keywords internal
 fixtures_used_by_tests <- function(fetch_fn, test_files, source_name = NULL) {
   if (is.na(fetch_fn)) return(character(0))
   fns <- c(fetch_fn, sub("^fetch_", "parse_", fetch_fn))
@@ -297,7 +297,7 @@ fixtures_used_by_tests <- function(fetch_fn, test_files, source_name = NULL) {
 #'
 #' "Niobrara County School District 1" -> `c(place = "niobrara", number = "1")`.
 #' @param name A source name.
-#' @export
+#' @keywords internal
 district_fixture_tokens <- function(name) {
   words <- tolower(unlist(strsplit(gsub("[^A-Za-z0-9 ]", " ", name), "\\s+")))
   words <- words[nzchar(words)]
@@ -385,7 +385,7 @@ gather_autofix_evidence <- function(call, source_name, page_text, repo_root = ".
 #' @param evidence A `gather_autofix_evidence()` result, or NULL.
 #' @param captured_on The capture date, as text.
 #' @return Markdown lines (none when there is nothing to show).
-#' @export
+#' @keywords internal
 autofix_evidence_markdown <- function(evidence, captured_on) {
   if (is.null(evidence)) return(character(0))
   code_list <- function(x) paste0("`", x, "`", collapse = ", ")

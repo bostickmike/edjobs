@@ -20,3 +20,4 @@ Unified diff of two texts after trimming lines and dropping blanks
 (innerText and html_text2() disagree on blank lines, which is noise).
 Uses the system \code{diff}; returns character(0) when identical or absent.
 }
+\keyword{internal}

@@ -45,13 +45,13 @@ suppressMessages({
 #' Google Gemini's OpenAI-compatible endpoint. Any other OpenAI-compatible
 #' provider works too -- set LLM_EXTRACT_ENDPOINT / LLM_EXTRACT_MODEL and the
 #' matching key in LLM_EXTRACT_KEY_ENV.
-#' @export
+#' @keywords internal
 llm_extract_endpoint <- function() {
   v <- Sys.getenv("LLM_EXTRACT_ENDPOINT")
   if (nzchar(v)) v else "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
 }
 #' Llm extract model
-#' @export
+#' @keywords internal
 llm_extract_model <- function() {
   v <- Sys.getenv("LLM_EXTRACT_MODEL")
   if (nzchar(v)) v else "gemini-3.1-flash-lite"
@@ -60,13 +60,13 @@ llm_extract_model <- function() {
 #'
 #' Which env var holds the API key. Override (e.g. to "OPENAI_API_KEY") when
 #' repointing LLM_EXTRACT_ENDPOINT at another provider.
-#' @export
+#' @keywords internal
 llm_extract_key_env <- function() {
   v <- Sys.getenv("LLM_EXTRACT_KEY_ENV")
   if (nzchar(v)) v else "GEMINI_API_KEY"
 }
 #' Llm extract token
-#' @export
+#' @keywords internal
 llm_extract_token <- function() Sys.getenv(llm_extract_key_env())
 
 #' `LLM_EXTRACT_MAX_CHARS`
@@ -74,7 +74,7 @@ llm_extract_token <- function() Sys.getenv(llm_extract_key_env())
 #' Cap the visible text sent to the model. Gemini's context is huge so this
 #' is really a latency/noise guard, not a hard limit -- 20k chars covers even
 #' a district page with several full job descriptions.
-#' @export
+#' @keywords internal
 LLM_EXTRACT_MAX_CHARS <- 20000L
 
 #' `LLM_EXTRACT_MAX_PLAUSIBLE`
@@ -86,7 +86,7 @@ LLM_EXTRACT_MAX_CHARS <- 20000L
 LLM_EXTRACT_MAX_PLAUSIBLE <- 25L
 
 #' `LLM_EXTRACT_SYSTEM_PROMPT`
-#' @export
+#' @keywords internal
 LLM_EXTRACT_SYSTEM_PROMPT <- paste(
   "You extract currently-open job postings from the visible text of a single",
   "US K-12 school district employment page.",
@@ -130,14 +130,14 @@ LLM_EXTRACT_SYSTEM_PROMPT <- paste(
 #' on a nested json_schema with additionalProperties). The exact shape is
 #' pinned by the system prompt above, and parse_llm_extracted_postings() is
 #' fully defensive about missing/extra/mistyped fields regardless.
-#' @export
+#' @keywords internal
 LLM_EXTRACT_RESPONSE_FORMAT <- list(type = "json_object")
 
 #' `LLM_EXTRACT_RESPONSE_SCHEMA`
 #'
 #' Kept for reference / for a provider that does support strict json_schema
 #' (set LLM_EXTRACT_ENDPOINT at it and swap this in):
-#' @export
+#' @keywords internal
 LLM_EXTRACT_RESPONSE_SCHEMA <- list(
   type = "json_schema",
   json_schema = list(
@@ -166,7 +166,7 @@ LLM_EXTRACT_RESPONSE_SCHEMA <- list(
 )
 
 #' Llm extract empty
-#' @export
+#' @keywords internal
 llm_extract_empty <- function() {
   data.frame(Title = character(0), Location = character(0),
              Posted_Date = character(0), Link = character(0),
@@ -179,7 +179,7 @@ llm_extract_empty <- function() {
 #' @param chromote_session See the description.
 #' @param url See the description.
 #' @param settle_seconds See the description.
-#' @export
+#' @keywords internal
 llm_extract_render_text <- function(chromote_session, url, settle_seconds = 4) {
   chromote_session$Page$navigate(url)
   chromote_session$Page$loadEventFired(wait_ = TRUE, timeout_ = 30)
@@ -253,7 +253,7 @@ llm_extract_call <- function(page_text,
 #' @param titles See the description.
 #' @param page_text See the description.
 #' @param probe_len See the description.
-#' @export
+#' @keywords internal
 llm_extract_title_on_page <- function(titles, page_text, probe_len = 20L) {
   page_norm <- tolower(gsub("[[:space:]]+", " ", page_text))
   vapply(titles, function(t) {
@@ -270,7 +270,7 @@ llm_extract_title_on_page <- function(titles, page_text, probe_len = 20L) {
 #' "Assistant Cook | Classified Application | 2026-2027" -- is kept (the
 #' "| ..." suffix is stripped before matching).
 #' @param titles See the description.
-#' @export
+#' @keywords internal
 llm_extract_looks_boilerplate <- function(titles) {
   core <- trimws(sub("\\s*\\|.*$", "", as.character(titles)))
   is_form <- grepl(
@@ -359,7 +359,7 @@ parse_llm_extracted_postings <- function(page_text, llm_postings, url,
 #' @param url See the description.
 #' @param location_fallback See the description.
 #' @param model See the description.
-#' @export
+#' @keywords internal
 fetch_llm_extracted_postings <- function(chromote_session, url,
                                          location_fallback = NA_character_,
                                          model = llm_extract_model()) {
@@ -407,12 +407,12 @@ llm_titles_from_page_text <- function(page_text,
 # until they are promoted.
 
 #' `LLM_EXTRACT_TARGETS_PATH`
-#' @export
+#' @keywords internal
 LLM_EXTRACT_TARGETS_PATH <- "llm_extract_targets.csv"
 
 #' Read llm extract targets
 #' @param path See the description.
-#' @export
+#' @keywords internal
 read_llm_extract_targets <- function(path = LLM_EXTRACT_TARGETS_PATH) {
   empty <- data.frame(District = character(0), Job_Link = character(0),
                       County = character(0), Notes = character(0),

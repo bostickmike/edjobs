@@ -24,3 +24,4 @@ fetch_census_mining_employment_share(
 \description{
 Fetch the ACS mining/energy employment share
 }
+\keyword{internal}

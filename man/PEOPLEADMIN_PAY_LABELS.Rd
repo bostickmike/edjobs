@@ -19,3 +19,4 @@ description ("Salary Hire Range: $60,598 - 66,889 annually"), so a page
 with no pay field is read from all its fields' text instead; a page that has
 one but states no amount ("commensurate with experience") stays NA.
 }
+\keyword{internal}

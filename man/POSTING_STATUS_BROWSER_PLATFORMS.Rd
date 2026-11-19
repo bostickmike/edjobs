@@ -9,3 +9,4 @@ POSTING_STATUS_BROWSER_PLATFORMS
 \description{
 \code{POSTING_STATUS_BROWSER_PLATFORMS}
 }
+\keyword{internal}

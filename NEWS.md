@@ -1,3 +1,33 @@
+# edjobs 0.44.0
+
+Hardening release from the 2026-11-17 package review (findings 4, 5 and 7; `claude-notes/2026-11-17_edjobs-package-review.md`).
+No change to what the pipelines produce for MT or WY, except that Apptegy-style title lines with another state's
+address are now dropped as addresses too.
+
+* **Internal helpers (finding 4).** 170 exports that nothing outside the package names are now internal
+  (`@keywords internal`, or only `@export` dropped where the name shares another function's help page; still
+  documented, reachable as `edjobs:::name`): 0.43.0's 425 exports -> 256 (with the new `state_timezone()`). Searched: every
+  tracked R, Rmd, YAML and shell file in both state repos (and MT's open `home-job-types` branch), the toolkit, the
+  wayback repo, this package's workflows and `inst/`, and the states' CSV/JSON registries. `scraper_calls()` and
+  `oews_area_definitions()` stay exported (the vignette uses them).
+  **State change needed with the pin:** `scripts/reclassify_committed_data.R` compares the installed package with a
+  checkout through `getExportedValue()`, which fails on an internal name; read `asNamespace("edjobs")` instead.
+* **No state names in package code (finding 5).** New test `test-no-state-names.R` reads every string constant in
+  `R/` (comments excluded) for a state name, a capitalized abbreviation, a statewide feed name or a US time zone;
+  the stored `opi:` / `wsba:` presence key prefixes are the listed exceptions (renaming them would split the
+  committed stretches). To pass it:
+  - `state_config(timezone = )` and `state_timezone()` (new): `presence_today()` and the JSON-LD date reader default
+    to the state's time zone instead of "America/Denver". **State change needed with the pin:** add
+    `timezone = "America/Denver"` to each state's `state_config()`; without it `presence_today()` and NEOGOV's
+    posting dates stop with "No state time zone set".
+  - The Apptegy title filter's `\b(mt|montana) [0-9]{5}\b` is built from R's list of states (`US_STATE_ZIP_RX`).
+    Every fixture line (11,238) and archived K-12 title (7,957, both states): 11 more lines dropped, all WY address
+    lines ("Rawlins, WY 82301"); no title changes.
+  - The presence README names "the state's `feed`" instead of MT's OPI and WY's WSBA.
+* **Front matter (finding 7).** DESCRIPTION's Title and Description describe the package as it is; the README's
+  file table lists all 38 files and its install line reads the state's `EDJOBS_VERSION`. Not changed: `Depends: R
+  (>= 4.5.0)` (no older R has been tested) and `_pkgdown.yml` (needs a site URL; whether to publish a site is open).
+
 # edjobs 0.43.0
 
 The two postings that left MT's `k12_pay_has_unit` run expectation at 2 after 0.42.0 (both state their unit;

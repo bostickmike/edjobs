@@ -15,3 +15,4 @@ One row: Posted_Date, Close_Date.
 \description{
 The posted and closing dates from the page's JobPosting block.
 }
+\keyword{internal}

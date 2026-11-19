@@ -45,7 +45,7 @@ parse_googlesites_postings <- function(html_text, url, location, start = NA, sto
 #' the body is used.
 #' @param html_text The page's HTML.
 #' @return One string, or NA when the HTML can't be read.
-#' @export
+#' @keywords internal
 googlesites_page_text <- function(html_text) {
   if (is.null(html_text) || length(html_text) == 0 || is.na(html_text[1]) || !nzchar(trimws(html_text[1]))) return(NA_character_)
   stop_if_no_html(html_text)

@@ -14,3 +14,4 @@ append_coverage_calendar(calendar, rows)
 \description{
 Replaces this run's rows (a same-day rerun) and keeps the rest.
 }
+\keyword{internal}

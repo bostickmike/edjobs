@@ -15,3 +15,4 @@ reference_rules_for(path, rules = reference_table_rules())
 The rules for the reference table at \code{path} (by file name, without
 \code{.csv}), from \code{reference_table_rules()}.
 }
+\keyword{internal}

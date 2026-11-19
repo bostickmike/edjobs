@@ -13,7 +13,7 @@
 # Shared verbatim by the Montana and Wyoming dashboards.
 
 #' `QCEW_API`
-#' @export
+#' @keywords internal
 QCEW_API <- "https://data.bls.gov/cew/data/api"
 
 #' Parse qcew school pay
@@ -24,7 +24,7 @@ QCEW_API <- "https://data.bls.gov/cew/data/api"
 #' @param industry See the description.
 #' @param titles See the description.
 #' @param state_fips See the description.
-#' @export
+#' @keywords internal
 parse_qcew_school_pay <- function(industry, titles, state_fips) {
   industry$area_fips <- sprintf("%05s", as.character(industry$area_fips))
   for (col in c("own_code", "annual_avg_emplvl", "avg_annual_pay")) industry[[col]] <- suppressWarnings(as.numeric(industry[[col]]))
@@ -45,7 +45,7 @@ parse_qcew_school_pay <- function(industry, titles, state_fips) {
 
 #' Read qcew csv
 #' @param url See the description.
-#' @export
+#' @keywords internal
 read_qcew_csv <- function(url) {
   resp <- httr2::request(url) %>% perform_with_retry()
   # All text, so FIPS codes keep their leading zeros; numbers are converted

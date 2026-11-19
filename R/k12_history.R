@@ -25,7 +25,6 @@ K12_POSTING_COLUMNS <- c("title", "Archive_Date", "date_posted", "position", "lo
                          "Close_Date", POSTED_PAY_COLUMNS, OEWS_ESTIMATE_COLUMNS, "Role_Hint")
 
 #' @rdname K12_POSTING_COLUMNS
-#' @export
 K12_TEACHER_COLUMNS <- c("title", "Archive_Date", "position", "location", "url", "District", "Posting_Source",
                          "Posting_Identity_Method", "Posting_ID", "Category", "Broad_Category", "Role_Hint")
 

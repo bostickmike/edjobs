@@ -24,3 +24,4 @@ the dates it was first and last listed. District names go through
 canonicalize_k12_district() when it is loaded (old WY archives spell
 "Campbell County Scholl District 1").
 }
+\keyword{internal}

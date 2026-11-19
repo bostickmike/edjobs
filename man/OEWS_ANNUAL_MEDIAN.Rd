@@ -9,3 +9,4 @@ OEWS_ANNUAL_MEDIAN
 \description{
 \code{OEWS_ANNUAL_MEDIAN}
 }
+\keyword{internal}

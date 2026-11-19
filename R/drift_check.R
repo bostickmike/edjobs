@@ -333,7 +333,7 @@ drop_standing_pool_titles <- function(llm_titles, history_titles = NULL) {
 #' history checks uses, whatever the run cadence.
 #' @param d Dates, or "YYYY-MM-DD" text.
 #' @return Dates, each a Monday.
-#' @export
+#' @keywords internal
 week_start <- function(d) {
   d <- as.Date(d)
   d - (as.POSIXlt(d)$wday + 6L) %% 7L
@@ -415,7 +415,7 @@ recent_source_titles <- function(name, type = "K-12", days = 56, k12_dir = "Arch
 #' returned: lower case, a trailing file extension (".docx", ".pdf") dropped,
 #' runs of anything but letters and digits made one space.
 #' @param x See the description.
-#' @export
+#' @keywords internal
 title_match_key <- function(x) {
   x <- tolower(as.character(x))
   x[is.na(x)] <- ""
@@ -434,7 +434,7 @@ title_match_key <- function(x) {
 #' current_titles keeps everything.
 #' @param llm_titles See the description.
 #' @param current_titles See the description.
-#' @export
+#' @keywords internal
 drop_titles_already_scraped <- function(llm_titles, current_titles = NULL) {
   if (!length(llm_titles) || !length(current_titles)) return(llm_titles)
   cur <- unique(title_match_key(current_titles))
@@ -499,7 +499,7 @@ AUTOFIX_LABEL <- "scraper-autofix"
 AUTOFIX_ELIGIBLE_VERDICTS <- "likely_broken"
 
 #' `AUTOFIX_MARKER_RE`
-#' @export
+#' @keywords internal
 AUTOFIX_MARKER_RE <- "<!--\\s*autofix-source:\\s*(.+?)\\s*-->"
 
 #' Autofix issue title
@@ -515,7 +515,7 @@ autofix_issue_title <- function(name) paste0("Scraper auto-fix: ", name)
 #' "none" just files it. Both agents on one issue would race to open
 #' competing PRs, so it's one or the other. A typo fails the step loudly
 #' rather than quietly filing issues nobody works.
-#' @export
+#' @keywords internal
 AUTOFIX_ENGINES <- c("claude", "copilot", "none")
 
 #' `AUTOFIX_CLAUDE_WORKFLOW`
@@ -550,7 +550,7 @@ autofix_engine <- function(value) {
 AUTOFIX_ESCALATION_MARKER <- "<!-- autofix-escalated: claude -->"
 
 #' `AUTOFIX_ESCALATION_MIN_DAYS`
-#' @export
+#' @keywords internal
 AUTOFIX_ESCALATION_MIN_DAYS <- 5
 
 #' Autofix escalation decision
@@ -596,11 +596,11 @@ parse_autofix_marker <- function(body) {
 }
 
 #' `AUTOFIX_PAGE_TEXT_MAX_CHARS`
-#' @export
+#' @keywords internal
 AUTOFIX_PAGE_TEXT_MAX_CHARS <- 20000
 
 #' `AUTOFIX_DIFF_MAX_LINES`
-#' @export
+#' @keywords internal
 AUTOFIX_DIFF_MAX_LINES <- 200
 
 #' Scraper reads inner text
@@ -635,7 +635,7 @@ scraper_reads_inner_text <- function(fetch_fn, scraper_lines) {
 #' @param new_text See the description.
 #' @param old_label See the description.
 #' @param new_label See the description.
-#' @export
+#' @keywords internal
 text_diff <- function(old_text, new_text, old_label = "old", new_label = "new") {
   norm <- function(x) { x <- trimws(unlist(strsplit(x, "\n", fixed = TRUE))); x[nzchar(x)] }
   if (!nzchar(Sys.which("diff"))) return(character(0))
@@ -669,7 +669,7 @@ parse_autofix_expected_titles <- function(body) {
 #' `TITLE_ABBREVIATION_PATTERN`
 #'
 #' Abbreviations whose trailing period isn't the end of a sentence.
-#' @export
+#' @keywords internal
 TITLE_ABBREVIATION_PATTERN <- paste0(
   "(?i)\\b(Jr|Sr|Asst|Assist|Assoc|Coord|Dept|Ed|Sp|St|Supt|Admin|Tech|Spec|Mgr|Dir|Fed|Govt|",
   "Mr|Mrs|Ms|Dr|No|Vo|Ag|Phys|Res|Prof|Approx|Hrs|P\\.E|Ft)\\."

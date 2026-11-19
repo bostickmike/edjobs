@@ -11,3 +11,4 @@ Days after its first check that an open or unknown posting page is still re-chec
 checks (2026-11-17): the old limit of 4 checks was 4 weekly runs (days 0, 7, 14, 21), which twice-weekly runs
 would use up in under two weeks. 28 days gives those same 4 checks on weekly runs.
 }
+\keyword{internal}

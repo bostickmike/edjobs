@@ -12,3 +12,4 @@ clean_acs_value(x)
 \description{
 Negative sentinel codes and NA become NA.
 }
+\keyword{internal}

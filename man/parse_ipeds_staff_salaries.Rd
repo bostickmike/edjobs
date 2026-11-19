@@ -18,3 +18,4 @@ One row per institution x category: IPEDS_UNITID, Staff_Category,
 Category_Label, Staff_Count, Avg_Salary, Year. unitids limits the result to
 this dashboard's institutions.
 }
+\keyword{internal}

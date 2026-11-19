@@ -15,3 +15,4 @@ Character vector of non-empty lines.
 \description{
 A page-builder HTML fragment as text lines
 }
+\keyword{internal}

@@ -16,3 +16,4 @@ fetch_urban_college_year(endpoint, year, fips = state_fips())
 \description{
 Fetch one Urban Institute IPEDS/FSA endpoint for one year and state
 }
+\keyword{internal}

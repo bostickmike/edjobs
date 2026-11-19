@@ -19,3 +19,4 @@ oews_series_id(area_code, type, soc, datatype)
 "OEUS" + area + industry (000000 = all) + SOC + datatype for a state;
 "OEUM" for metropolitan and nonmetropolitan areas.
 }
+\keyword{internal}

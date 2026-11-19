@@ -28,6 +28,10 @@ APPTEGY_ROLE_WORDS <- paste0("\\b(", paste(c(
   "wrestling", "track", "cross country", "golf", "softball", "baseball", "cheer(leading)?", "speech and drama",
   "drama"), collapse = "|"), ")\\b")
 
+# A state name or abbreviation before a ZIP code ("Townsend, Montana 59644", "mt 59644"): an address line. Built from
+# R's own list of states, so package code names no state (MT's "\\b(mt|montana) [0-9]{5}\\b" until 0.44.0).
+US_STATE_ZIP_RX <- paste0("\\b(", paste(tolower(c(datasets::state.abb, datasets::state.name)), collapse = "|"), ") [0-9]{5}\\b")
+
 # Lines that are never a title: instructions, contacts, addresses, pay and
 # benefit lines, job-description headings, navigation and footer text.
 APPTEGY_BOILER <- paste(c(
@@ -47,7 +51,7 @@ APPTEGY_BOILER <- paste(c(
   "letters? of (recommendation|reference|interest)", 
   "volunteer", "^(required|encouraged|job dependent)$", "until filled",
   "^(start date|department|supervisor|position type|school/building|supervisory|knowledge skills)",
-  "\\b(mt|montana) [0-9]{5}\\b", "insurance", "benefits?( package)?$",
+  US_STATE_ZIP_RX, "insurance", "benefits?( package)?$",
   "^(employment|current openings|job openings|open positions)$", "application$", "applications$", "^menu$",
   "^translate$", "^search site$", "^sign in$", "\\bportal\\b", "wish list", "^endorsements?\\b", "^flexible hours$",
   "holidays off", "\\b(position|job) descriptions?\\b", "^no (positions?|openings?|vacancies) (are |is )?(currently )?(available|open)",
@@ -70,7 +74,7 @@ APPTEGY_BOILER <- paste(c(
 #' unchanged.
 #' @param l One line of text.
 #' @return Character vector of one or more items.
-#' @export
+#' @keywords internal
 apptegy_split_line <- function(l) {
   if (grepl("(^|\\s)1[.)]\\s+\\S.*\\s2[.)]\\s+\\S", l)) {
     items <- trimws(strsplit(sub("^.*?(^|\\s)1[.)]\\s+", "", l, perl = TRUE), "\\s+[0-9]+[.)]\\s+")[[1]])
@@ -152,7 +156,7 @@ apptegy_is_detail <- function(x) {
 #' @param skip_section Optional perl regex: a section header whose lines are
 #'   skipped until the next header ("CURRENTLY FILLED").
 #' @return Character vector of titles, each once.
-#' @export
+#' @keywords internal
 apptegy_title_lines <- function(text, start = NA, stop = NA, skip_section = NA) {
   apptegy_title_rows(text, start, stop, skip_section)$Title
 }
@@ -374,7 +378,7 @@ decode_apptegy_pagebuilder_nodes <- function(html_text) {
 #'
 #' @param html_frag A node's `content$html` (`<p>`/`<li>` items).
 #' @return Character vector of non-empty lines.
-#' @export
+#' @keywords internal
 apptegy_html_fragment_to_lines <- function(html_frag) {
   if (is.null(html_frag) || !is.character(html_frag) || !nzchar(html_frag[1])) return(character(0))
   x <- gsub("<li>|<p( [^>]*)?>", "\n", html_frag[1])
@@ -394,7 +398,7 @@ apptegy_html_fragment_to_lines <- function(html_frag) {
 #' itself ("Bus Driver"); a card saying "No current openings" gives nothing.
 #' @param nodes From [decode_apptegy_pagebuilder_nodes()].
 #' @return Character vector of lines.
-#' @export
+#' @keywords internal
 apptegy_pagebuilder_lines <- function(nodes) {
   out <- character(0)
   html_text <- function(h) trimws(gsub("&nbsp;", " ", gsub("<[^>]+>", " ", h)))
@@ -495,7 +499,7 @@ parse_apptegy_postings <- function(content, url, location, mode = "text",
 #' @param lines The title rows' own lines.
 #' @param text The page text they came from.
 #' @return Character, one per line: the text to read pay from.
-#' @export
+#' @keywords internal
 continue_wrapped_pay <- function(lines, text) {
   out <- lines
   dangling <- !is.na(lines) & grepl("\\$\\s?[0-9][0-9,.]*\\s*([-\u2013\u2014]|\\bto)\\s*$", lines, perl = TRUE)
@@ -523,7 +527,7 @@ continue_wrapped_pay <- function(lines, text) {
 #' @param text The page text the rows came from.
 #' @param deadline_date The run date: a deadline before it has passed.
 #' @return Logical, one per row.
-#' @export
+#' @keywords internal
 apptegy_passed_deadline <- function(rows, text, deadline_date = Sys.Date()) {
   if (!nrow(rows)) return(logical(0))
   L <- trimws(gsub("[\u00a0\t ]+", " ", strsplit(paste(text, collapse = "\n"), "\n")[[1]])); L <- L[nzchar(L)]

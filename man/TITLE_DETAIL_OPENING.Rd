@@ -18,3 +18,4 @@ title at the first separator (" - ", "- ", " (", ", ") whose remainder opens
 with such detail and returns the job's name and the detail. Titles with no
 such remainder come back unchanged.
 }
+\keyword{internal}

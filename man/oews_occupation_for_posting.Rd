@@ -16,3 +16,4 @@ The OEWS occupation for a K-12 posting, from its position category and
 title. NA where no occupation is a fair match: coaches (season stipends,
 not comparable to an annual coaching wage) and unclassified postings.
 }
+\keyword{internal}

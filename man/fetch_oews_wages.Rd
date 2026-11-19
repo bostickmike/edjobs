@@ -17,3 +17,4 @@ fetch_oews_wages(state, api_key = Sys.getenv("BLS_API_KEY"), pause = 1)
 One row per area x occupation: Area_Code, Area_Name, SOC, Occupation,
 Annual_Median, Hourly_Median, Year.
 }
+\keyword{internal}

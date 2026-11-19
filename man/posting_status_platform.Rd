@@ -12,3 +12,4 @@ posting_status_platform(url)
 \description{
 Posting status platform
 }
+\keyword{internal}

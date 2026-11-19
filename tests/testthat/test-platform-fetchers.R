@@ -450,13 +450,19 @@ test_that("a JobPosting block that cannot be read gives NA for that page and the
 })
 
 # ---- Phase 4 review fixes (2026-11-13) ---------------------------------------
-test_that("a JSON-LD date is an ISO day: zones read in Mountain time, other forms are NA", {
-  f <- edjobs:::jsonld_day
+test_that("a JSON-LD date is an ISO day: zones read in the state's time zone, other forms are NA", {
+  f <- function(x) edjobs:::jsonld_day(x, tz = "America/Denver")
   expect_equal(f("2026-11-01"), "2026-11-01")
   expect_equal(f("2026-11-02T06:59:00Z"), "2026-11-01")          # midnight-ish local deadline, not a day late
   expect_equal(f("2026-11-02T06:59:00-07:00"), "2026-11-02")
   expect_equal(f("2026-11-02T23:00"), "2026-11-02")
   for (x in list("11/01/2026", 20261101, "2026-13-45", "", NULL)) expect_true(is.na(f(x)))
+  # The default is the state config's time zone
+  withr::defer(set_state_config(NULL))
+  set_state_config(state_config("Testland", "99", "app", timezone = "America/New_York"))
+  expect_equal(edjobs:::jsonld_day("2026-11-02T04:30:00Z"), "2026-11-01")
+  set_state_config(state_config("Testland", "99", "app", timezone = "Asia/Tokyo"))
+  expect_equal(edjobs:::jsonld_day("2026-11-02T04:30:00Z"), "2026-11-02")
 })
 
 test_that("the paged fetchers stop when a board repeats a page, and at max_pages", {

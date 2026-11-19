@@ -18,3 +18,4 @@ details", "Title. details", "Title | details" and "Title - details" become
 the title part when it is short and names a role. Any other line comes back
 unchanged.
 }
+\keyword{internal}

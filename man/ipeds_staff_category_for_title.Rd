@@ -20,3 +20,4 @@ function's category ("IT Manager" -> computer, "Business Manager" ->
 business, "Facilities Manager" -> maintenance) when one fits; "Project
 Manager" and other titles naming no function get none.
 }
+\keyword{internal}

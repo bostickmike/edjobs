@@ -14,3 +14,4 @@ The header row becomes the column names; every column except NAME, state
 and county becomes numeric. An empty or header-only response gives an
 empty data frame.
 }
+\keyword{internal}

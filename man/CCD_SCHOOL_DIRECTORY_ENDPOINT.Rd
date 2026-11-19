@@ -9,3 +9,4 @@ CCD_SCHOOL_DIRECTORY_ENDPOINT
 \description{
 \code{CCD_SCHOOL_DIRECTORY_ENDPOINT}
 }
+\keyword{internal}

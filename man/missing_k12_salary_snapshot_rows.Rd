@@ -14,3 +14,4 @@ missing_k12_salary_snapshot_rows(existing, snapshot)
 \description{
 The rows of \code{snapshot} whose District and Salary_Year pair is not already in \code{existing} (one per pair).
 }
+\keyword{internal}

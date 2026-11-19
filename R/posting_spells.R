@@ -46,13 +46,12 @@ POSTING_SPELL_EVENTS <- c("no longer listed", "closed (confirmed)", "filled", "c
 #' `EVERGREEN_TITLE_PATTERN`: substitute lists, "always accepting" and other
 #' standing ads. `POOL_TITLE_PATTERN`: applicant pools, adjunct and part-time
 #' faculty listings. Both are excluded from durations (case-insensitive, perl).
-#' @export
+#' @keywords internal
 EVERGREEN_TITLE_PATTERN <- paste0(
   "\\bsub(stitute)?s?\\b|substitute|on[- ]call|always accepting|accepting applications|",
   "ongoing|continuous|general application|interest (form|list)|^copy of\\b")
 
 #' @rdname EVERGREEN_TITLE_PATTERN
-#' @export
 POOL_TITLE_PATTERN <- "\\bpool\\b|\\badjunct\\b|part[- ]time faculty|applicant (pool|list)|\\bstanding\\b"
 
 #' Frozen-board and partial-run thresholds
@@ -72,7 +71,6 @@ FROZEN_MIN_WEEKS <- 12
 FROZEN_MIN_POSTINGS <- 5
 
 #' @rdname FROZEN_MIN_WEEKS
-#' @export
 PARTIAL_MIN_PREVIOUS <- 10
 
 #' The rules a state's posting spells are built under
@@ -277,7 +275,6 @@ bridge_posting_ids <- function(panel, rules = spell_rules()) {
 }
 
 #' @rdname bridge_posting_ids
-#' @export
 bridge_adjacent_runs <- function(panel, rules = spell_rules()) {
   runs <- sort(unique(panel$Run_Date))
   if (is.null(panel$Bridged_From)) panel$Bridged_From <- NA_character_
@@ -461,7 +458,7 @@ build_frozen_board_report_markdown <- function(frozen, date = Sys.Date()) {
 #' @param district,source,is_feed,run One spell's district, source, feed flag
 #'   and next run.
 #' @param feed_entity The calendar's entity for feed rows.
-#' @export
+#' @keywords internal
 source_health <- function(panel, calendar, district, source, is_feed, run, feed_entity = NA_character_) {
   if (is.na(run)) return(NA_character_)
   run_chr <- format(run)

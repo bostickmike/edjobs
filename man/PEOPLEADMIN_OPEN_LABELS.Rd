@@ -15,3 +15,4 @@ Posting Date" and "Initial Review Date". A close date is kept even when
 like AppliTrack's "Closing Date"); with no close date, "Open Until Filled:
 Yes" gives Close_Date "Open Until Filled". Blank fields are NA.
 }
+\keyword{internal}

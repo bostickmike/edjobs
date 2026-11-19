@@ -14,3 +14,4 @@ fetch_oews_latest_year(state, api_key = Sys.getenv("BLS_API_KEY"))
 \description{
 Latest OEWS year the API serves, from one statewide series.
 }
+\keyword{internal}

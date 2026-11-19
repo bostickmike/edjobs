@@ -9,3 +9,4 @@ OEWS_HOURLY_MEDIAN
 \description{
 \code{OEWS_HOURLY_MEDIAN}
 }
+\keyword{internal}

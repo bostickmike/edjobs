@@ -25,3 +25,4 @@ institutions are multi-department universities). FALSE gives every row
 \description{
 Parse a PeopleAdmin Atom feed
 }
+\keyword{internal}

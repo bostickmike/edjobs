@@ -9,3 +9,4 @@ coverage_calendar_empty()
 \description{
 Coverage calendar empty
 }
+\keyword{internal}

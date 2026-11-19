@@ -22,3 +22,4 @@ office is not always the county seat, e.g. Carbon County's is in Joliet); "at/on
 "main campus" in lower case (a site banner's "Main Campus" is not about the job), returned as "main campus".
 Names are not yet checked against the state's places.
 }
+\keyword{internal}

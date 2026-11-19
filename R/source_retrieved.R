@@ -6,14 +6,14 @@
 #'
 #' Path of the file holding each source's last retrieval date in an app folder.
 #' @param app_dir The dashboard's app folder.
-#' @export
+#' @keywords internal
 source_retrieved_path <- function(app_dir) file.path(app_dir, "source_retrieved_dates.csv")
 
 #' Read source retrieved dates
 #'
 #' Reads `source_retrieved_dates.csv` (columns Source, Retrieved); an empty frame when the file is missing.
 #' @param app_dir The dashboard's app folder.
-#' @export
+#' @keywords internal
 read_source_retrieved <- function(app_dir) {
   path <- source_retrieved_path(app_dir)
   if (!file.exists(path)) return(data.frame(Source = character(0), Retrieved = character(0), stringsAsFactors = FALSE))
@@ -45,7 +45,7 @@ record_source_retrieved <- function(source, app_dir, date = Sys.Date()) {
 #' sources' dates differ, or "" when none is recorded.
 #' @param dates Output of read_source_retrieved().
 #' @param sources Source keys whose dates the label covers.
-#' @export
+#' @keywords internal
 source_retrieved_label <- function(dates, sources) {
   x <- sort(unique(dates$Retrieved[dates$Source %in% sources & !is.na(dates$Retrieved) & nzchar(dates$Retrieved)]))
   if (length(x) == 0) return("")

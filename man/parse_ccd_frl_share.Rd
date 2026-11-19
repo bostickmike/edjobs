@@ -18,3 +18,4 @@ charter inside a host district). Share = FRL students / enrollment over the
 schools reporting counts, NA when those hold under \link{FRL_MIN_REPORTED_SHARE}
 of the entity's enrollment.
 }
+\keyword{internal}

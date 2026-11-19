@@ -12,7 +12,8 @@ state_config(
   feed = NULL,
   drift_baseline_from = NULL,
   scraper_sources = list(),
-  autofix = list()
+  autofix = list(),
+  timezone = NULL
 )
 }
 \arguments{
@@ -44,6 +45,10 @@ lookup order (\code{resolve_scraper_call()}, \code{build_source_url_lookup()}).}
 state's scraper files, read as text), \code{fixtures_by} (\code{"name"} or
 \code{"tests"}, see \code{gather_autofix_evidence()}) and \code{fixture_example} (a path
 pattern for a new fixture, with \code{{platform}} and \code{{date}}).}
+
+\item{timezone}{The state's time zone (an \code{OlsonNames()} entry, "America/Denver"): the day a check counts for
+and a JSON-LD date-time's local day are in the boards' own time, not the runner's UTC (\code{state_timezone()}).
+NULL is allowed for code that never needs it.}
 }
 \value{
 A list of class \code{edjobs_state_config}.

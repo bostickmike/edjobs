@@ -12,3 +12,4 @@ coverage_entity_name(source)
 \description{
 Coverage entity name
 }
+\keyword{internal}

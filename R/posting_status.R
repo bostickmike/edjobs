@@ -35,7 +35,7 @@
 #' SchoolSpring postings have their own record (schoolspring_endings.csv) and
 #' PeopleAdmin's feed is complete (a dropped posting's page stays up), so
 #' neither is checked here.
-#' @export
+#' @keywords internal
 POSTING_STATUS_COLUMNS <- c("Check_URL", "Platform", "Segment", "District", "Title", "Last_Listed", "Status", "Signal",
                             "Stated_Close_Date", "First_Checked", "Last_Checked", "Status_Since", "Checks")
 #' `POSTING_STATUS_RECHECK_DAYS`
@@ -43,18 +43,18 @@ POSTING_STATUS_COLUMNS <- c("Check_URL", "Platform", "Segment", "District", "Tit
 #' Days after its first check that an open or unknown posting page is still re-checked. Days, not a number of
 #' checks (2026-11-17): the old limit of 4 checks was 4 weekly runs (days 0, 7, 14, 21), which twice-weekly runs
 #' would use up in under two weeks. 28 days gives those same 4 checks on weekly runs.
-#' @export
+#' @keywords internal
 POSTING_STATUS_RECHECK_DAYS <- 28
 #' `POSTING_STATUS_BROWSER_PLATFORMS`
-#' @export
+#' @keywords internal
 POSTING_STATUS_BROWSER_PLATFORMS <- c("redrover", "oracle", "paycom")
 #' `POSTING_STATUS_UA`
-#' @export
+#' @keywords internal
 POSTING_STATUS_UA <- "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
 #' Posting status platform
 #' @param url See the description.
-#' @export
+#' @keywords internal
 posting_status_platform <- function(url) {
   u <- tolower(ifelse(is.na(url), "", url))
   dplyr::case_when(
@@ -101,7 +101,7 @@ posting_status_check_url <- function(url) {
 #'
 #' Month-name or numeric dates ("November 6, 2026", "11/4/2026") as Date.
 #' @param x See the description.
-#' @export
+#' @keywords internal
 parse_status_date <- function(x) {
   x <- trimws(x)
   d <- suppressWarnings(as.Date(x, format = "%m/%d/%Y"))
@@ -116,7 +116,7 @@ parse_status_date <- function(x) {
 #' @param platform See the description.
 #' @param text See the description.
 #' @param checked_on See the description.
-#' @export
+#' @keywords internal
 parse_posting_status <- function(platform, text, checked_on = Sys.Date()) {
   res <- function(status, signal, close = NA_character_)
     data.frame(Status = status, Signal = signal, Stated_Close_Date = close, stringsAsFactors = FALSE)
@@ -180,7 +180,7 @@ parse_posting_status <- function(platform, text, checked_on = Sys.Date()) {
 #' @param check_url See the description.
 #' @param platform See the description.
 #' @param session See the description.
-#' @export
+#' @keywords internal
 fetch_posting_page_text <- function(check_url, platform, session = NULL) {
   if (platform %in% POSTING_STATUS_BROWSER_PLATFORMS) {
     if (is.null(session)) stop("a browser session is needed for ", platform)
@@ -256,7 +256,7 @@ drop_closed_wsba_rows <- function(wsba_rows, checks) {
 #' run and not in this one. prev / cur: data frames with url, title, District.
 #' @param prev See the description.
 #' @param cur See the description.
-#' @export
+#' @keywords internal
 dropped_postings <- function(prev, cur) {
   pk <- posting_status_check_url(prev$url)
   ck <- posting_status_check_url(cur$url)
@@ -272,7 +272,7 @@ dropped_postings <- function(prev, cur) {
 #' @param previous See the description.
 #' @param checks See the description.
 #' @param run_date See the description.
-#' @export
+#' @keywords internal
 merge_posting_status <- function(previous, checks, run_date) {
   run_date <- format(as.Date(run_date))
   if (is.null(previous) || nrow(previous) == 0) {
@@ -313,7 +313,7 @@ merge_posting_status <- function(previous, checks, run_date) {
 #' @param previous See the description.
 #' @param listed_check_urls See the description.
 #' @param run_date This run's date.
-#' @export
+#' @keywords internal
 posting_status_rechecks <- function(previous, listed_check_urls, run_date = Sys.Date()) {
   if (is.null(previous) || nrow(previous) == 0) return(previous[0, , drop = FALSE])
   age <- as.numeric(as.Date(run_date) - as.Date(substr(previous$First_Checked, 1, 10)))

@@ -29,3 +29,4 @@ short line under a jobs header. Drops bullets, contacts, sentences,
 application-form links, pay-scale and benefit lines, job-description
 headings, school names, navigation and footer lines.
 }
+\keyword{internal}

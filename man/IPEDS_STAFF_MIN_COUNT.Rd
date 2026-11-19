@@ -9,3 +9,4 @@ IPEDS_STAFF_MIN_COUNT
 \description{
 Averages from fewer full-time staff than this are too noisy to show.
 }
+\keyword{internal}

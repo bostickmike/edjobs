@@ -32,10 +32,10 @@
 #'   e.g. BOCES and academies) take the feed's row.
 #' - Reference tables, Census/IPEDS context and the LLM shadow pilot are not
 #'   posting sources and are left out.
-#' @export
+#' @keywords internal
 COVERAGE_CALENDAR_COLUMNS <- c("Run_Date", "Segment", "Entity", "Source", "Status", "N_Rows", "Error")
 #' `COVERAGE_HEALTHY_STATUS`
-#' @export
+#' @keywords internal
 COVERAGE_HEALTHY_STATUS <- "ok"
 
 #' Read scrape log
@@ -52,7 +52,7 @@ read_scrape_log <- function(log_path) {
 
 #' Coverage entity name
 #' @param source See the description.
-#' @export
+#' @keywords internal
 coverage_entity_name <- function(source) sub("^Apptegy/chromote: ", "", source)
 
 #' Latest log entries
@@ -60,7 +60,7 @@ coverage_entity_name <- function(source) sub("^Apptegy/chromote: ", "", source)
 #' The latest logged attempt per source on run_date.
 #' @param scrape_log See the description.
 #' @param run_date See the description.
-#' @export
+#' @keywords internal
 latest_log_entries <- function(scrape_log, run_date) {
   l <- scrape_log[!is.na(scrape_log$timestamp) & substr(scrape_log$timestamp, 1, 10) == format(as.Date(run_date)), , drop = FALSE]
   l <- l[order(l$timestamp), , drop = FALSE]
@@ -77,7 +77,7 @@ latest_log_entries <- function(scrape_log, run_date) {
 #' @param feeds See the description.
 #' @param shared_boards See the description.
 #' @param previous See the description.
-#' @export
+#' @keywords internal
 build_coverage_calendar <- function(scrape_log, run_date, k12_entities = character(0), he_entities = character(0),
                                     data_k12 = character(0), data_he = character(0), feeds = character(0),
                                     shared_boards = character(0), previous = NULL) {
@@ -123,7 +123,7 @@ build_coverage_calendar <- function(scrape_log, run_date, k12_entities = charact
 }
 
 #' Coverage calendar empty
-#' @export
+#' @keywords internal
 coverage_calendar_empty <- function() {
   data.frame(Run_Date = character(0), Segment = character(0), Entity = character(0), Source = character(0),
              Status = character(0), N_Rows = integer(0), Error = character(0), stringsAsFactors = FALSE)
@@ -134,7 +134,7 @@ coverage_calendar_empty <- function() {
 #' Replaces this run's rows (a same-day rerun) and keeps the rest.
 #' @param calendar See the description.
 #' @param rows See the description.
-#' @export
+#' @keywords internal
 append_coverage_calendar <- function(calendar, rows) {
   if (!is.null(calendar) && nrow(calendar) > 0) {
     calendar <- dplyr::mutate(calendar, dplyr::across(-N_Rows, as.character), N_Rows = as.integer(N_Rows))

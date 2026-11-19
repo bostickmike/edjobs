@@ -9,3 +9,4 @@ TITLE_ABBREVIATION_PATTERN
 \description{
 Abbreviations whose trailing period isn't the end of a sentence.
 }
+\keyword{internal}

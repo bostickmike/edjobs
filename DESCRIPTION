@@ -1,12 +1,13 @@
 Package: edjobs
-Title: Shared Code for the Montana and Wyoming Education Jobs Dashboards
-Version: 0.43.0
+Title: Shared Code for State Education Jobs Dashboards
+Version: 0.44.0
 Authors@R: person("Mike", "Bostick", email = "michael.bostick@montana.edu", role = c("aut", "cre"))
-Description: Code shared by the Montana and Wyoming Education Jobs Dashboards:
-    weekly checks of a run's output against written expectations, and, as the
-    migration proceeds, scraping, classification, posting identity and the
-    data checks both state pipelines use. Each state repository pins a tagged
-    version.
+Description: Code shared by state education jobs dashboards (today Montana
+    and Wyoming): platform and site-family scrapers, posting classification and
+    posted pay, posting spells and listing durations, federal context sources,
+    the daily presence check, the checks each weekly run makes on its own output,
+    and shared app helpers. What differs by state comes in as data through
+    state_config(). Each state repository pins a tagged version.
 License: MIT + file LICENSE
 Depends:
     R (>= 4.5.0)

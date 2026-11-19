@@ -13,3 +13,4 @@ parse_oews_response(json_text)
 Parses one API response into series_id / year / value. "-" (suppressed or
 not published) and "#" (above the published ceiling) become NA.
 }
+\keyword{internal}

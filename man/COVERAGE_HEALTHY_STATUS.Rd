@@ -9,3 +9,4 @@ COVERAGE_HEALTHY_STATUS
 \description{
 \code{COVERAGE_HEALTHY_STATUS}
 }
+\keyword{internal}

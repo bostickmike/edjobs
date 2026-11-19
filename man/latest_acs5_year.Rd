@@ -21,3 +21,4 @@ latest_acs5_year(
 \description{
 Walks back from \code{start_year}; errors when no vintage in the window answers.
 }
+\keyword{internal}

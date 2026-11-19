@@ -14,3 +14,4 @@ Who works a new auto-fix issue, from the AUTOFIX_ENGINE repo variable:
 competing PRs, so it's one or the other. A typo fails the step loudly
 rather than quietly filing issues nobody works.
 }
+\keyword{internal}

@@ -77,7 +77,7 @@ schoolspring_empty <- function() {
 #' are dropped.
 #' @param json_text The response body.
 #' @param domain_name The district's SchoolSpring hostname (for the links and ids).
-#' @export
+#' @keywords internal
 parse_schoolspring_json <- function(json_text, domain_name) {
   parsed <- jsonlite::fromJSON(json_text, simplifyVector = TRUE)
   jobs <- parsed$value$jobsList
@@ -132,7 +132,7 @@ fetch_tedk12_postings <- function(url) {
 #' where a row has no such link.
 #' @param html_text The board page.
 #' @param url The board URL (base for relative links, fallback url).
-#' @export
+#' @keywords internal
 parse_tedk12_postings <- function(html_text, url) {
   empty <- data.frame(title = character(0), date_posted = character(0), position = character(0),
                       location = character(0), url = character(0), stringsAsFactors = FALSE)
@@ -221,7 +221,7 @@ fetch_peopleadmin_atom <- function(feed_url, location_fallback = NA_character_, 
 #' Parse a PeopleAdmin Atom feed
 #' @inheritParams fetch_peopleadmin_atom
 #' @param xml_text The feed body.
-#' @export
+#' @keywords internal
 parse_peopleadmin_atom <- function(xml_text, location_fallback = NA_character_, location_from_author = TRUE) {
   doc <- xml2::read_xml(xml_text)
   ns <- c(a = "http://www.w3.org/2005/Atom")
@@ -267,7 +267,7 @@ parse_peopleadmin_atom <- function(xml_text, location_fallback = NA_character_, 
 #' registry needs only the agency slug. Links are built on the domain the
 #' redirect lands on, so an agency's posting URLs stay what they have always
 #' been.
-#' @export
+#' @keywords internal
 NEOGOV_BASE <- "https://www.schooljobs.com"
 
 #' Fetch NEOGOV postings
@@ -428,7 +428,7 @@ neogov_card_location <- function(card) {
 #' The number in /careers/<agency>/jobs/<id>/...: the posting's identity on
 #' both NEOGOV domains, its Attract sites and its own page.
 #' @param url Posting links.
-#' @export
+#' @keywords internal
 neogov_job_id <- function(url) sub("^.*/jobs/([0-9]+).*$", "\\1", url)
 
 #' Fetch NEOGOV posting details
@@ -443,7 +443,7 @@ neogov_job_id <- function(url) sub("^.*/jobs/([0-9]+).*$", "\\1", url)
 #' @param links Posting links.
 #' @param delay Seconds between pages.
 #' @return One row per link: Link, Posted_Date, Close_Date (YYYY-MM-DD or NA).
-#' @export
+#' @keywords internal
 fetch_neogov_posting_details <- function(links, delay = 0.3) {
   rows <- lapply(links, function(link) {
     Sys.sleep(delay)
@@ -465,7 +465,7 @@ fetch_neogov_posting_details <- function(links, delay = 0.3) {
 #' The posted and closing dates from the page's JobPosting block.
 #' @param html_text The page, or NA.
 #' @return One row: Posted_Date, Close_Date.
-#' @export
+#' @keywords internal
 parse_neogov_posting_page <- function(html_text) {
   j <- parse_jobposting_jsonld(html_text)
   data.frame(Posted_Date = j$Date_Posted, Close_Date = j$Valid_Through, stringsAsFactors = FALSE)
@@ -544,11 +544,11 @@ jp_num <- function(x) {
 }
 
 # A JSON-LD date as an ISO day. Plain "2026-11-01" as is; a date-time with a
-# zone ("2026-11-02T06:59:00Z", "...-07:00") as the day in Mountain time (both
-# states), so a midnight-local deadline doesn't land a day late; a date-time
+# zone ("2026-11-02T06:59:00Z", "...-07:00") as the day in the state's time zone
+# (`state_timezone()`), so a midnight-local deadline doesn't land a day late; a date-time
 # with no zone, its date part. Anything else (11/01/2026, 20261101) is NA, not
 # passed on as a date.
-jsonld_day <- function(x, tz = "America/Denver") {
+jsonld_day <- function(x, tz = state_timezone()) {
   x <- trimws(jp_chr(x))
   if (is.na(x) || !grepl("^\\d{4}-\\d{2}-\\d{2}", x)) return(NA_character_)
   d <- substr(x, 1, 10)
@@ -654,7 +654,7 @@ redrover_org_slug <- function(job_link) sub(".*/org/([^/?]+).*", "\\1", job_link
 #' Standing application forms a Red Rover board lists as openings
 #'
 #' Excluded by [parse_redrover_json()] (St. Ignatius, MT, lists two).
-#' @export
+#' @keywords internal
 REDROVER_PLACEHOLDER_TITLES <- c("Classified Application", "Certified Application", "Volunteer Application")
 
 # Red Rover's own pay types, mapped to Pay_Unit. The labels are the ones the

@@ -10,3 +10,4 @@ llm_extract_key_env()
 Which env var holds the API key. Override (e.g. to "OPENAI_API_KEY") when
 repointing LLM_EXTRACT_ENDPOINT at another provider.
 }
+\keyword{internal}

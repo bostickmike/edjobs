@@ -29,3 +29,4 @@ has a final status or was last listed more than recheck_days ago) and
 returns the updated endings table. \code{fetch} is fetch_schoolspring_details()
 in production.
 }
+\keyword{internal}

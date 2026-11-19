@@ -17,3 +17,4 @@ parse_posting_status(platform, text, checked_on = Sys.Date())
 What a posting's page says. text: the page's visible text. Returns a
 one-row data frame: Status, Signal, Stated_Close_Date (character or NA).
 }
+\keyword{internal}

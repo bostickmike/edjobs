@@ -18,3 +18,4 @@ County rows for one state from QCEW's annual NAICS 6111 file:
 County ("Yellowstone County"), County_FIPS, School_Employment,
 Avg_Annual_Pay, Year. titles is QCEW's area_titles table.
 }
+\keyword{internal}

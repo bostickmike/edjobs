@@ -10,3 +10,4 @@ FRL_MIN_REPORTED_SHARE
 A free/reduced-price lunch share is shown only when the schools reporting
 counts hold at least this share of the entity's enrollment.
 }
+\keyword{internal}

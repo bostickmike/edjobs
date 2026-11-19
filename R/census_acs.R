@@ -24,11 +24,11 @@
 # sentinel codes (e.g. -666666666 for "not available") and become NA.
 
 #' `ACS_DETAIL_ENDPOINT`
-#' @export
+#' @keywords internal
 ACS_DETAIL_ENDPOINT <- "https://api.census.gov/data/%d/acs/acs5"
 
 #' `ACS_SUBJECT_ENDPOINT`
-#' @export
+#' @keywords internal
 ACS_SUBJECT_ENDPOINT <- "https://api.census.gov/data/%d/acs/acs5/subject"
 
 #' Census API key
@@ -53,7 +53,7 @@ census_api_key <- function() {
 #' and county becomes numeric. An empty or header-only response gives an
 #' empty data frame.
 #' @param json_text The response body.
-#' @export
+#' @keywords internal
 parse_acs_json <- function(json_text) {
   raw <- jsonlite::fromJSON(json_text)
   if (is.null(raw) || nrow(raw) < 2) return(data.frame())
@@ -69,7 +69,7 @@ parse_acs_json <- function(json_text) {
 #'
 #' Negative sentinel codes and NA become NA.
 #' @param x A numeric vector.
-#' @export
+#' @keywords internal
 clean_acs_value <- function(x) ifelse(is.na(x) | x < 0, NA_real_, x)
 
 # A column of `raw`, cleaned; NA when the response doesn't have it (older
@@ -87,7 +87,7 @@ acs_col <- function(raw, var) if (var %in% names(raw)) clean_acs_value(raw[[var]
 #' NA when any input is missing or `den` is not positive.
 #' @param num,num_moe The numerator estimate and its MOE.
 #' @param den,den_moe The denominator estimate and its MOE.
-#' @export
+#' @keywords internal
 acs_proportion_moe <- function(num, num_moe, den, den_moe) {
   ok <- !is.na(num) & !is.na(num_moe) & !is.na(den) & !is.na(den_moe) & den > 0
   p <- ifelse(ok, num / den, NA_real_)
@@ -102,7 +102,7 @@ acs_proportion_moe <- function(num, num_moe, den, den_moe) {
 #' @param year ACS 5-year vintage.
 #' @param api_key See [census_api_key()].
 #' @param fips Two-digit state FIPS code; defaults to the current state config's.
-#' @export
+#' @keywords internal
 fetch_acs_counties <- function(endpoint_template, get_vars, year, api_key, fips = state_fips()) {
   resp <- httr2::request(sprintf(endpoint_template, year)) %>%
     httr2::req_url_query(get = paste(get_vars, collapse = ","), `for` = "county:*",
@@ -127,7 +127,7 @@ county_label <- function(name, county_suffix) {
 #' @param year ACS vintage.
 #' @param county_suffix Text removed from the end of Census's county NAME
 #'   (", Montana"); NULL keeps the full name.
-#' @export
+#' @keywords internal
 parse_census_income_rent_population <- function(raw, year, county_suffix = NULL) {
   if (nrow(raw) == 0) {
     return(data.frame(County = character(0), Median_Household_Income = numeric(0),
@@ -151,7 +151,7 @@ parse_census_income_rent_population <- function(raw, year, county_suffix = NULL)
 #' error Mining_Employment_Share_MOE ([acs_proportion_moe()]; NA without the _M columns).
 #' @param raw Output of [fetch_acs_counties()] for S2403_C01_001E, S2403_C01_004E (and their _M MOEs).
 #' @inheritParams parse_census_income_rent_population
-#' @export
+#' @keywords internal
 parse_census_mining_employment_share <- function(raw, county_suffix = NULL) {
   if (nrow(raw) == 0) {
     return(data.frame(County = character(0), Mining_Employment_Share = numeric(0),
@@ -169,7 +169,7 @@ parse_census_mining_employment_share <- function(raw, county_suffix = NULL) {
 #' Fetch ACS income, rent and population
 #' @inheritParams parse_census_income_rent_population
 #' @inheritParams fetch_acs_counties
-#' @export
+#' @keywords internal
 fetch_census_income_rent_population <- function(year = NULL, api_key = census_api_key(), fips = state_fips(),
                                                  county_suffix = NULL) {
   year <- year %||% latest_acs5_year(api_key = api_key, fips = fips)
@@ -180,7 +180,7 @@ fetch_census_income_rent_population <- function(year = NULL, api_key = census_ap
 
 #' Fetch the ACS mining/energy employment share
 #' @inheritParams fetch_census_income_rent_population
-#' @export
+#' @keywords internal
 fetch_census_mining_employment_share <- function(year = NULL, api_key = census_api_key(), fips = state_fips(),
                                                  county_suffix = NULL) {
   year <- year %||% latest_acs5_year(api_key = api_key, fips = fips)
@@ -194,7 +194,7 @@ fetch_census_mining_employment_share <- function(year = NULL, api_key = census_a
 #' County, Population_Change_Pct ((current - prior) / prior; NA when either
 #' is missing or the prior is 0), for counties in both frames.
 #' @param current,prior Outputs of [parse_census_income_rent_population()].
-#' @export
+#' @keywords internal
 compute_population_change <- function(current, prior) {
   if (nrow(current) == 0 || nrow(prior) == 0) {
     return(data.frame(County = character(0), Population_Change_Pct = numeric(0), stringsAsFactors = FALSE))
@@ -213,7 +213,7 @@ compute_population_change <- function(current, prior) {
 #' Walks back from `start_year`; errors when no vintage in the window answers.
 #' @param start_year,years_back Vintages tried: `start_year` down to `start_year - years_back`.
 #' @inheritParams fetch_acs_counties
-#' @export
+#' @keywords internal
 latest_acs5_year <- function(start_year = as.integer(format(Sys.Date(), "%Y")), years_back = 3,
                              api_key = census_api_key(), fips = state_fips()) {
   for (year in seq(start_year, start_year - years_back)) {

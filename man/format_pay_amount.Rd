@@ -12,3 +12,4 @@ format_pay_amount(x)
 \description{
 Format pay amount
 }
+\keyword{internal}

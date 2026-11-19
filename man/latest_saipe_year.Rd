@@ -22,3 +22,4 @@ latest_saipe_year(
 Walks back from \code{start_year} on the unified geography; errors when none of
 the years answers.
 }
+\keyword{internal}
