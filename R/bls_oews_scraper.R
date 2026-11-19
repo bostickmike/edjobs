@@ -28,13 +28,24 @@
 #' (bls.gov/oes/2025/may/msa_def.htm): metro codes are "00" + the CBSA code;
 #' nonmetropolitan areas use state FIPS + "0000" + n. Counties are listed
 #' without " County". bls.gov refuses scripted requests, so a new state's rows
-#' are added to the CSV from that page by hand; no code changes.
+#' are added to the CSV from that page by hand; no code changes. A state can
+#' instead keep its rows itself (`state_config(oews_areas = )`, same columns):
+#' they are added to the package's, so a new state needs no package release.
 #' @param state A state's postal abbreviation ("MT") or FIPS code ("30");
 #'   NULL for every state.
+#' @param extra Rows to add (defaults to the session's `state_config(oews_areas = )`).
 #' @export
-oews_area_definitions <- function(state = NULL) {
+oews_area_definitions <- function(state = NULL, extra = current_state_config()$oews_areas) {
   d <- utils::read.csv(system.file("extdata", "oews_area_definitions.csv", package = "edjobs"),
                        colClasses = "character", na.strings = "")
+  if (!is.null(extra)) {
+    if (is.character(extra)) extra <- utils::read.csv(extra, colClasses = "character", na.strings = "")
+    missing <- setdiff(names(d), names(extra))
+    if (length(missing)) stop("oews_areas needs column(s) ", paste(missing, collapse = ", "))
+    extra <- extra[names(d)]
+    extra[] <- lapply(extra, function(x) { x <- as.character(x); x[!is.na(x) & !nzchar(x)] <- NA_character_; x })
+    d <- rbind(d, extra[!extra$state_fips %in% d$state_fips, , drop = FALSE])
+  }
   if (is.null(state)) return(d)
   d <- d[d$state_abbr == state | d$state_fips == state, , drop = FALSE]
   if (nrow(d) == 0) stop("No OEWS area definitions for state ", state, " (inst/extdata/oews_area_definitions.csv)")

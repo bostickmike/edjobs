@@ -123,3 +123,8 @@ Today a third state would need its own repository with a pipeline Rmd, registrie
 state-specific files (name corrections, posting identity, panels, rules). The package work aims to shrink that to
 data: registries discovered from NCES CCD/IPEDS district and college URLs plus platform fingerprinting, a
 `state_config()`, and a skeleton pipeline and app. Success is measured in days to stand up a state.
+
+The toy state in `inst/toystate/` (`system.file("toystate", package = "edjobs")`) is the worked example and the
+measure: four made-up districts on four package platforms, run end to end in the package's tests. Its README lists
+what a new state still writes as code (how each fetcher's columns become one raw row, posting identity, the run's
+stages), and the test fails when that list changes.

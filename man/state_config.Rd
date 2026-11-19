@@ -13,7 +13,8 @@ state_config(
   drift_baseline_from = NULL,
   scraper_sources = list(),
   autofix = list(),
-  timezone = NULL
+  timezone = NULL,
+  oews_areas = NULL
 )
 }
 \arguments{
@@ -49,6 +50,11 @@ pattern for a new fixture, with \code{{platform}} and \code{{date}}).}
 \item{timezone}{The state's time zone (an \code{OlsonNames()} entry, "America/Denver"): the day a check counts for
 and a JSON-LD date-time's local day are in the boards' own time, not the runner's UTC (\code{state_timezone()}).
 NULL is allowed for code that never needs it.}
+
+\item{oews_areas}{The state's own BLS OEWS area rows, when the package's
+\code{inst/extdata/oews_area_definitions.csv} doesn't have them: a data frame
+or CSV path with that file's columns (\code{oews_area_definitions()}). NULL
+for a state the package already knows.}
 }
 \value{
 A list of class \code{edjobs_state_config}.
