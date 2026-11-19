@@ -368,3 +368,54 @@ test_that("fixtures_named_for_source: district 1's fixture is not district 14's 
   expect_equal(fixtures_named_for_source(list(platform = "apptegy"), "Fremont County School District 1",
                                          files[1])$own, character(0))
 })
+
+test_that("default_scraper_specs: every platform's fetcher is an edjobs export", {
+  specs <- default_scraper_specs()
+  expect_true(all(vapply(specs, inherits, logical(1), "edjobs_scraper_spec")))
+  expect_false(anyDuplicated(names(specs)) > 0)
+  fns <- unique(vapply(specs, `[[`, "", "fn"))
+  expect_true(all(fns %in% getNamespaceExports("edjobs")), info = paste(setdiff(fns, getNamespaceExports("edjobs")), collapse = ", "))
+})
+
+test_that("default_scraper_specs resolve a registry row on the shared schema", {
+  reg <- data.frame(District = c("A", "B", "C", "D"), Platform = c("AppliTrack", "Edlio", "Apptegy", "RedRoverK12"),
+                    Platform_Key = c("alpha", "", "", "4161"), City = c("Aton", "Bton", NA, "Dton"),
+                    Job_Link = c("https://www.applitrack.com/alpha/onlineapp/default.aspx", "https://b.example/jobs",
+                                 "https://c.example/page/jobs", "https://connect.redroverk12.com/sd659912"),
+                    List_Start = c("", "^Open$", "", ""), List_Stop = c("", "", "^End$", ""), List_Skip = "",
+                    stringsAsFactors = FALSE)
+  src <- list(scraper_registry(reg, "District", "registry", specs = scraper_specs()))
+  a <- resolve_scraper_call("A", src)
+  expect_equal(a$fn, "fetch_applitrack_postings"); expect_equal(a$args, list("alpha"))
+  b <- resolve_scraper_call("B", src)
+  expect_equal(b$args, list("https://b.example/jobs", "Bton", "^Open$", NA_character_, NA_character_))
+  c <- resolve_scraper_call("C", src)
+  expect_true(c$session)
+  expect_equal(c$args, list("https://c.example/page/jobs", NA_character_, "text", NA_character_, "^End$", NA_character_))
+  d <- resolve_scraper_call("D", src)
+  expect_equal(d$args, list("4161", redrover_org_slug("https://connect.redroverk12.com/sd659912")))
+})
+
+test_that("scraper_specs adds, replaces and removes by platform; a doubled platform is an error", {
+  own <- scraper_spec("fetch_own_postings", "Job_Link")
+  s <- scraper_specs(Own = own, Apptegy = scraper_spec("fetch_other_postings", "Feed_URL"), Edlio = NULL)
+  expect_identical(s$Own, own)
+  expect_equal(s$Apptegy$fn, "fetch_other_postings")
+  expect_false("Edlio" %in% names(s))
+  expect_equal(length(s), length(default_scraper_specs()))
+  expect_identical(scraper_specs(list(Own = own))$Own, own)
+  expect_identical(scraper_specs(Own = own, defaults = list()), list(Own = own))
+  expect_error(scraper_specs(own), "name each spec")
+  expect_error(scraper_specs(Own = own, Own = own), "named twice")
+  expect_error(scraper_registry(data.frame(), "District", "r", specs = c(default_scraper_specs(), list(AppliTrack = own))),
+               "two specs")
+})
+
+test_that("registry_text gives text, or NA_character_ for a blank, NA or missing column", {
+  row <- data.frame(a = "x", b = "", c = NA, d = 5, stringsAsFactors = FALSE)
+  expect_identical(registry_text("a")(row), "x")
+  expect_identical(registry_text("b")(row), NA_character_)
+  expect_identical(registry_text("c")(row), NA_character_)
+  expect_identical(registry_text("d")(row), "5")
+  expect_identical(registry_text("zzz")(row), NA_character_)
+})
