@@ -15,7 +15,10 @@ state_config(
   autofix = list(),
   timezone = NULL,
   oews_areas = NULL,
-  county_suffix = NULL
+  county_suffix = NULL,
+  k12_source_names = NULL,
+  drift_min_mean = 3,
+  direct_registry = NULL
 )
 }
 \arguments{
@@ -60,6 +63,16 @@ for a state the package already knows.}
 \item{county_suffix}{What the Census county names end with that the state's files leave off (", Montana":
 the files say "Gallatin County"), passed to \code{\link[=fetch_census_county_context]{fetch_census_county_context()}}; NULL keeps Census's name
 ("Albany County, Wyoming").}
+
+\item{k12_source_names}{How the weekly checks name the source of each K-12 row (drift, pay coverage, title
+quality): a function of an archive or \code{combinedclean.csv} data frame returning one name per row, or NULL to
+leave that archive out (one written before the columns the naming needs). NULL uses \code{District} as is.}
+
+\item{drift_min_mean}{The drift check's floor: sources averaging fewer postings a week aren't judged on a quiet
+week (\code{flag_drift(min_mean_count = )}).}
+
+\item{direct_registry}{The registry the drift report's statewide-feed section counts as "registered
+districts": a function of no arguments returning it, or NULL to read \code{k12_district_registry.csv}.}
 }
 \value{
 A list of class \code{edjobs_state_config}.

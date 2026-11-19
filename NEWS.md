@@ -1,3 +1,14 @@
+# edjobs 0.51.0
+
+* **The drift-family checks as functions (2026-11-17 package review, step 6, slice 2):** `check_drift_step()`,
+  `check_pay_coverage_step()` and `check_title_quality_step()`, the states' `check_drift.R`, `check_pay_coverage.R`
+  and `check_title_quality.R`. What differed between the states is now `state_config()` data:
+  `k12_source_names` (how a K-12 row's source is named: Montana collapses its statewide feed's rows into one source
+  and leaves out archives from before `Posting_Source`, Wyoming canonicalizes district names; NULL uses `District`;
+  `state_k12_source_names()` applies it), `drift_min_mean` (the drift floor, default 3) and `direct_registry` (the
+  registry the feed section counts). The title-quality script's `montana <- app == "Mt_Ed_Jobs"` branch is gone. On
+  both states' committed data and archives each function prints and writes exactly what the script did.
+
 # edjobs 0.50.0
 
 * **The weekly run's checks as functions (2026-11-17 package review, step 6, slice 1).** Four `.github/scripts`
