@@ -1,3 +1,12 @@
+# edjobs 0.55.0
+
+* **The drift corroboration as a function (2026-11-17 package review, step 6, slice 6).** `corroborate_drift_step()`
+  replaces the states' `corroborate_drift.R`: each flagged source's live page rendered and scored, the LLM title read
+  when `GEMINI_API_KEY` is set, the statewide-feed override, `/tmp/drift_results.csv` and the drift report. What
+  differed by state is `state_config()` data: the app folder, `k12_source_names`, the feed, `direct_registry`, and
+  two new fields, `canonical_source_name` (Wyoming's registry links are keyed by raw spellings the drift check
+  corrects) and `drift_intro` (the report's opening text). The page renderer can be passed in (`render =`).
+
 # edjobs 0.54.0
 
 * **The auto-fix issue step as a function (2026-11-17 package review, step 6, slice 5).** `file_autofix_issues_step()`

@@ -293,3 +293,148 @@ file_autofix_issues_step <- function(results_path = "/tmp/drift_results.csv", ma
   }
   invisible(NULL)
 }
+
+#' Corroborate the drift check's flagged sources against their live pages
+#'
+#' Tier 2 of the drift-alert system (the states' `corroborate_drift.R`; package review step 6, slice 6). Only does
+#' anything when the drift check flagged a source. For each one it renders the live public page and scores the
+#' visible text with [score_page_text_for_job_signal()], unless the drift check attached a real `scrape_error`
+#' (this run's own `safe_scrape()` logged a live failure), which is a stronger, cheaper signal: a broken or migrated
+#' tenant can read as a normal page when rendered fresh. With `GEMINI_API_KEY` set, the rendered text also goes
+#' through [llm_titles_from_page_text()] and [combine_verdict_with_llm()] (an "inconclusive" score plus real titles
+#' the scraper missed becomes "likely_broken"). A K-12 source scored empty while the statewide feed lists postings
+#' for it is likely broken too. Writes every verdict, with the page text the auto-fix issue needs, to
+#' `results_path` (always: [file_autofix_issues_step()] also closes recovered sources' issues from it), and the
+#' actionable ones to `report_path`. The source names, the feed and the URL lookup come from `state_config()`.
+#' @param flagged_path The drift check's flagged sources ([check_drift_step()]).
+#' @param results_path,report_path Where the verdicts and the drift report go.
+#' @param render A function of a URL returning the page's visible text (NA when it fails); defaults to a headless
+#'   Chrome session opened on first use.
+#' @param today The report's date.
+#' @return The verdicts, invisibly (NULL when nothing was flagged).
+#' @export
+corroborate_drift_step <- function(flagged_path = "/tmp/drift_flagged.csv", results_path = "/tmp/drift_results.csv",
+                                   report_path = "/tmp/drift_report.md", render = NULL, today = Sys.Date()) {
+  flagged <- utils::read.csv(flagged_path, stringsAsFactors = FALSE)
+  if (nrow(flagged) == 0) {
+    cat("Nothing flagged, no corroboration to do.\n")
+    return(invisible(NULL))
+  }
+  config <- current_state_config()
+  app_dir <- run_app_dir(NULL)
+  if (!"scrape_error" %in% names(flagged)) flagged$scrape_error <- NA_character_
+  if (!"safety_net_vacancies" %in% names(flagged)) flagged$safety_net_vacancies <- NA_integer_
+
+  read_if <- function(path, reader) if (file.exists(path)) reader(path) else NULL
+  combined_raw <- read_if(file.path(app_dir, "combinedclean.csv"), function(p) utils::read.csv(p, stringsAsFactors = FALSE))
+  registry <- if (file.exists("k12_district_registry.csv")) {
+    if (is.null(config$direct_registry)) utils::read.csv("k12_district_registry.csv", stringsAsFactors = FALSE) else config$direct_registry()
+  } else NULL
+  scrape_log <- read_if("scrape_log.csv", function(p) utils::read.csv(p, stringsAsFactors = FALSE))
+  # This run's titles per source, so the LLM step counts only titles the scraper missed (edjobs 0.16.0).
+  he_current <- read_if(file.path(app_dir, "hedata.xlsx"), function(p) as.data.frame(readxl::read_xlsx(p)))
+  k12_source_names <- if (is.null(combined_raw)) character(0) else state_k12_source_names(combined_raw, config)
+  current_titles_for <- function(name, type) {
+    if (identical(type, "K-12")) {
+      if (is.null(combined_raw)) return(NULL)
+      combined_raw$title[k12_source_names == name]
+    } else {
+      if (is.null(he_current)) return(NULL)
+      he_current$Title[he_current$Institution == name]
+    }
+  }
+
+  safety_net_summary <- summarize_central_safety_net(
+    combined_df = combined_raw, registry = registry, scrape_log = scrape_log,
+    feed_label = config$feed$label, feed_short_name = config$feed$short_name,
+    discrepancy_path = config$feed$discrepancy_file
+  )
+
+  # Both registries' links per source, plus the feed's page, under the names the drift check flags.
+  url_lookup <- build_source_url_lookup()
+  if (!is.null(config$canonical_source_name)) {
+    names(url_lookup) <- config$canonical_source_name(names(url_lookup))
+    url_lookup <- url_lookup[!duplicated(names(url_lookup), fromLast = TRUE)]
+  }
+
+  b <- NULL
+  if (is.null(render)) {
+    render <- function(url) {
+      if (is.null(b)) b <<- chromote::ChromoteSession$new()
+      b$Page$navigate(url, wait_ = TRUE)
+      b$Page$loadEventFired(wait_ = TRUE)
+      Sys.sleep(2.5)
+      b$Runtime$evaluate("document.body.innerText")$result$value
+    }
+  }
+  results <- data.frame(name = character(0), type = character(0), mean_count = numeric(0),
+                        count = numeric(0), url = character(0), verdict = character(0),
+                        error_message = character(0), llm_note = character(0),
+                        llm_titles = character(0), page_text = character(0),
+                        safety_net_vacancies = integer(0), stringsAsFactors = FALSE)
+
+  for (i in seq_len(nrow(flagged))) {
+    row <- flagged[i, ]
+    url <- unname(url_lookup[row$name])
+    if (is.na(url)) url <- NULL
+    llm_note <- NA_character_
+    llm_titles <- character(0)
+    text <- NA_character_
+
+    fb_count <- if (!is.na(row$safety_net_vacancies)) {
+      as.integer(row$safety_net_vacancies)
+    } else if (!is.null(safety_net_summary$fallback_districts[[row$name]])) {
+      as.integer(safety_net_summary$fallback_districts[[row$name]])
+    } else {
+      0L
+    }
+
+    if (!is.na(row$scrape_error)) {
+      verdict <- "confirmed_broken"
+    } else if (is.null(url)) {
+      verdict <- "no_url_available"
+    } else {
+      text <- tryCatch(render(url), error = function(e) NA_character_)
+      verdict <- score_page_text_for_job_signal(text)
+      # The page is already rendered: ask an LLM what postings it sees (no key -> no-op).
+      llm_titles <- tryCatch(llm_titles_from_page_text(text, url = url), error = function(e) character(0))
+      combined <- combine_verdict_with_llm(verdict, llm_titles,
+                                           tryCatch(recent_source_titles(row$name, row$type), error = function(e) NULL),
+                                           current_titles = tryCatch(current_titles_for(row$name, row$type),
+                                                                     error = function(e) NULL))
+      verdict <- combined$verdict
+      llm_note <- combined$note
+    }
+
+    # Scored empty, but the statewide feed lists postings for it that its own board doesn't: the scraper is broken.
+    if (verdict == "looks_genuinely_empty" && fb_count > 0) {
+      verdict <- "likely_broken"
+      llm_note <- sprintf("the statewide feed lists %d posting(s) for it that its own board doesn't", fb_count)
+    }
+
+    cat(sprintf("%-40s baseline=%.1f current=%d -> %s%s\n", row$name, row$mean_count,
+                row$count, verdict, if (is.na(llm_note)) "" else paste0("  [", llm_note, "]")))
+    results <- rbind(results, data.frame(
+      name = row$name, type = row$type, mean_count = row$mean_count,
+      count = row$count, url = if (is.null(url)) NA_character_ else url,
+      verdict = verdict, error_message = row$scrape_error, llm_note = llm_note,
+      llm_titles = paste(llm_titles, collapse = " | "),
+      # Kept for the auto-fix issue: the agent's firewalled sandbox can't be trusted to render the page the same way.
+      page_text = if (length(text) == 1) text else NA_character_,
+      safety_net_vacancies = fb_count, stringsAsFactors = FALSE
+    ))
+  }
+  if (!is.null(b)) invisible(b$close())
+
+  utils::write.csv(results, results_path, row.names = FALSE)
+  actionable <- results[results$verdict %in% c("confirmed_broken", "likely_broken", "inconclusive", "no_url_available"), ]
+  if (nrow(actionable) == 0) {
+    cat("All flagged sources corroborated as genuinely empty -- nothing to report.\n")
+    return(invisible(results))
+  }
+  lines <- build_drift_report_markdown(actionable = actionable, safety_net_summary = safety_net_summary, date = today,
+                                       feed_short_name = config$feed$short_name, intro_explanation = config$drift_intro)
+  writeLines(lines, report_path)
+  cat("Report written to ", report_path, "\n", sep = "")
+  invisible(results)
+}

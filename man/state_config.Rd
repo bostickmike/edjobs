@@ -19,7 +19,9 @@ state_config(
   k12_source_names = NULL,
   drift_min_mean = 3,
   direct_registry = NULL,
-  saipe_gaps = character(0)
+  saipe_gaps = character(0),
+  canonical_source_name = NULL,
+  drift_intro = NULL
 )
 }
 \arguments{
@@ -79,6 +81,14 @@ districts": a function of no arguments returning it, or NULL to read \code{k12_d
 
 \item{saipe_gaps}{Districts in \code{salarymap2.csv} with no Census SAIPE child poverty rate, by design (a BOCES, a
 state institution's school): the Census check (\code{\link[=check_census_step]{check_census_step()}}) expects one for every other district.}
+
+\item{canonical_source_name}{The name the weekly checks give a source, from the name its registry row has: a
+function of a character vector (Wyoming's \code{canonicalize_k12_district()}, which corrects the registry's raw
+spellings and passes college names through), or NULL to use the registry's names as they are. The drift
+corroboration (\code{\link[=corroborate_drift_step]{corroborate_drift_step()}}) applies it to the source-to-URL lookup's names.}
+
+\item{drift_intro}{The drift report's opening explanation (\code{\link[=build_drift_report_markdown]{build_drift_report_markdown()}}), or NULL for the
+package's.}
 }
 \value{
 A list of class \code{edjobs_state_config}.
