@@ -32,6 +32,10 @@
 #' @param timezone The state's time zone (an `OlsonNames()` entry, "America/Denver"): the day a check counts for
 #'   and a JSON-LD date-time's local day are in the boards' own time, not the runner's UTC (`state_timezone()`).
 #'   NULL is allowed for code that never needs it.
+#' @param oews_areas The state's own BLS OEWS area rows, when the package's
+#'   `inst/extdata/oews_area_definitions.csv` doesn't have them: a data frame
+#'   or CSV path with that file's columns (`oews_area_definitions()`). NULL
+#'   for a state the package already knows.
 #' @param autofix Settings for the auto-fix issue: `scraper_files` (the
 #'   state's scraper files, read as text), `fixtures_by` (`"name"` or
 #'   `"tests"`, see `gather_autofix_evidence()`) and `fixture_example` (a path
@@ -39,7 +43,7 @@
 #' @return A list of class `edjobs_state_config`.
 #' @export
 state_config <- function(state, fips, app_dir, reference_tables = list(), feed = NULL, drift_baseline_from = NULL,
-                         scraper_sources = list(), autofix = list(), timezone = NULL) {
+                         scraper_sources = list(), autofix = list(), timezone = NULL, oews_areas = NULL) {
   stopifnot(is.character(state), length(state) == 1, nzchar(state),
             is.character(fips), grepl("^\\d{2}$", fips), is.character(app_dir), length(app_dir) == 1,
             is.list(reference_tables))
@@ -61,7 +65,10 @@ state_config <- function(state, fips, app_dir, reference_tables = list(), feed =
   if (!is.null(timezone) && !(is.character(timezone) && length(timezone) == 1 && timezone %in% OlsonNames())) {
     stop("timezone must be one OlsonNames() entry (an Area/City name)")
   }
-  structure(list(state = state, fips = fips, timezone = timezone, app_dir = app_dir, reference_tables = reference_tables, feed = feed,
+  if (!is.null(oews_areas) && !is.data.frame(oews_areas) && !(is.character(oews_areas) && length(oews_areas) == 1)) {
+    stop("oews_areas must be a data frame or a CSV path")
+  }
+  structure(list(state = state, fips = fips, timezone = timezone, oews_areas = oews_areas, app_dir = app_dir, reference_tables = reference_tables, feed = feed,
                  scraper_sources = scraper_sources, autofix = autofix,
                  drift_baseline_from = if (is.null(drift_baseline_from)) NULL else as.Date(drift_baseline_from)),
             class = "edjobs_state_config")

@@ -1,0 +1,4 @@
+"state_fips","state_abbr","area_code","area_name","area_type","county"
+"99","ZZ","9900000","Toyland","state",""
+"99","ZZ","9900001","North Toyland nonmetropolitan area","nonmetro","North"
+"99","ZZ","9900002","South Toyland nonmetropolitan area","nonmetro","South"

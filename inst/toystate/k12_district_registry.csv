@@ -1,0 +1,5 @@
+"District","NCES_LEAID","City","County","Latitude","Longitude","Platform","Platform_Key","Job_Link","List_Start","List_Stop","List_Skip"
+"Alder Creek School District","9900001","Alder Creek","North County","45.10","-105.20","AppliTrack","aldercreek","https://www.applitrack.com/aldercreek/onlineapp/default.aspx","","",""
+"Birch Valley Public Schools","9900002","Birch Valley","North County","45.40","-105.80","SchoolSpring","birchvalley.schoolspring.com","https://birchvalley.schoolspring.com/","","",""
+"Cedar Flats School District","9900003","Cedar Flats","South County","44.20","-104.90","TedK12","","https://cedarflats.tedk12.com/hire/index.aspx","","",""
+"Dogwood County Schools","9900004","Dogwood","South County","44.60","-105.50","Apptegy","","https://www.dogwood.example/page/employment","^[0-9]{4}-[0-9]{4} School Year Positions Open:$","^Full Family Health Insurance Offered$",""

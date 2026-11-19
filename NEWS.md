@@ -1,3 +1,18 @@
+# edjobs 0.45.0
+
+* **A toy state (`inst/toystate/`, `test-toy-state.R`; 2026-11-17 package review, step 3).** Toyland: four made-up
+  districts, one each on AppliTrack, SchoolSpring, TedK12 and Apptegy, run end to end as a third state would run it:
+  dispatch from its registry and `state_config()`, archive, `build_k12_combinedclean()`, teacher rows, totals and the
+  accumulated files, two runs and a same-day re-run, then its own run expectations. HTTP comes from real captured
+  fixtures (`httr2::local_mocked_responses()`), Apptegy from a stand-in browser session; it sees only the package's
+  exports. Its README lists what a new state still writes as code: `toy_raw_rows()` (each fetcher's own columns to
+  one raw row), `toy_posting_identity()` (the fallback id), `toy_k12_run()` (the stages), `toy_registry()`; the test
+  fails when that list changes. Not yet in it: colleges, a statewide feed, spells, federal context, the app.
+* `state_config(oews_areas = )`: a state's own BLS OEWS area rows, added to the package's
+  `oews_area_definitions.csv` by `oews_area_definitions()`. Found by the toy state: `build_k12_combinedclean()`
+  stopped for any state the package's CSV didn't list, so a new state had to change the package. MT and WY are
+  unchanged (their rows are in the package; NULL adds nothing).
+
 # edjobs 0.44.0
 
 Hardening release from the 2026-11-17 package review (findings 4, 5 and 7; `claude-notes/2026-11-17_edjobs-package-review.md`).

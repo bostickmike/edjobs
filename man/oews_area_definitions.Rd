@@ -4,11 +4,13 @@
 \alias{oews_area_definitions}
 \title{OEWS area definitions}
 \usage{
-oews_area_definitions(state = NULL)
+oews_area_definitions(state = NULL, extra = current_state_config()$oews_areas)
 }
 \arguments{
 \item{state}{A state's postal abbreviation ("MT") or FIPS code ("30");
 NULL for every state.}
+
+\item{extra}{Rows to add (defaults to the session's \code{state_config(oews_areas = )}).}
 }
 \description{
 Every OEWS area of the states the package knows, one row per county
@@ -19,5 +21,7 @@ OEWS Metropolitan and Nonmetropolitan Area Definitions"
 (bls.gov/oes/2025/may/msa_def.htm): metro codes are "00" + the CBSA code;
 nonmetropolitan areas use state FIPS + "0000" + n. Counties are listed
 without " County". bls.gov refuses scripted requests, so a new state's rows
-are added to the CSV from that page by hand; no code changes.
+are added to the CSV from that page by hand; no code changes. A state can
+instead keep its rows itself (\code{state_config(oews_areas = )}, same columns):
+they are added to the package's, so a new state needs no package release.
 }

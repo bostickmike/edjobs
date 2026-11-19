@@ -1,0 +1,7 @@
+"id","applies_from","expires","file","filter","measure","min","max","note"
+"every_district_counted","2026-11-02","2026-12-31","app/k12_district_weekly_totals.csv","Archive_Date == ""2026-11-02""","","4","4","All four registry districts have postings in the first run (one per platform)"
+"posting_ids_unique","2026-11-02","2026-12-31","app/combinedclean.csv","","sum(duplicated(Posting_ID))","","0","One row per posting in the run's file"
+"every_posting_identified","2026-11-02","2026-12-31","app/combinedclean.csv","is.na(Posting_ID) | Posting_ID == """"","","","0","Every posting has an id (a link id or the fallback)"
+"teachers_found","2026-11-02","2026-12-31","app/k12jobanalysis.csv","","","1","","The teacher table isn't empty"
+"pay_has_unit","2026-11-02","2026-12-31","app/combinedclean.csv","!is.na(Pay_Min) & is.na(Pay_Unit)","","","0","Posted pay always carries its unit"
+"posted_pay_found","2026-11-02","2026-12-31","app/combinedclean.csv","!is.na(Pay_Min)","","1","","Some postings state their pay (Alder Creek's board does)"
