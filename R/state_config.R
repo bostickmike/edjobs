@@ -39,6 +39,13 @@
 #' @param county_suffix What the Census county names end with that the state's files leave off (", Montana":
 #'   the files say "Gallatin County"), passed to [fetch_census_county_context()]; NULL keeps Census's name
 #'   ("Albany County, Wyoming").
+#' @param k12_source_names How the weekly checks name the source of each K-12 row (drift, pay coverage, title
+#'   quality): a function of an archive or `combinedclean.csv` data frame returning one name per row, or NULL to
+#'   leave that archive out (one written before the columns the naming needs). NULL uses `District` as is.
+#' @param drift_min_mean The drift check's floor: sources averaging fewer postings a week aren't judged on a quiet
+#'   week (`flag_drift(min_mean_count = )`).
+#' @param direct_registry The registry the drift report's statewide-feed section counts as "registered
+#'   districts": a function of no arguments returning it, or NULL to read `k12_district_registry.csv`.
 #' @param autofix Settings for the auto-fix issue: `scraper_files` (the
 #'   state's scraper files, read as text), `fixtures_by` (`"name"` or
 #'   `"tests"`, see `gather_autofix_evidence()`) and `fixture_example` (a path
@@ -47,7 +54,7 @@
 #' @export
 state_config <- function(state, fips, app_dir, reference_tables = list(), feed = NULL, drift_baseline_from = NULL,
                          scraper_sources = list(), autofix = list(), timezone = NULL, oews_areas = NULL,
-                         county_suffix = NULL) {
+                         county_suffix = NULL, k12_source_names = NULL, drift_min_mean = 3, direct_registry = NULL) {
   stopifnot(is.character(state), length(state) == 1, nzchar(state),
             is.character(fips), grepl("^\\d{2}$", fips), is.character(app_dir), length(app_dir) == 1,
             is.list(reference_tables))
@@ -75,9 +82,13 @@ state_config <- function(state, fips, app_dir, reference_tables = list(), feed =
   if (!is.null(county_suffix) && !(is.character(county_suffix) && length(county_suffix) == 1)) {
     stop("county_suffix must be one string or NULL")
   }
+  if (!is.null(k12_source_names) && !is.function(k12_source_names)) stop("k12_source_names must be a function or NULL")
+  if (!is.null(direct_registry) && !is.function(direct_registry)) stop("direct_registry must be a function or NULL")
+  if (!(is.numeric(drift_min_mean) && length(drift_min_mean) == 1 && drift_min_mean >= 0)) stop("drift_min_mean must be one number >= 0")
   structure(list(state = state, fips = fips, timezone = timezone, oews_areas = oews_areas, county_suffix = county_suffix,
                  app_dir = app_dir, reference_tables = reference_tables, feed = feed,
                  scraper_sources = scraper_sources, autofix = autofix,
+                 k12_source_names = k12_source_names, drift_min_mean = drift_min_mean, direct_registry = direct_registry,
                  drift_baseline_from = if (is.null(drift_baseline_from)) NULL else as.Date(drift_baseline_from)),
             class = "edjobs_state_config")
 }
