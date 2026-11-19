@@ -22,7 +22,9 @@
 #' @param feed The state's statewide job feed, or NULL: a list with
 #'   `short_name` ("OPI"), `label` (its `Posting_Source` value), `url` and
 #'   `discrepancy_file` (the report of feed postings missing from direct
-#'   scrapes). The drift report reads it.
+#'   scrapes). The drift report reads it. Optional: `signature` (words the feed's page must show for the pre-flight
+#'   canary, any one; default the short name and the state's name) and `cainfo` (a CA bundle file for a feed server
+#'   whose certificate chain the runner's store lacks; [run_canaries()]).
 #' @param drift_baseline_from The first run date whose archive counts toward
 #'   the drift check's per-source baselines (`build_historical_counts()`):
 #'   earlier archives predate fixes that changed the counts.

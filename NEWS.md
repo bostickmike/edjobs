@@ -1,3 +1,15 @@
+# edjobs 0.52.0
+
+* **The pre-flight canary and the rebuild-parity report as functions (2026-11-17 package review, step 6, slice 3).**
+  `canary_step()` / `run_canaries()` / `check_endpoint()` and the validators (`validate_urban_ipeds()`,
+  `validate_urban_ccd()`, `validate_census()`, `validate_feed_page()`) replace the states' `canary_api_check.R`;
+  the FIPS code and feed come from `state_config()`, with two optional feed fields: `signature` (words the feed's
+  page must show; default its short name and the state's name) and `cainfo` (a CA bundle for a feed server whose
+  chain the runner lacks). `report_rebuild_parity(k12, he)` is the compare-and-report half of
+  `check_rebuild_parity.R`; the rebuild itself stays state code. The canary's failure message for the feed now reads
+  the same in every state ("did not match the OPI page's signature (TeacherSearch / Montana)"); otherwise output is
+  the scripts' own.
+
 # edjobs 0.51.0
 
 * **The drift-family checks as functions (2026-11-17 package review, step 6, slice 2):** `check_drift_step()`,

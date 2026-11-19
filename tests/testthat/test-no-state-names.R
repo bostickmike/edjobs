@@ -6,7 +6,9 @@
 STATE_NAME_ALLOWED <- list(
   # Stored key prefixes in the committed presence files (presence_sightings.csv): renaming them would split every
   # open stretch. They name the two feed adapters, opi_posting_key() and wsba_vacancy_key().
-  "presence_check.R" = c("opi:", "wsba:")
+  "presence_check.R" = c("opi:", "wsba:"),
+  # The canary's status words, not Oklahoma.
+  "run_checks_canary.R" = c("OK", "[OK]  ")
 )
 
 package_code_strings <- function(file) {
