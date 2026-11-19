@@ -1,3 +1,13 @@
+# edjobs 0.47.0
+
+* **Pipeline stages, slice 1 (2026-11-17 package review, step 5).** The chunks both weekly Rmds wrote out the same
+  way, as functions taking the state's config: `refresh_county_context(file, source_name)` (the Census ACS county
+  context into salarymap2.csv or salarymap.csv; a failed fetch leaves the file untouched; returns the context for
+  later joins) and `refresh_source_record_links()` (CCD/IPEDS links, last). `join_county_context()` and
+  `COUNTY_CONTEXT_COLUMNS` are the pure part. `state_config(county_suffix = )`: what Census county names end with
+  that the state's files leave off (MT ", Montana"; NULL keeps Census's name). Tests check each stage writes byte
+  for byte what the chunk it replaces wrote.
+
 # edjobs 0.46.0
 
 * **Package-held scraper specs (2026-11-17 package review, step 4).** `default_scraper_specs()`: one `scraper_spec()`
