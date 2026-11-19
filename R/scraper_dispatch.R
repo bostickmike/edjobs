@@ -10,10 +10,10 @@
 # resolve_scraper_call() looks a source name up in them, in order. The live
 # check, the repro script and the auto-fix issue all go through it.
 #
-# The specs stay in the states for now: the two registries name platforms
-# and arguments differently ("AppliTrack" + Slug, "Applitrack" + a path
-# computed from Job_Link). Once they agree, the specs for the platforms this
-# package scrapes can live here.
+# The specs for the platforms this package scrapes live here
+# (default_scraper_specs(), 0.46.0; the registries have shared one schema
+# since 0.31.0). A state adds or replaces only its own with scraper_specs(),
+# so a district on a known platform is one registry row.
 
 #' How one platform's scraper is called
 #'
@@ -45,6 +45,91 @@ scraper_spec <- function(fn, args = character(0), session = FALSE, map = FALSE, 
             class = "edjobs_scraper_spec")
 }
 
+#' A registry column as text, for a scraper argument
+#'
+#' For `scraper_spec(args = )`: a function of the registry row giving the
+#' column's value as text, or `NA_character_` when the column is missing,
+#' blank or NA (a list rule the row doesn't have, a city the registry leaves
+#' empty).
+#' @param col The registry column.
+#' @return A function of the registry row.
+#' @export
+registry_text <- function(col) {
+  force(col)
+  function(row) {
+    v <- row[[col]]
+    if (is.null(v) || length(v) == 0 || is.na(v[1]) || !nzchar(v[1])) NA_character_ else as.character(v[1])
+  }
+}
+
+#' The scraper specs for the platforms this package scrapes
+#'
+#' One `scraper_spec()` per registry `Platform` whose fetcher is in this
+#' package, reading the shared registry schema: `Platform_Key` (the board's key:
+#' AppliTrack's tenant path, SchoolSpring's domain, Google Doc ids, Red Rover's
+#' org id), `Job_Link`, `City` and the list rules `List_Start`, `List_Stop`,
+#' `List_Skip` (K-12), and `Feed_URL`, `Institution` (colleges). Combine with a
+#' state's own specs through [scraper_specs()].
+#'
+#' K-12: AppliTrack, SchoolSpring, TedK12, RedRoverK12, CyberSchool,
+#' CyberSchoolText, GoogleDoc, Apptegy (rendered text), ApptegyPageBuilder,
+#' GoogleSites, Finalsite, WordPress, Edlio, Joomla. Colleges: PeopleAdmin,
+#' Neogov.
+#' @return A named list of `scraper_spec()`.
+#' @export
+default_scraper_specs <- function() {
+  rules <- list(registry_text("List_Start"), registry_text("List_Stop"), registry_text("List_Skip"))
+  family <- function(fn) scraper_spec(fn, c(list("Job_Link", registry_text("City")), rules))
+  apptegy <- function(mode) {
+    force(mode)
+    scraper_spec("fetch_apptegy_postings", c(list("Job_Link", registry_text("City"), function(row) mode), rules),
+                 session = TRUE)
+  }
+  list(
+    AppliTrack   = scraper_spec("fetch_applitrack_postings",   "Platform_Key"),
+    SchoolSpring = scraper_spec("fetch_schoolspring_postings", "Platform_Key"),
+    TedK12       = scraper_spec("fetch_tedk12_postings",       "Job_Link"),
+    # Platform_Key is the numeric org id; the link slug comes from Job_Link.
+    RedRoverK12  = scraper_spec("fetch_redrover_postings",
+                                list(registry_text("Platform_Key"), function(row) redrover_org_slug(row$Job_Link))),
+    CyberSchool  = scraper_spec("fetch_cyberschool_postings",  list("Job_Link", registry_text("City"))),
+    CyberSchoolText = scraper_spec("fetch_cyberschool_postings",
+                                   c(list("Job_Link", registry_text("City"), function(row) "text"), rules)),
+    # The doc ids are in Platform_Key.
+    GoogleDoc    = scraper_spec("fetch_googledoc_postings",
+                                c(list("Platform_Key", registry_text("City"), "Job_Link"), rules)),
+    Apptegy            = apptegy("text"),
+    ApptegyPageBuilder = apptegy("pagebuilder"),
+    GoogleSites  = family("fetch_googlesites_postings"),
+    Finalsite    = family("fetch_finalsite_postings"),
+    WordPress    = family("fetch_wordpress_postings"),
+    Edlio        = family("fetch_edlio_postings"),
+    Joomla       = family("fetch_joomla_postings"),
+    PeopleAdmin  = scraper_spec("fetch_peopleadmin_atom", c("Feed_URL", "Institution")),
+    Neogov       = scraper_spec("fetch_neogov_postings", "Feed_URL")
+  )
+}
+
+#' The package's scraper specs plus a state's own
+#'
+#' @param ... A state's own `scraper_spec()`s, named by platform, or one named
+#'   list of them. A name the defaults already have replaces that default;
+#'   `NULL` removes it.
+#' @param defaults The specs to start from; [default_scraper_specs()].
+#' @return A named list of `scraper_spec()`, for `scraper_registry(specs = )`.
+#' @export
+scraper_specs <- function(..., defaults = default_scraper_specs()) {
+  own <- list(...)
+  if (length(own) == 1 && is.null(names(own)) && is.list(own[[1]]) && !inherits(own[[1]], "edjobs_scraper_spec"))
+    own <- own[[1]]
+  if (length(own) && (is.null(names(own)) || any(!nzchar(names(own)))))
+    stop("scraper_specs(): name each spec by its platform")
+  if (anyDuplicated(names(own))) stop("scraper_specs(): platform named twice: ", names(own)[duplicated(names(own))][1])
+  out <- defaults
+  for (p in names(own)) out[p] <- list(own[[p]])
+  out[!vapply(out, is.null, logical(1))]
+}
+
 #' A registry of sources, one row each
 #'
 #' @param table The registry: a data frame, the path of a CSV, or a function
@@ -65,6 +150,10 @@ scraper_registry <- function(table, name_col, where, specs = list(), platform_co
   stopifnot(is.data.frame(table) || is.function(table) || (is.character(table) && length(table) == 1),
             is.list(specs), all(vapply(specs, inherits, logical(1), "edjobs_scraper_spec")),
             is.null(fallback) || is.function(fallback))
+  # c() of two spec lists keeps both copies of a platform and the lookup takes the first: use scraper_specs().
+  if (anyDuplicated(names(specs)))
+    stop("scraper_registry(): platform '", names(specs)[duplicated(names(specs))][1],
+         "' has two specs; combine spec lists with scraper_specs()")
   structure(list(kind = "registry", table = table, name_col = name_col, where = where, specs = specs,
                  platform_col = platform_col, url_col = url_col, fallback = fallback),
             class = "edjobs_scraper_source")

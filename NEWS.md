@@ -1,3 +1,17 @@
+# edjobs 0.46.0
+
+* **Package-held scraper specs (2026-11-17 package review, step 4).** `default_scraper_specs()`: one `scraper_spec()`
+  for each platform this package scrapes (AppliTrack, SchoolSpring, TedK12, RedRoverK12, CyberSchool,
+  CyberSchoolText, GoogleDoc, Apptegy, ApptegyPageBuilder, GoogleSites, Finalsite, WordPress, Edlio, Joomla,
+  PeopleAdmin, Neogov), reading the shared registry schema. A state passes `scraper_specs(...)` to
+  `scraper_registry(specs = )`, naming only its own scrapers and any default it replaces (`NULL` removes one), so a
+  district on a known platform is one registry row. `registry_text(col)`: a registry column as text, NA when blank
+  (the list rules, City). `scraper_registry()` now stops on a platform with two specs (`c()` of two spec lists
+  kept both and the lookup silently took the first). The toy state uses the defaults for AppliTrack, SchoolSpring
+  and TedK12. Dispatch parity: MT 224 of 224 sources resolve to the same call; WY 59 of 61, and the other two
+  (Edlio) add `skip_section = NA`, the function's own default. These specs drive the live check, the repro script
+  and the auto-fix issue, not the weekly pipelines.
+
 # edjobs 0.45.0
 
 * **A toy state (`inst/toystate/`, `test-toy-state.R`; 2026-11-17 package review, step 3).** Toyland: four made-up

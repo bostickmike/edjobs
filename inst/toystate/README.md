@@ -9,7 +9,7 @@ new state have to write" (2026-11-17 package review, step 3) and the shortest wo
 | File | What a state supplies |
 |---|---|
 | `k12_district_registry.csv` | One row per district, in the shared registry schema (`District`, `NCES_LEAID`, `City`, `County`, `Latitude`, `Longitude`, `Platform`, `Platform_Key`, `Job_Link`, `List_Start`, `List_Stop`, `List_Skip`) |
-| `state_config.R` | `state_config()`: name, FIPS, time zone, its own OEWS areas, and how each platform is scraped (`scraper_registry()` with a `scraper_spec()` per platform) |
+| `state_config.R` | `state_config()`: name, FIPS, time zone, its own OEWS areas, and how each platform is scraped (`scraper_registry()`: the package's specs, plus its own Apptegy spec) |
 | `oews_areas.csv`, `oews_role_wages.csv` | The state's BLS OEWS areas and wages (a real state fetches the wages with `refresh_oews_wages()`) |
 | `run_expectations.csv` | What a run's files should show (`evaluate_run_expectations()`) |
 | `pipeline.R` | The weekly K-12 run: what the package doesn't do yet |
@@ -28,7 +28,8 @@ package shows up as a shorter list. As of 0.45.0:
    Review steps 5 to 7 (pipeline stages as package functions).
 4. `toy_registry()`: reading the registry CSV (the states have `read_k12_registry()`).
 
-Also still the state's to write, but as data: the four `scraper_spec()`s in `state_config.R` (review step 4,
-package-held specs, would make a district on a known platform one registry row and nothing else).
+Not code any more: how each platform is scraped. AppliTrack, SchoolSpring and TedK12 come from the package's
+`default_scraper_specs()` (review step 4, 0.46.0), so a district on a known platform is one registry row. Toyland
+replaces only Apptegy's spec (`scraper_specs()`), to read its fixtures without today's deadline cutoff.
 
 Not yet in the toy: colleges, a statewide feed, posting spells, federal context, the app. Each is a later slice.

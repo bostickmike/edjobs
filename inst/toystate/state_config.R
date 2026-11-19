@@ -10,10 +10,9 @@ set_state_config(state_config(
   oews_areas = file.path(toy_dir, "oews_areas.csv"),
   scraper_sources = list(scraper_registry(
     toy_registry, name_col = "District", where = "k12_district_registry.csv",
-    specs = list(
-      AppliTrack = scraper_spec("fetch_applitrack_postings", "Platform_Key"),
-      SchoolSpring = scraper_spec("fetch_schoolspring_postings", "Platform_Key"),
-      TedK12 = scraper_spec("fetch_tedk12_postings", "Job_Link"),
+    # AppliTrack, SchoolSpring and TedK12 come from the package (default_scraper_specs()): a district on one of
+    # them is a registry row and nothing else. Toyland replaces only Apptegy's.
+    specs = scraper_specs(
       # The page's text (mode "text"), the registry's list rules, and no deadline filter: the toy's pages are fixtures
       # captured on one day, so a "today" cutoff would change the result as the calendar moves.
       Apptegy = scraper_spec("fetch_apptegy_postings", list(
