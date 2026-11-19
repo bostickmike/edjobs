@@ -1,3 +1,11 @@
+# edjobs 0.48.0
+
+* **Pipeline stages, slice 2 (review step 5).** `refresh_file_columns(file, source_name, fetch, expected_cols, by)`:
+  the fetch-then-swap-columns step most context chunks repeat. The fetch runs through `safe_scrape()`; on rows, the
+  file's `replace` columns (the fetch's own, by default) are dropped and the new ones joined by `by`; on a failure the
+  file is left alone. First uses: IPEDS enrollment and its 5-year trend, FSA Pell share (both states' HE chunks).
+  `refresh_county_context()` is now one call to it (same output; slice 1's byte-for-byte tests still pass).
+
 # edjobs 0.47.0
 
 * **Pipeline stages, slice 1 (2026-11-17 package review, step 5).** The chunks both weekly Rmds wrote out the same

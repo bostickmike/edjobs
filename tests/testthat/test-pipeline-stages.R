@@ -80,3 +80,33 @@ test_that("the stages need a state config", {
   expect_error(refresh_county_context("x.csv", "x", config = NULL), "no state config")
   expect_error(refresh_source_record_links(config = NULL), "no state config")
 })
+
+test_that("refresh_file_columns writes what the old per-fetch chunk wrote, keyed by Name, and keeps others' columns", {
+  f <- stage_fixture()
+  withr::local_dir(f$dir)
+  prof <- data.frame(Name = c("U1", "U2"), IPEDS_UNITID = c(240727L, 240505L), Enrollment = c(1, 2),
+                     Enrollment_Year = 2020L, Pell_Year = 2019L, stringsAsFactors = FALSE)
+  utils::write.csv(prof, file.path(f$app, "salarymap.csv"), row.names = FALSE)
+  enr <- data.frame(Name = c("U1", "U2"), Enrollment = c(9500.5, 3100), Enrollment_Year = 2023L)
+  expected <- file.path(f$dir, "expected.csv")
+  file.copy(file.path(f$app, "salarymap.csv"), expected)
+  x <- utils::read.csv(expected, fileEncoding = "UTF-8") %>%
+    dplyr::select(-dplyr::any_of(c("Enrollment", "Enrollment_Year"))) %>%
+    dplyr::left_join(enr, by = "Name")
+  utils::write.csv(x, expected, row.names = FALSE)
+  out <- refresh_file_columns("salarymap.csv", "IPEDS fall enrollment FTE (TY)", fetch = function() enr,
+                              expected_cols = c("Name", "Enrollment", "Enrollment_Year"), by = "Name",
+                              retrieved_source = "Urban IPEDS", config = f$config)
+  expect_identical(readLines(file.path(f$app, "salarymap.csv")), readLines(expected))
+  expect_equal(out, enr)
+  expect_true("Urban IPEDS" %in% read_source_retrieved(f$app)$Source)
+  # A failed fetch: the default message names the file and its columns; the file stays.
+  before <- readLines(file.path(f$app, "salarymap.csv"))
+  expect_message(refresh_file_columns("salarymap.csv", "IPEDS fall enrollment FTE (TY)", fetch = function() stop("524"),
+                                      expected_cols = c("Name", "Enrollment", "Enrollment_Year"), by = "Name",
+                                      config = f$config),
+                 "salarymap.csv's Enrollment, Enrollment_Year untouched")
+  expect_identical(readLines(file.path(f$app, "salarymap.csv")), before)
+  expect_error(refresh_file_columns("salarymap.csv", "x", fetch = function() enr, expected_cols = "Enrollment",
+                                    by = "Name", config = f$config))
+})
