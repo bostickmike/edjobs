@@ -483,7 +483,29 @@ parse_apptegy_postings <- function(content, url, location, mode = "text",
       rows <- rows[!passed, , drop = FALSE]
     }
   }
+  if (nrow(rows)) rows$Pay_Line <- continue_wrapped_pay(rows$Line, text)
   title_rows_postings(rows, url, location)
+}
+
+#' Join a pay range that wraps onto the next line
+#'
+#' A title's line that ends partway through a pay range ("Custodian/Light Maintenance (immediate opening) - $13.52 -"
+#' with "$13.82/hour DOE." on the next line, Townsend 2026-11-17) gets the page's next non-empty line appended, so
+#' [extract_posted_pay()] reads the whole range and its unit. Other lines are returned as they are.
+#' @param lines The title rows' own lines.
+#' @param text The page text they came from.
+#' @return Character, one per line: the text to read pay from.
+#' @export
+continue_wrapped_pay <- function(lines, text) {
+  out <- lines
+  dangling <- !is.na(lines) & grepl("\\$\\s?[0-9][0-9,.]*\\s*([-\u2013\u2014]|\\bto)\\s*$", lines, perl = TRUE)
+  if (!any(dangling) || is.null(text)) return(out)
+  L <- trimws(gsub("[\u00a0\t ]+", " ", strsplit(paste(text, collapse = "\n"), "\n")[[1]])); L <- L[nzchar(L)]
+  for (i in which(dangling)) {
+    j <- which(L == trimws(gsub("[\u00a0\t ]+", " ", lines[i])))
+    if (length(j) && j[1] < length(L)) out[i] <- paste(trimws(lines[i]), L[j[1] + 1])
+  }
+  out
 }
 
 #' Which titles' own text gives an application deadline that has passed
@@ -558,7 +580,9 @@ title_rows_postings <- function(rows, url, location, doc = NULL) {
                     Link = title_links(rows, doc, url), stringsAsFactors = FALSE)
   if (nrow(out) == 0) return(ensure_posted_pay_columns(out))
   shared <- rows$Line %in% rows$Line[duplicated(rows$Line)]
-  pay <- extract_posted_pay(ifelse(shared, NA_character_, rows$Line))
+  # A family can give the text to read pay from (`Pay_Line`: Apptegy's wrapped pay ranges); else the line itself.
+  pay_line <- if ("Pay_Line" %in% names(rows)) rows$Pay_Line else rows$Line
+  pay <- extract_posted_pay(ifelse(shared, NA_character_, pay_line))
   cbind(out, pay)
 }
 

@@ -1,3 +1,17 @@
+# edjobs 0.43.0
+
+The two postings that left MT's `k12_pay_has_unit` run expectation at 2 after 0.42.0 (both state their unit;
+`claude-notes/2026-11-19_unitless-pay-browning-townsend.md`):
+
+* `extract_posted_pay()` looks past a semicolon for pay words: "Salary: Hourly rate per Classified Salary Schedule,
+  Lane 3/Step 0; $21.16" (Browning bus driver) is hourly. Bonus/fee words before a semicolon still don't veto the
+  amount ("Hiring bonus available; $18/hour"). Replayed over every archived `Pay_Text` in both states (1,044
+  distinct texts): only that posting changes (unit NA -> "hour").
+* `continue_wrapped_pay()` (new): an Apptegy title line that ends partway through a pay range ("Custodian/Light
+  Maintenance (immediate opening) - $13.52 -", with "$13.82/hour DOE." on the next line, Townsend) reads its pay
+  from the line plus the next one, so the range keeps its high end and unit ($13.52-$13.82/hour). The title, its
+  line, deadline and link matching are unchanged. The only such snippet in either state's archives.
+
 # edjobs 0.42.0
 
 * `extract_posted_pay()` reads a full or half day written before the amount as a day rate ("Full day/$100 and 1/2
