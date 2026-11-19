@@ -66,6 +66,23 @@ test_that("parse_apptegy_postings: Melstone's posted pay comes from each title's
   expect_true(all(c("Activity Drivers (CDL)", "Activity Drivers (non-CDL)") %in% r$Title))
 })
 
+test_that("parse_apptegy_postings: a pay range wrapped onto the next line keeps its high end and unit", {
+  # Townsend 2026-11-19: "... (immediate opening) - $13.52 -" / "$13.82/hour DOE." (MT k12_pay_has_unit).
+  r <- parse_apptegy_postings(read_fixture("apptegy_townsend_rendered.txt"), "u", "Townsend")
+  cust <- r[r$Title == "Custodian/Light Maintenance (immediate opening)", ]
+  expect_equal(nrow(cust), 1)
+  expect_equal(c(cust$Pay_Min, cust$Pay_Max), c(13.52, 13.82))
+  expect_equal(cust$Pay_Unit, "hour")
+  expect_true(all(is.na(r$Pay_Min[r$Title != cust$Title])))
+})
+
+test_that("continue_wrapped_pay joins only a line that ends partway through a range", {
+  text <- "Cook - $15 -\n\n$17/hour\nAide - $14.00/hour\nNext line\nDriver $20 to\n"
+  expect_equal(continue_wrapped_pay(c("Cook - $15 -", "Aide - $14.00/hour", "Driver $20 to", NA), text),
+               c("Cook - $15 - $17/hour", "Aide - $14.00/hour", "Driver $20 to", NA))
+  expect_equal(continue_wrapped_pay("Cook - $15 -", NULL), "Cook - $15 -")
+})
+
 test_that("parse_apptegy_postings: Deer Lodge page-builder cards", {
   html <- read_fixture("apptegy_deerlodge_pagedata.html")
   expect_false(is.null(decode_apptegy_pagebuilder_nodes(html)))

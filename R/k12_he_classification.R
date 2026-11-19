@@ -660,6 +660,10 @@ extract_posted_pay <- function(text) {
       near_before <- substr(before, max(1, nchar(before) - 30), nchar(before))
       # Only the amount's own sentence decides whether it's a bonus/fee, so a
       # "signing bonus." just before "Starting salary: $X" doesn't veto $X.
+      # Pay words may sit before a semicolon: in "Hourly rate per Classified Salary Schedule, Lane 3/Step 0; $21.16"
+      # (Browning 2026-11-17) they are the amount's own. Only the pay-word checks look past it; a bonus word before a
+      # semicolon ("Hiring bonus available; $18/hour") still doesn't veto the amount.
+      pay_words_before <- sub("^.*\\$\\s?\\d[0-9,.]*[kK]?", "", sub("^.*[.!]\\s", "", near_before))
       near_before <- sub("^.*[.;!]\\s", "", near_before)
       # Nor does an earlier amount's own wording: in "Signing bonus $1,000,
       # $42,000 annual salary" the bonus word belongs to $1,000.
@@ -734,14 +738,14 @@ extract_posted_pay <- function(text) {
         # $16.04", "Step 1: $13.37", "$21.35 starting pay") is hourly: every
         # amount in that range with a stated unit was hourly (633 of 633, both
         # states' postings, 2026-11-10).
-        lo >= 7.25 & hi <= 60 & (grepl("wage|\\bpay\\b|salary|\\brate\\b|schedule|\\bstep\\b|\\bgrade\\b|starting", near_before) |
+        lo >= 7.25 & hi <= 60 & (grepl("wage|\\bpay\\b|salary|\\brate\\b|schedule|\\bstep\\b|\\bgrade\\b|starting", pay_words_before) |
                                    grepl("^[^a-z]{0,3}(starting )?(pay|wage)\\b", after)) ~ "hour",
         TRUE ~ NA_character_
       )
       # An "hourly" figure in the thousands, or a "yearly" one under $1,000,
       # is a misread unit -- keep the amount, drop the unit.
       if (!is.na(unit) && ((unit == "hour" && hi > 500) || (unit == "year" && hi < 1000))) unit <- NA_character_
-      score <- (if (grepl("salary|wage|pay|rate|stipend|compensation|starting|step|lane|schedule", near_before)) 2 else 0) +
+      score <- (if (grepl("salary|wage|pay|rate|stipend|compensation|starting|step|lane|schedule", pay_words_before)) 2 else 0) +
         (if (!is.na(unit)) 1 else 0)
       if (score > best_score) {
         best_score <- score
