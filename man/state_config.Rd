@@ -36,7 +36,9 @@ of rules.}
 \item{feed}{The state's statewide job feed, or NULL: a list with
 \code{short_name} ("OPI"), \code{label} (its \code{Posting_Source} value), \code{url} and
 \code{discrepancy_file} (the report of feed postings missing from direct
-scrapes). The drift report reads it.}
+scrapes). The drift report reads it. Optional: \code{signature} (words the feed's page must show for the pre-flight
+canary, any one; default the short name and the state's name) and \code{cainfo} (a CA bundle file for a feed server
+whose certificate chain the runner's store lacks; \code{\link[=run_canaries]{run_canaries()}}).}
 
 \item{drift_baseline_from}{The first run date whose archive counts toward
 the drift check's per-source baselines (\code{build_historical_counts()}):
