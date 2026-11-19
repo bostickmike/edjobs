@@ -25,7 +25,6 @@ is passed to \code{\link[=fetch_census_county_context]{fetch_census_county_conte
 The context table (zero rows when the fetch failed), invisibly, for later stages that join it again.
 }
 \description{
-Fetches the Census ACS county context through \code{\link[=safe_scrape]{safe_scrape()}} (logged as \code{source_name}, retrieval recorded as
-"Census ACS") and rewrites \code{file} with it (\code{\link[=join_county_context]{join_county_context()}}). A failed fetch leaves the file as it was, so
-last week's good values are never blanked.
+Fetches the Census ACS county context and rewrites \code{file} with it: \code{\link[=refresh_file_columns]{refresh_file_columns()}} by \code{County}, replacing
+\link{COUNTY_CONTEXT_COLUMNS} (the same result as \code{\link[=join_county_context]{join_county_context()}}). A failed fetch leaves the file as it was.
 }

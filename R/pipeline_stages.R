@@ -1,7 +1,8 @@
 # Pipeline stages (2026-11-17 package review, step 5): a chunk both states' weekly Rmd wrote out the same way, as one
 # function taking the state's config. A state's Rmd calls the stage; what differs by state comes from
-# state_config(). The first stages are the ones that already used only package code: the federal county context and
-# the source record links.
+# state_config(). Slice 1 (0.47.0): the federal county context and the source record links. Slice 2 (0.48.0):
+# refresh_file_columns(), the fetch-then-swap-columns step the context chunks repeat (IPEDS enrollment and its
+# trend, FSA Pell share; the county context is now one of its uses).
 
 #' The county-context columns a refresh replaces
 #'
@@ -26,11 +27,47 @@ join_county_context <- function(profile, context) {
   dplyr::left_join(profile, context, by = "County")
 }
 
+#' Pipeline stage: refresh some of a file's columns from one fetch
+#'
+#' The step most of the weekly pipeline's context chunks repeat: run `fetch` through [safe_scrape()] (logged as
+#' `source_name`; its retrieval recorded under `retrieved_source`), and if it returned rows, drop `replace` from
+#' `file` and join the fetch's columns by `by`. A failed or empty fetch leaves the file as it was, so last week's good
+#' values are never blanked.
+#' @param file The CSV inside the app folder ("salarymap.csv").
+#' @param source_name The scrape log's name for this fetch ("IPEDS fall enrollment FTE (WY)").
+#' @param fetch A function of no arguments returning the new columns plus `by`.
+#' @param expected_cols The columns `fetch` must return ([safe_scrape()]).
+#' @param by The join key ("Name", "District", "County").
+#' @param retrieved_source The source-retrieved name ("Urban IPEDS"), or NULL.
+#' @param replace The file's columns this fetch replaces: `expected_cols` without `by` unless given.
+#' @param fail_message The message on a failed fetch; a default naming the file and the columns.
+#' @param config The state's config; the session's by default (its `app_dir`).
+#' @return The fetched table (zero rows when the fetch failed), invisibly.
+#' @export
+refresh_file_columns <- function(file, source_name, fetch, expected_cols, by, retrieved_source = NULL,
+                                 replace = setdiff(expected_cols, by), fail_message = NULL,
+                                 config = current_state_config()) {
+  if (is.null(config)) stop("refresh_file_columns(): no state config (set_state_config())")
+  stopifnot(is.character(by), length(by) >= 1, by %in% expected_cols)
+  path <- file.path(config$app_dir, file)
+  new <- safe_scrape(source_name, retrieved_source = retrieved_source, app_dir = config$app_dir, scrape_fn = fetch,
+                     expected_cols = expected_cols)
+  if (nrow(new) > 0) {
+    old <- utils::read.csv(path, fileEncoding = "UTF-8")
+    old <- old[, setdiff(names(old), replace), drop = FALSE]
+    utils::write.csv(dplyr::left_join(old, new, by = by), path, row.names = FALSE)
+  } else {
+    message(if (is.null(fail_message)) {
+      paste0(source_name, " fetch failed -- leaving ", file, "'s ", paste(replace, collapse = ", "), " untouched this run.")
+    } else fail_message)
+  }
+  invisible(new)
+}
+
 #' Pipeline stage: refresh a profile file's county context
 #'
-#' Fetches the Census ACS county context through [safe_scrape()] (logged as `source_name`, retrieval recorded as
-#' "Census ACS") and rewrites `file` with it ([join_county_context()]). A failed fetch leaves the file as it was, so
-#' last week's good values are never blanked.
+#' Fetches the Census ACS county context and rewrites `file` with it: [refresh_file_columns()] by `County`, replacing
+#' [COUNTY_CONTEXT_COLUMNS] (the same result as [join_county_context()]). A failed fetch leaves the file as it was.
 #' @param file The profile CSV inside the app folder ("salarymap2.csv", "salarymap.csv").
 #' @param source_name The scrape log's name for this fetch ("Census ACS county context (WY)").
 #' @param config The state's config; the session's by default. Its `app_dir` holds `file`; its `county_suffix`
@@ -41,17 +78,12 @@ join_county_context <- function(profile, context) {
 refresh_county_context <- function(file, source_name, config = current_state_config(),
                                    fetch = function() fetch_census_county_context(county_suffix = config$county_suffix)) {
   if (is.null(config)) stop("refresh_county_context(): no state config (set_state_config())")
-  path <- file.path(config$app_dir, file)
-  context <- safe_scrape(source_name, retrieved_source = "Census ACS", app_dir = config$app_dir, scrape_fn = fetch,
-                         expected_cols = c("County", "Median_Household_Income", "Median_Gross_Rent", "Population",
-                                           "ACS_Year", "Mining_Employment_Share", "Population_Change_Pct"))
-  if (nrow(context) > 0) {
-    profile <- utils::read.csv(path, fileEncoding = "UTF-8")
-    utils::write.csv(join_county_context(profile, context), path, row.names = FALSE)
-  } else {
-    message("Census ACS county context fetch failed -- leaving ", file, " untouched this run.")
-  }
-  invisible(context)
+  refresh_file_columns(file, source_name, fetch = fetch, by = "County", retrieved_source = "Census ACS",
+                       expected_cols = c("County", "Median_Household_Income", "Median_Gross_Rent", "Population",
+                                         "ACS_Year", "Mining_Employment_Share", "Population_Change_Pct"),
+                       replace = COUNTY_CONTEXT_COLUMNS,
+                       fail_message = paste0("Census ACS county context fetch failed -- leaving ", file, " untouched this run."),
+                       config = config)
 }
 
 #' Pipeline stage: add source record links to the profile files
