@@ -14,7 +14,8 @@ state_config(
   scraper_sources = list(),
   autofix = list(),
   timezone = NULL,
-  oews_areas = NULL
+  oews_areas = NULL,
+  county_suffix = NULL
 )
 }
 \arguments{
@@ -55,6 +56,10 @@ NULL is allowed for code that never needs it.}
 \code{inst/extdata/oews_area_definitions.csv} doesn't have them: a data frame
 or CSV path with that file's columns (\code{oews_area_definitions()}). NULL
 for a state the package already knows.}
+
+\item{county_suffix}{What the Census county names end with that the state's files leave off (", Montana":
+the files say "Gallatin County"), passed to \code{\link[=fetch_census_county_context]{fetch_census_county_context()}}; NULL keeps Census's name
+("Albany County, Wyoming").}
 }
 \value{
 A list of class \code{edjobs_state_config}.
