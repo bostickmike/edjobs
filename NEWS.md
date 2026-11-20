@@ -1,3 +1,10 @@
+# edjobs (development version)
+
+* `extract_posted_pay()` splits an amount run into the next number after its cents. Carbon County SD 1 (WY) posts
+  "Hourly Rate: $18.85-$23.8512 month work year"; it was read as $23.851 a month and blanked as implausible every
+  run since 11-11. Now $18.85-$23.85 an hour. Replayed on all 669 distinct archived pay snippets in both states: this
+  is the only one that changes (and the only 4+ decimal amount in either state's archives).
+
 # edjobs 0.59.0
 
 * **`.github/workflows/weekly-run.yml`: the states' weekly data refresh as one reusable workflow** (package review

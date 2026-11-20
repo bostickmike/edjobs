@@ -648,6 +648,10 @@ extract_posted_pay <- function(text) {
     # Boards that drop the line break after a field run the unit into the
     # next label ("PAY RATE: $145/dayBENEFITS: None", "$146.09 per dayIf you").
     t <- gsub("\\b(hourly|hour|hr|daily|day|monthly|month|yearly|year|yr|annually|annual|annum)(?=[A-Z])", "\\1 ", t, perl = TRUE)
+    # And an amount into the next number: Carbon 1's "Hourly Rate: $18.85-$23.8512 month work year" (the only amount
+    # with 4+ decimals in either state's archives, 2026-11-20) read as $23.851 a month. Cents end after two digits;
+    # the "; " keeps the stray "12" from making "month" the amount's unit.
+    t <- gsub("(\\$\\s?\\d[0-9,]*\\.\\d{2})(\\d{2,})", "\\1; \\2", t, perl = TRUE)
     m <- gregexpr(pattern, t, perl = TRUE)[[1]]
     if (m[1] == -1) next
     starts <- as.integer(m); lens <- attr(m, "match.length")

@@ -25,6 +25,17 @@ test_that("extract_posted_pay reads amounts, ranges and units as written", {
   expect_true(all(is.na(p$Pay_Text) == is.na(p$Pay_Min)))
 })
 
+test_that("extract_posted_pay splits an amount run into the next number", {
+  # Carbon County SD 1 (WY), 2026-11-13 and 11-20: the board drops the space before "12 month work year".
+  p <- extract_posted_pay(c(
+    "Hide Reports To: Director Full Time: Hourly Rate: $18.85-$23.8512 month work year with salary and fr",
+    "Classified hourly rates: $17.820 to $22.00 hourly"
+  ))
+  expect_equal(p$Pay_Min, c(18.85, 17.82))
+  expect_equal(p$Pay_Max, c(23.85, 22))
+  expect_equal(p$Pay_Unit, c("hour", "hour"))
+})
+
 test_that("extract_posted_pay ignores bonuses, fees and differentials", {
   p <- extract_posted_pay(c(
     "*We offer a one-time $1,000 signing bonus. Starting salary will be a minimum of $46,225 to max of $86,400 DOE",
