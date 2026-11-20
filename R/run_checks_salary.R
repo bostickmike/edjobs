@@ -12,6 +12,9 @@
 #' @param coverage One row per source column whose coverage is watched: `name` (as the report shows it), `file`,
 #'   `column`. A source is flagged when fewer rows have a value than in the last committed file.
 #' @param bounds One row per value range: `name`, `file`, `column`, `min_ok`, `max_ok` ([check_salary_value_bounds()]).
+#'   Optional columns: `per`, a column `column` is divided by (a range per student: rows without a positive `per`
+#'   are skipped); `unless`, a column whose rows with a value are skipped (a dollar range kept only for the rows a
+#'   `per` range can't check). NA or "" means none.
 #' @param yoy One row per year-over-year pair: `file`, `current`, `prior` (column names;
 #'   [check_salary_yoy_plausibility()]).
 #' @param extra A function of no arguments returning report lines (character(0) when there's nothing to say), for a
@@ -28,9 +31,15 @@ salary_checks <- function(coverage, bounds = NULL, yoy = NULL, extra = NULL) {
   need(coverage, c("name", "file", "column"), "coverage")
   need(bounds, c("name", "file", "column", "min_ok", "max_ok"), "bounds")
   need(yoy, c("file", "current", "prior"), "yoy")
+  if (!is.null(bounds)) for (opt in c("per", "unless")) {
+    bounds[[opt]] <- if (opt %in% names(bounds)) ifelse(is.na(bounds[[opt]]), "", as.character(bounds[[opt]])) else ""
+  }
   if (!is.null(extra) && !is.function(extra)) stop("extra must be a function or NULL")
   structure(list(coverage = coverage, bounds = bounds, yoy = yoy, extra = extra), class = "edjobs_salary_checks")
 }
+
+# "$211,032.2" and "$5e+05" read badly in the report: whole dollars with commas.
+salary_dollars <- function(x) formatC(round(x), format = "d", big.mark = ",")
 
 SALARY_FILE_KEYS <- c(salarymap2.csv = "District", salarymap.csv = "Name")
 
@@ -149,14 +158,22 @@ salary_drift_step <- function(app_dir = NULL, report_path = "/tmp/drift_report.m
     coverage_lines <- c(coverage_lines, "")
   }
 
-  named <- function(f, col) {
+  column_of <- function(d, col) if (col %in% names(d)) d[[col]] else rep(NA_real_, nrow(d))
+  named <- function(f, col, per = "", unless = "") {
     d <- current(f)
-    stats::setNames(if (col %in% names(d)) d[[col]] else rep(NA_real_, nrow(d)), d[[SALARY_FILE_KEYS[[f]]]])
+    x <- column_of(d, col)
+    if (nzchar(per)) {
+      den <- column_of(d, per)
+      x <- ifelse(!is.na(den) & den > 0, x / den, NA_real_)
+    }
+    if (nzchar(unless)) x[!is.na(column_of(d, unless))] <- NA_real_
+    stats::setNames(x, d[[SALARY_FILE_KEYS[[f]]]])
   }
   b <- checks$bounds
   plausibility_flags <- c(
     lapply(seq_len(if (is.null(b)) 0 else nrow(b)), function(i)
-      check_salary_value_bounds(b$name[i], named(b$file[i], b$column[i]), min_ok = b$min_ok[i], max_ok = b$max_ok[i])),
+      check_salary_value_bounds(b$name[i], named(b$file[i], b$column[i], b$per[i], b$unless[i]),
+                                min_ok = b$min_ok[i], max_ok = b$max_ok[i])),
     lapply(seq_len(if (is.null(checks$yoy)) 0 else nrow(checks$yoy)), function(i) {
       y <- checks$yoy[i, ]
       check_salary_yoy_plausibility(named(y$file, y$current), named(y$file, y$prior))
@@ -177,10 +194,10 @@ salary_drift_step <- function(app_dir = NULL, report_path = "/tmp/drift_report.m
         r <- f[i, ]
         plausibility_lines <- c(plausibility_lines, if ("min_ok" %in% names(f)) {
           sprintf("- **%s** (%s): $%s is outside the expected $%s-$%s range", r$name, r$entity,
-                  format(r$value, big.mark = ","), format(r$min_ok, big.mark = ","), format(r$max_ok, big.mark = ","))
+                  salary_dollars(r$value), salary_dollars(r$min_ok), salary_dollars(r$max_ok))
         } else {
           sprintf("- **%s**: $%s -> $%s (%+.1f%%), a real outlier vs. every other entity's change this run",
-                  r$name, format(r$prior, big.mark = ","), format(r$current, big.mark = ","), r$pct_change * 100)
+                  r$name, salary_dollars(r$prior), salary_dollars(r$current), r$pct_change * 100)
         })
       }
     }

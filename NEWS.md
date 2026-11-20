@@ -1,3 +1,12 @@
+# edjobs 0.58.0
+
+* **A salary value range can be per unit of another column.** `salary_checks(bounds = )` takes optional `per` (divide
+  `column` by this column; rows without a positive value are skipped) and `unless` (skip rows with a value in this
+  column, so a dollar range covers only what a `per` range can't). Montana's general-fund floor of $500k, set when its
+  smallest of 32 districts spent $2.1M, flagged 13 real districts of 4-46 students every week since the 11-10 registry
+  growth; per enrolled student ($3k-$60k) it flags none in any committed version and catches a misread digit at any
+  district size. Report amounts are whole dollars with commas ("$5e+05" and "$211,032.2" before).
+
 # edjobs 0.57.0
 
 * **`salary_drift_step()`: the weekly salary-source check, with coverage against last run's committed file** (package
