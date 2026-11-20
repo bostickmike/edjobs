@@ -1,5 +1,21 @@
-# edjobs (development version)
+# edjobs 0.60.0
 
+* **`dashboard_server_shared()`: the dashboard server code both states share** (package review step 7, slice 1;
+  Mike's choice A, 2026-11-20: one package server function with state hooks). It holds the 101 server blocks that
+  were identical in both states' `app.R` (90) or differed only by the state's name (11): the Home KPIs and tables,
+  the map filters, the Jobs tables, Trends, both Listing Duration tabs, Higher Ed Jobs, most of Higher Ed Colleges,
+  the downloads and the Feedback form. Generated from Montana's `app.R` (script in the workspace's
+  `claude-notes/2026-11-21_step7-slice1/`): calls into other packages are written `pkg::fn()`, the download file
+  names take `state_name`, and the 27 app-level objects it reads come in as `data`
+  (`dashboard_server_data_names()`). The 14 blocks that differ by state (district pay and finance columns, the map
+  center, the timeline labels, WY's WDE staff download, and `outputOptions()` on the state's map) stay in each
+  `app.R` and read 7 of the reactives it returns.
+* The UI helpers `spells_footnote()`, `kpi_value_box()`, `dash_card()`, `help_popover()`, `info_popover()`,
+  `download_tile()` and the Feedback form (`feedback_nav_item()`, `feedback_server()`; was each app's `feedback.R`,
+  identical in both) move here (phase 6's slice 3; unchanged but for `pkg::fn()` calls and `\u` escapes for
+  non-ASCII characters in strings). shiny, bslib, DT, plotly, ggplot2, shinyWidgets, grid, curl and codetools
+  are Suggests (Mike, 11-17 "B"): the apps load them already, and jobs that install edjobs without drawing a
+  page (auto-fix, Copilot setup) don't need them. The Feedback tests moved here.
 * `extract_posted_pay()` splits an amount run into the next number after its cents. Carbon County SD 1 (WY) posts
   "Hourly Rate: $18.85-$23.8512 month work year"; it was read as $23.851 a month and blanked as implausible every
   run since 11-11. Now $18.85-$23.85 an hour. Replayed on all 669 distinct archived pay snippets in both states: this
