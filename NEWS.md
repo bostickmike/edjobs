@@ -1,3 +1,17 @@
+# edjobs 0.57.0
+
+* **`salary_drift_step()`: the weekly salary-source check, with coverage against last run's committed file** (package
+  review step 6, slice 7). The states' `check_salary_drift.R` compared each source with a count typed into the
+  script, and the counts had gone stale as the registries grew: Montana expected 32 districts with CCD and OPI
+  finance figures against 201 in the file, and 25-27 with DLI's against 149; Wyoming counted WSBA's rows (57 >= 48)
+  with 10 districts lacking a base salary. Each source in `state_config(salary_checks = salary_checks(...))` is now
+  compared with the same file in git's HEAD (`committed_salary_file()`, or the folder `EDJOBS_SALARY_BASELINE` names
+  for a rehearsal copy without `.git`), and a drop names the districts or colleges that lost a value
+  (`compare_salary_coverage()`). No per-state gap lists to keep. Replayed on every committed version of both states'
+  salary maps (75 commits): no false flags. A drop is flagged once: after that run's commit it is the baseline. The
+  value bounds, year-over-year outliers and reference-table status are unchanged and configured per state; a state's
+  own check (Wyoming's Sheridan/Gillette split watch) is the `extra` hook.
+
 # edjobs 0.56.0
 
 * **A drift corroboration with no LLM reading no longer drops a source from the report.** `llm_titles_from_page_text()`

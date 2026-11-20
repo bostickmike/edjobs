@@ -21,7 +21,8 @@ state_config(
   direct_registry = NULL,
   saipe_gaps = character(0),
   canonical_source_name = NULL,
-  drift_intro = NULL
+  drift_intro = NULL,
+  salary_checks = NULL
 )
 }
 \arguments{
@@ -89,6 +90,8 @@ corroboration (\code{\link[=corroborate_drift_step]{corroborate_drift_step()}}) 
 
 \item{drift_intro}{The drift report's opening explanation (\code{\link[=build_drift_report_markdown]{build_drift_report_markdown()}}), or NULL for the
 package's.}
+
+\item{salary_checks}{What the weekly salary check (\code{\link[=salary_drift_step]{salary_drift_step()}}) looks at: a \code{\link[=salary_checks]{salary_checks()}}, or NULL.}
 }
 \value{
 A list of class \code{edjobs_state_config}.
