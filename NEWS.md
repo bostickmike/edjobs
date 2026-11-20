@@ -1,3 +1,17 @@
+# edjobs 0.61.0
+
+* **`data_tab_panel()`: the Data tab's UI** (package review step 7, slice 2b; Mike, 2026-11-21: the package builds
+  each tab and the state passes its text, one tab per PR, Data first). Both states' `app.R` had this `nav_panel()`
+  with the same layout and per-state prose. The package keeps the layout and the text both states shared; each
+  `app.R` passes its own tiles (`data_tile()`: fields it leaves out take the shared default for that download),
+  provenance rows (`data_provenance_row()`, four shared rows by key), table title, intro, headers and class, and its
+  citation and repository. Each state's page HTML is the same as before (checked with the workspace's
+  `claude-notes/2026-11-21_step7-slice2b-data/ui_parity.R`).
+* `download_rows()` and `rows_phrase()`: the row count a download hands out, as " (8,400+ records)", so the Data
+  tiles' counts come from the files at app start. The hand-written ones had gone stale: Montana's tiles said 3,200+
+  K-12 history records and 3,700+ weekly observations for downloads of 8,401 and 2,891 rows; Wyoming's said 76,000+
+  K-12 and 29,000+ higher ed records for 13,513 and 18,532.
+
 # edjobs 0.60.0
 
 * **`dashboard_server_shared()`: the dashboard server code both states share** (package review step 7, slice 1;
