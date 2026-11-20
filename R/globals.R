@@ -12,4 +12,11 @@ utils::globalVariables(c("N_Rows", ".data", "parts_sum", "total_value", "Distric
                          # k12_he_classification.R: posting_run_totals()
                          "Job_Type", "id", "unmarked", ".group",
                          # posting_spells.R: frozen_board_runs()
-                         "Weeks"))
+                         "Weeks",
+                         # app_server_shared.R
+                         ".Job_Type", ".Map_Name", ".Not_Marked", "Appointment", "Count", "County", "CurrentCount",
+                         "DisplayCount", "Duration_Bin", "Enrollment", "Estimated_Days_Open", "Faculty_Avg_Salary",
+                         "Faculty_Avg_Salary_Y1Ago", "Institution", "is_admin", "is_cte", "is_elementary", "is_health",
+                         "is_secondary", "is_sped", "is_stem", "is_support_staff", "Link", "Location", "MatchingCount",
+                         "MatchingSample", "Median_Days", "Name", "SampleTitles", "Status", "Type", "Value",
+                         "WeeklyNew"))
