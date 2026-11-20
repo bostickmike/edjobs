@@ -266,13 +266,13 @@ test_that("combine_verdict_with_llm keeps an already-likely_broken verdict and s
   expect_match(out$note, "Custodian")
 })
 
-test_that("llm_titles_from_page_text returns character(0) with no key or a blank page (never throws)", {
+test_that("llm_titles_from_page_text returns NULL (no reading) with no key or a blank page (never throws)", {
   withr::with_envvar(c(GEMINI_API_KEY = "", LLM_EXTRACT_KEY_ENV = ""), {
-    expect_identical(llm_titles_from_page_text("Food Service Worker\nBus Driver"), character(0))
+    expect_null(llm_titles_from_page_text("Food Service Worker\nBus Driver"))
   })
   withr::with_envvar(c(GEMINI_API_KEY = "fake-key"), {
-    expect_identical(llm_titles_from_page_text(NA_character_), character(0))
-    expect_identical(llm_titles_from_page_text("   "), character(0))
+    expect_null(llm_titles_from_page_text(NA_character_))
+    expect_null(llm_titles_from_page_text("   "))
   })
 })
 
@@ -721,4 +721,24 @@ test_that("build_historical_counts gives the same baseline from twice-weekly run
   twice <- c(weekly, setNames(lapply(c(9, 9, 9, 9), function(n) data.frame(name = rep("A", n))), mondays))
   expect_equal(build_historical_counts(twice, "name"), build_historical_counts(weekly, "name"))
   expect_equal(build_historical_counts(twice, "name")$n_weeks[1], 4L)
+})
+
+test_that("no LLM reading (NULL) leaves the verdict alone; only a real empty reading downgrades (0.56.0)", {
+  out <- combine_verdict_with_llm("inconclusive", NULL)
+  expect_equal(out$verdict, "inconclusive")
+  expect_true(is.na(out$note))
+  expect_equal(combine_verdict_with_llm("inconclusive", character(0))$verdict, "looks_genuinely_empty")
+})
+
+test_that("llm_titles_from_page_text: NULL with no key, a failed call or a rejected count; character(0) for a real empty reading", {
+  withr::local_envvar(GEMINI_API_KEY = "")
+  expect_null(llm_titles_from_page_text("Careers page text"))
+  local_mocked_bindings(llm_extract_token = function() "key")
+  local_mocked_bindings(llm_extract_call = function(...) NULL)
+  expect_null(llm_titles_from_page_text("Careers page text"))
+  local_mocked_bindings(llm_extract_call = function(...) list())
+  expect_identical(llm_titles_from_page_text("Careers page text"), character(0))
+  local_mocked_bindings(llm_extract_call = function(...) rep(list(list(title = "Teacher")), 50))
+  expect_null(llm_titles_from_page_text("Careers page text", max_titles = 40L))
+  expect_null(llm_titles_from_page_text(""))
 })

@@ -71,7 +71,7 @@ test_that("corroboration: scrape errors, missing URLs and rendered pages get the
   out <- capture.output(res <- corroborate_drift_step("flagged.csv", "results.csv", "report.md", render = render,
                                                       today = as.Date("2026-11-19")))
   expect_equal(rendered, "https://alpha.example")   # canonicalized name found its URL; the errored one isn't rendered
-  expect_equal(res$verdict, c("looks_genuinely_empty", "confirmed_broken", "no_url_available"))
+  expect_equal(res$verdict, c("inconclusive", "confirmed_broken", "no_url_available"))   # no LLM: stays inconclusive
   expect_equal(read.csv("results.csv")$name, res$name)
   report <- readLines("report.md")
   expect_true(any(grepl("Custom intro.", report, fixed = TRUE)))

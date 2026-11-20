@@ -11,7 +11,8 @@ verdict: from score_page_text_for_job_signal() ("likely_broken" /
 "looks_genuinely_empty" / "inconclusive"), or "confirmed_broken" /
 "no_url_available" set upstream in corroborate_drift.R.
 llm_titles: from llm_titles_from_page_text() -- character(0) when the LLM
-step was skipped (no key) or found nothing.
+read the page and found nothing; NULL when no reading happened (no key,
+blank page, a failed call), which leaves the verdict as it was.
 }
 \details{
 Returns list(verdict, note):
