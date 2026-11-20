@@ -93,17 +93,19 @@ data_provenance_row <- function(key = NULL, layer = NULL, source = NULL, cadence
 #' @param provenance_rows List of [data_provenance_row()]s.
 #' @param citation Citation text before the repository link ("Author (year). Title. ").
 #' @param repo_url The state repository's GitHub URL (citation and issue tracker links).
-#' @param provenance_title,provenance_intro Provenance card title and the sentence above its table.
-#' @param provenance_headers The table's four column headers.
-#' @param provenance_table_class,provenance_table_style The table's class and style attributes.
+#' @param provenance_title,provenance_intro Provenance card title and the sentence above its table (NULL: Montana's).
+#' @param provenance_headers The table's four column headers (NULL: Montana's).
+#' @param provenance_table_class,provenance_table_style The table's class and style attributes (NULL: Montana's
+#'   `"table table-striped table-bordered table-hover"` and none).
 #' @export
 data_tab_panel <- function(tiles, dictionary, provenance_rows, citation, repo_url,
-                           provenance_title = "Data Provenance & Source Transparency",
-                           provenance_intro = "All datasets are compiled through automated, reproducible collection pipelines and federal/state data integration. Here is where every data point originates:",
-                           provenance_headers = c("Dataset Layer", "Primary Authority / Source", "Refresh Frequency", "Description & Research Utility"),
-                           provenance_table_class = "table table-striped table-bordered table-hover",
-                           provenance_table_style = NULL) {
+                           provenance_title = NULL, provenance_intro = NULL, provenance_headers = NULL,
+                           provenance_table_class = NULL, provenance_table_style = NULL) {
   need_shiny_ui("data_tab_panel")
+  provenance_title <- provenance_title %||% "Data Provenance & Source Transparency"
+  provenance_intro <- provenance_intro %||% "All datasets are compiled through automated, reproducible collection pipelines and federal/state data integration. Here is where every data point originates:"
+  provenance_headers <- provenance_headers %||% c("Dataset Layer", "Primary Authority / Source", "Refresh Frequency", "Description & Research Utility")
+  provenance_table_class <- provenance_table_class %||% "table table-striped table-bordered table-hover"
   tags <- htmltools::tags
   tile_ui <- function(x) download_tile(
     x$icon, x$heading, x$text, x$output_id, x$label,

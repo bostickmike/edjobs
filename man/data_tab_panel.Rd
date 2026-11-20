@@ -10,12 +10,10 @@ data_tab_panel(
   provenance_rows,
   citation,
   repo_url,
-  provenance_title = "Data Provenance & Source Transparency",
-  provenance_intro =
-    "All datasets are compiled through automated, reproducible collection pipelines and federal/state data integration. Here is where every data point originates:",
-  provenance_headers = c("Dataset Layer", "Primary Authority / Source",
-    "Refresh Frequency", "Description & Research Utility"),
-  provenance_table_class = "table table-striped table-bordered table-hover",
+  provenance_title = NULL,
+  provenance_intro = NULL,
+  provenance_headers = NULL,
+  provenance_table_class = NULL,
   provenance_table_style = NULL
 )
 }
@@ -30,11 +28,12 @@ data_tab_panel(
 
 \item{repo_url}{The state repository's GitHub URL (citation and issue tracker links).}
 
-\item{provenance_title, provenance_intro}{Provenance card title and the sentence above its table.}
+\item{provenance_title, provenance_intro}{Provenance card title and the sentence above its table (NULL: Montana's).}
 
-\item{provenance_headers}{The table's four column headers.}
+\item{provenance_headers}{The table's four column headers (NULL: Montana's).}
 
-\item{provenance_table_class, provenance_table_style}{The table's class and style attributes.}
+\item{provenance_table_class, provenance_table_style}{The table's class and style attributes (NULL: Montana's
+\code{"table table-striped table-bordered table-hover"} and none).}
 }
 \description{
 The \code{nav_panel()} for the Data tab (value \code{"data_tab"}): download tiles, the searchable data dictionary
