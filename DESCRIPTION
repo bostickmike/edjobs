@@ -42,6 +42,7 @@ Suggests:
     plotly,
     rmarkdown,
     shiny,
+    shinycssloaders,
     shinyWidgets,
     testthat (>= 3.0.0),
     withr,

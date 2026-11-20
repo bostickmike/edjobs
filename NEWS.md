@@ -16,6 +16,8 @@
   non-ASCII characters in strings). shiny, bslib, DT, plotly, ggplot2, shinyWidgets, grid, curl and codetools
   are Suggests (Mike, 11-17 "B"): the apps load them already, and jobs that install edjobs without drawing a
   page (auto-fix, Copilot setup) don't need them. The Feedback tests moved here.
+* `k12_spells_panel()` and `he_spells_panel()`: the two Listing Duration tabs' UI, identical in both states' `app.R`
+  (step 7 slice 2a; generated the same way, `make_ui_spells.R`). shinycssloaders joins the Suggests.
 * `extract_posted_pay()` splits an amount run into the next number after its cents. Carbon County SD 1 (WY) posts
   "Hourly Rate: $18.85-$23.8512 month work year"; it was read as $23.851 a month and blanked as implausible every
   run since 11-11. Now $18.85-$23.85 an hour. Replayed on all 669 distinct archived pay snippets in both states: this

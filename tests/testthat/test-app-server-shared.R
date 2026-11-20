@@ -27,3 +27,17 @@ test_that("UI helpers build the same tags app.R did", {
   expect_match(as.character(info_popover("Method", "text")), "circle-info", fixed = TRUE)
   expect_match(as.character(kpi_value_box("12", "Openings", color = "green")), "bg-success", fixed = TRUE)
 })
+
+test_that("the Listing Duration panels call only base, edjobs or pkg::fn()", {
+  ns <- asNamespace("edjobs")
+  known <- c(ls(ns, all.names = TRUE), ls(parent.env(ns), all.names = TRUE), ls(baseenv(), all.names = TRUE))
+  for (f in list(k12_spells_panel, he_spells_panel))
+    expect_equal(setdiff(codetools::findGlobals(f, merge = FALSE)$functions, known), character(0))
+})
+
+test_that("the Listing Duration panels build with their input ids", {
+  skip_if_not_installed("shiny"); skip_if_not_installed("bslib"); skip_if_not_installed("shinycssloaders")
+  k <- as.character(htmltools::tagList(bslib::page_navbar(k12_spells_panel(), he_spells_panel())))
+  for (id in c("k12_spell_status", "k12_spell_district", "he_spell_status", "he_spell_institution"))
+    expect_match(k, paste0('id="', id, '"'), fixed = TRUE)
+})
