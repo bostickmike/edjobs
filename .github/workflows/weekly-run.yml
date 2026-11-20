@@ -1,0 +1,488 @@
+# The weekly data refresh for a state dashboard repo (package review step 6, second half; measured in
+# claude-notes/2026-11-19_step6-workflow-measure.md). Both states' weekly-scrape.yml had the same jobs and steps in
+# the same order, differing only in state data, which is now the inputs below. The state keeps a short caller with its
+# cron, `concurrency`, `permissions`, and this job; the steps' R code is the state's own .github/scripts (most of them
+# now call edjobs). Installs edjobs at the caller's EDJOBS_VERSION, as presence.yml does.
+#
+# Called from a state repo:
+#   concurrency: { group: weekly-scrape, cancel-in-progress: false }
+#   permissions: { contents: write, issues: write, actions: write }
+#   jobs:
+#     weekly:
+#       uses: bostickmike/edjobs/.github/workflows/weekly-run.yml@v0.59.0
+#       with:
+#         app_dir: Mt_Ed_Jobs
+#         rmd: Mt_ED_Jobs.Rmd
+#         autofix_engine: ${{ vars.AUTOFIX_ENGINE }}
+#       secrets:
+#         CENSUS_API_KEY: ${{ secrets.CENSUS_API_KEY }}
+#         ...
+#
+# Secrets are passed one by one: GitHub documents `secrets: inherit` for callers in the same organization only, and
+# these repos belong to a user account. AUTOFIX_ENGINE is an input for the same reason (whose `vars` a called workflow
+# sees isn't documented). The caller's top-level `env:` doesn't reach a called workflow, so the time zone is an input.
+name: Weekly data refresh (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      app_dir:
+        description: The app folder (Mt_Ed_Jobs)
+        type: string
+        required: true
+      rmd:
+        description: The pipeline Rmd (Mt_ED_Jobs.Rmd)
+        type: string
+        required: true
+      timezone:
+        description: The boards' time zone, for every step's dates
+        type: string
+        default: America/Denver
+      extra_packages:
+        description: CRAN packages the state needs besides the shared list (space-separated)
+        type: string
+        default: ''
+      pipeline_gemini:
+        description: Give the pipeline step GEMINI_API_KEY (MT's LLM shadow pilot); the corroboration step always gets it
+        type: boolean
+        default: false
+      state_checks:
+        description: The state's own non-blocking check scripts, one path per line; each runs, and a crash goes in the drift issue
+        type: string
+        default: ''
+      state_files:
+        description: Files the data commit adds besides the shared ones, one path per line (must exist)
+        type: string
+        default: ''
+      optional_files:
+        description: Files the data commit adds when they exist, besides the shared ones, one path per line
+        type: string
+        default: ''
+      autofix_engine:
+        description: claude | copilot | none (the caller's vars.AUTOFIX_ENGINE; see autofix_engine())
+        type: string
+        default: ''
+      edjobs_ref:
+        description: Install edjobs at this git ref instead of the caller's EDJOBS_VERSION (for testing a branch)
+        type: string
+        default: ''
+    secrets:
+      CENSUS_API_KEY:
+        required: false
+      BLS_API_KEY:
+        required: false
+      GEMINI_API_KEY:
+        required: false
+      COPILOT_TOKEN:
+        required: false
+      CLAUDE_CODE_OAUTH_TOKEN:
+        required: false
+      ANTHROPIC_API_KEY:
+        required: false
+
+env:
+  TZ: ${{ inputs.timezone }}
+  APP_DIR: ${{ inputs.app_dir }}
+
+jobs:
+  # GitHub starts the scheduled run hours late (MT 2026-11-10: 13:00 UTC cron, started 20:05). A manual run dispatched
+  # earlier the same day has already pushed that day's data, so the late scheduled run would only fail at its push
+  # (same-day files conflict). This job lets a scheduled run see that and stop cleanly. Manual dispatches always run.
+  # (Workflow plan 2026-11-10, 2.2.) `github` is the caller's context, so event_name is the caller's.
+  guard:
+    runs-on: ubuntu-latest
+    outputs:
+      skip: ${{ steps.check.outputs.skip }}
+    steps:
+      - uses: actions/checkout@v4
+      # The checkout above is main as it was when this run was *created*; a scheduled run created before the manual
+      # run pushed, then queued behind it (concurrency), would never see that push (MT 2026-11-10: created at
+      # 6f52b4a, started 9 s after c2dec92 landed). So read main's tip now. grep without -q reads all of git's
+      # output: no SIGPIPE under pipefail.
+      - name: Skip a scheduled run when today's data refresh is already on main
+        id: check
+        run: |
+          today=$(date +%Y-%m-%d)
+          if [ "${{ github.event_name }}" = "schedule" ] && \
+             git fetch --depth=50 origin main && \
+             git log -n 50 --format=%s FETCH_HEAD | grep -xF "Automated weekly data refresh ($today)" > /dev/null; then
+            echo "::notice::Today's data refresh ($today) is already on main (a manual run); skipping this scheduled run."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  scrape:
+    needs: guard
+    if: needs.guard.outputs.skip != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      # Before anything runs apt (2026-11-11 *.ubuntu.com DNS outage). The state repo's own copy of the action.
+      - uses: ./.github/actions/apt-mirror-fallback
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: 'release'
+          use-public-rspm: true
+
+      # setup-r writes TZ=UTC to $GITHUB_ENV, which overrides the workflow's env for every later step (test dispatch
+      # 2026-11-17: the guard ran in Mountain time, the commit date in UTC). Put the state's time zone back.
+      - name: Run in the boards' time zone (setup-r sets UTC)
+        run: echo "TZ=${{ inputs.timezone }}" >> "$GITHUB_ENV"
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev libpoppler-cpp-dev \
+            libudunits2-dev libgdal-dev libgeos-dev libproj-dev
+
+      # app.R's packages never run in this workflow, but rsconnect::writeManifest() can only capture a package that
+      # is installed in the job generating the manifest; leaving one out breaks the Connect Cloud redeploy silently
+      # (Wyoming, 2026-08-03). sf: leaflet >= 2.2.x Imports it (Wyoming run, 2026-09-11).
+      - name: Install R packages
+        env:
+          EXTRA_PACKAGES: ${{ inputs.extra_packages }}
+        run: |
+          Rscript -e 'extra <- strsplit(trimws(Sys.getenv("EXTRA_PACKAGES")), " +")[[1]]' \
+                  -e 'install.packages(c(
+            "rmarkdown", "dplyr", "purrr", "readr", "readxl", "rvest",
+            "stringr", "tidyverse", "writexl", "xml2", "jsonlite",
+            "httr2", "lubridate", "chromote", "rsconnect", "testthat",
+            "withr", "here", "pdftools", "shinytest2",
+            "shiny", "bslib", "shinyWidgets", "DT", "data.table",
+            "leaflet", "plotly", "scales", "shinycssloaders",
+            "sf", extra[nzchar(extra)]))'
+
+      # Before the test suite: the tests and the run-expectations step load it.
+      - name: Install edjobs at the pinned version
+        env:
+          GITHUB_PAT: ${{ github.token }}
+          EDJOBS_REF: ${{ inputs.edjobs_ref }}
+        run: |
+          Rscript -e 'ref <- Sys.getenv("EDJOBS_REF"); if (!nzchar(ref)) ref <- paste0("v", trimws(readLines("EDJOBS_VERSION")))' \
+                  -e 'install.packages("pak"); pak::pak(paste0("bostickmike/edjobs@", ref), ask = FALSE)'
+
+      - name: Install Chrome (the chromote scrapers and the drift check's live corroboration)
+        id: setup-chrome
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Run test suite (abort before touching real data if red)
+        env:
+          # so test-app-boot-smoke.R's skip_on_cran() doesn't skip the shinytest2 boot smoke -- Chrome is installed above
+          NOT_CRAN: "true"
+          CHROMOTE_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
+        run: |
+          Rscript -e 'here::here(); testthat::test_dir("tests/testthat", stop_on_failure = TRUE)'
+
+      - name: Snapshot pre-run data for the sanity check
+        run: |
+          mkdir -p /tmp
+          cp "$APP_DIR/combinedclean.csv" /tmp/baseline_combinedclean.csv
+          cp "$APP_DIR/hedata.xlsx" /tmp/baseline_hedata.xlsx
+
+      - name: Pre-flight API canary check
+        continue-on-error: true
+        env:
+          CENSUS_API_KEY: ${{ secrets.CENSUS_API_KEY }}
+        run: Rscript .github/scripts/canary_api_check.R
+
+      - name: Run the scrape pipeline
+        env:
+          CHROMOTE_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
+          CENSUS_API_KEY: ${{ secrets.CENSUS_API_KEY }}
+          # Optional: raises the BLS OEWS API limits; the once-a-year refresh also fits the keyless limits.
+          BLS_API_KEY: ${{ secrets.BLS_API_KEY }}
+          # Only for a state whose pipeline asks an LLM (MT's llm_extract_scraper.R shadow pilot); a no-op if unset.
+          GEMINI_API_KEY: ${{ inputs.pipeline_gemini && secrets.GEMINI_API_KEY || '' }}
+          RMD: ${{ inputs.rmd }}
+        run: |
+          # Interrupted at 40 minutes (normally 10-25), leaving the job time to print where R was stuck
+          # (render_with_stack.R) and upload what the run had written so far (the step below).
+          timeout -s INT -k 120 40m Rscript .github/scripts/render_with_stack.R "$RMD"
+
+      # A failed or cancelled run commits nothing, so keep what it wrote (archives, scrape_log.csv,
+      # posting_status.csv, ...) for 30 days.
+      - name: Upload this run's partial outputs if it failed
+        if: failure() || cancelled()
+        run: |
+          mkdir -p /tmp/partial-outputs
+          find . -path ./.git -prune -o -type f -mmin -90 -size -20M -print | cpio -pdm /tmp/partial-outputs 2>/dev/null || true
+      - if: failure() || cancelled()
+        uses: actions/upload-artifact@v4
+        with:
+          name: partial-outputs-${{ github.run_id }}
+          path: /tmp/partial-outputs
+          retention-days: 30
+          if-no-files-found: warn
+
+      # scrape_log.csv (per-source ok/empty/error and row count, safe_scrape()) is .gitignore'd: committing it would
+      # mean a diff every run. Uploaded even when a later step fails the job -- that's the run you'd want it from.
+      - name: Upload this run's scrape_log.csv
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scrape-log-${{ github.run_id }}
+          path: scrape_log.csv
+          retention-days: 90
+          if-no-files-found: warn
+
+      - name: Refresh K-12 and Higher Ed vacancy duration spells
+        run: |
+          Rscript scripts/generate_job_duration_spells.R
+          Rscript scripts/generate_he_job_duration_spells.R
+
+      # Posting-level K-12 and HE spells and Kaplan-Meier durations, rebuilt from the archives each week; a failure
+      # here doesn't stop the run.
+      - name: Rebuild posting-level K-12 and HE spells
+        id: build_posting_spells
+        continue-on-error: true
+        run: Rscript scripts/build_posting_spells.R
+
+      - name: Sanity-check the new data before committing anything
+        run: Rscript .github/scripts/sanity_check.R
+
+      - name: Verify every shipped dataset still has the columns app.R expects
+        run: Rscript .github/scripts/verify_schema.R
+
+      # Re-run against THIS week's freshly written CSVs (the suite above ran on last week's committed data).
+      # Blocking: a range/sign/referential-integrity regression in this week's output must not ship.
+      - name: Data-quality invariant sweep on the new data
+        run: Rscript -e 'testthat::test_file("tests/testthat/test-weekly-data-quality.R", stop_on_failure = TRUE)'
+
+      # The monitoring steps below are diagnostic only: a bug in any of them must never block the data commit and
+      # the Connect Cloud redeploy.
+      - name: Check each source for drift against its own history
+        id: check_drift
+        continue-on-error: true
+        run: Rscript .github/scripts/check_drift.R
+
+      - name: Corroborate any flagged sources with a live chromote check
+        id: corroborate_drift
+        continue-on-error: true
+        env:
+          CHROMOTE_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
+          # lets the corroboration also ask an LLM what postings the flagged page shows (no-op if unset)
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          if [ -f /tmp/drift_flagged.csv ] && [ "$(tail -n +2 /tmp/drift_flagged.csv | wc -l)" -gt 0 ]; then
+            Rscript .github/scripts/corroborate_drift.R
+          else
+            echo "Nothing flagged, skipping."
+          fi
+
+      # After the corroboration (which overwrites, not appends, /tmp/drift_report.md), and before the commit step:
+      # it compares with git's HEAD copy of the salary maps (salary_drift_step()).
+      - name: Check salary source coverage against last run's committed files
+        id: check_salary_drift
+        continue-on-error: true
+        run: Rscript .github/scripts/check_salary_drift.R
+
+      - name: Check Census source coverage and value plausibility
+        id: check_census_drift
+        continue-on-error: true
+        run: Rscript .github/scripts/check_census_drift.R
+
+      # Postings can keep arriving while the pay a source used to carry goes blank -- check_drift.R counts postings.
+      - name: Check posted-pay coverage against each source's own history
+        id: check_pay_coverage
+        continue-on-error: true
+        run: Rscript .github/scripts/check_pay_coverage.R
+
+      # Titles that aren't job titles and sources whose share of Other jumped against their recent weeks -- a
+      # scraper reading the wrong element keeps its row count (classification safeguards items 5 and 6).
+      - name: Check title shape and each source's share of Other
+        id: check_title_quality
+        continue-on-error: true
+        run: Rscript .github/scripts/check_title_quality.R
+
+      # The state's own checks (MT's OPI cross-check, WY's frozen boards). Each runs even if one before it crashed;
+      # the crashed ones are listed for the self-check below.
+      - name: The state's own checks
+        id: state_checks
+        if: inputs.state_checks != ''
+        continue-on-error: true
+        env:
+          STATE_CHECKS: ${{ inputs.state_checks }}
+        run: |
+          : > /tmp/state_check_failures
+          while IFS= read -r script; do
+            script=$(echo "$script" | xargs)
+            [ -z "$script" ] && continue
+            echo "::group::$script"
+            Rscript "$script" || echo " $(basename "$script")" >> /tmp/state_check_failures
+            echo "::endgroup::"
+          done <<< "$STATE_CHECKS"
+          [ ! -s /tmp/state_check_failures ]
+
+      # The from-archive rebuild must reproduce the committed data (classification safeguards item 12), or neither
+      # disaster recovery nor scripts/reclassify_committed_data.R can be trusted.
+      - name: Check a rebuild from the archives reproduces the committed data
+        id: check_rebuild_parity
+        continue-on-error: true
+        run: Rscript .github/scripts/check_rebuild_parity.R
+
+      # run_expectations.csv: what a person expects after a change lands (workflow plan 2026-11-10, 2.1).
+      - name: Check this run against run_expectations.csv
+        id: check_run_expectations
+        continue-on-error: true
+        run: Rscript .github/scripts/check_run_expectations.R
+
+      # Is the daily presence check (presence.yml) still recording? It commits to the `presence` branch at most once
+      # a day, and not on a day with no change, so only a gap of more than 3 days goes in the drift issue.
+      - name: Check the daily presence check is still recording
+        id: check_presence_age
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          last=$(gh api "repos/$GITHUB_REPOSITORY/commits/presence" --jq '.commit.committer.date')
+          days=$(( ( $(date +%s) - $(date -d "$last" +%s) ) / 86400 ))
+          echo "Daily presence check: last commit to the presence branch $last ($days day(s) ago)." | tee -a "$GITHUB_STEP_SUMMARY"
+          if [ "$days" -gt 3 ]; then
+            {
+              echo ""
+              echo "---"
+              echo ""
+              echo "**Daily presence check:** the presence branch's last commit is $days days old ($last). The daily check commits whenever a board changes, so a gap this long usually means presence.yml is failing or not being scheduled. See [its runs](${{ github.server_url }}/${{ github.repository }}/actions/workflows/presence.yml)."
+              echo ""
+            } >> /tmp/drift_report.md
+          fi
+
+      # continue-on-error hides a CRASHED monitoring step behind "ran fine, found nothing" unless something checks.
+      - name: Verify the monitoring steps themselves didn't crash
+        run: |
+          FAILED=""
+          [ "${{ steps.check_drift.outcome }}" = "failure" ] && FAILED="$FAILED check_drift.R"
+          [ "${{ steps.corroborate_drift.outcome }}" = "failure" ] && FAILED="$FAILED corroborate_drift.R"
+          [ "${{ steps.check_salary_drift.outcome }}" = "failure" ] && FAILED="$FAILED check_salary_drift.R"
+          [ "${{ steps.check_census_drift.outcome }}" = "failure" ] && FAILED="$FAILED check_census_drift.R"
+          [ "${{ steps.check_pay_coverage.outcome }}" = "failure" ] && FAILED="$FAILED check_pay_coverage.R"
+          [ "${{ steps.check_title_quality.outcome }}" = "failure" ] && FAILED="$FAILED check_title_quality.R"
+          [ "${{ steps.state_checks.outcome }}" = "failure" ] && FAILED="$FAILED$(cat /tmp/state_check_failures 2>/dev/null | tr -d '\n')"
+          [ "${{ steps.build_posting_spells.outcome }}" = "failure" ] && FAILED="$FAILED build_posting_spells.R"
+          [ "${{ steps.check_run_expectations.outcome }}" = "failure" ] && FAILED="$FAILED check_run_expectations.R"
+          [ "${{ steps.check_presence_age.outcome }}" = "failure" ] && FAILED="$FAILED presence-age check"
+          [ "${{ steps.check_rebuild_parity.outcome }}" = "failure" ] && FAILED="$FAILED check_rebuild_parity.R"
+
+          if [ -z "$FAILED" ]; then
+            echo "All monitoring steps ran without crashing."
+            exit 0
+          fi
+
+          echo "Monitoring step(s) crashed:$FAILED -- see this run's logs for the actual error."
+          {
+            echo ""
+            echo "---"
+            echo ""
+            echo "**Monitoring self-check:** the following alerting step(s) crashed this run (continue-on-error kept the pipeline going, but this means their findings for this run -- if any -- may be incomplete or missing):$FAILED. See [this run's logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for the actual error."
+            echo ""
+          } >> /tmp/drift_report.md
+
+      - name: File or update a GitHub Issue if anything needs a human look
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ ! -f /tmp/drift_report.md ]; then
+            echo "No report generated, nothing to file."
+            exit 0
+          fi
+          EXISTING=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
+            --search "in:title \"Scraper drift check\"" --json number --jq '.[0].number')
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --repo "$GITHUB_REPOSITORY" --body-file /tmp/drift_report.md
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" \
+              --title "Scraper drift check: sources need review" \
+              --body-file /tmp/drift_report.md
+          fi
+
+      # Tier 3: one issue per likely_broken source, handed to an agent to open a fix PR (claude-autofix.yml by
+      # default, or Copilot); also closes those issues once their source recovers, so it runs even when nothing was
+      # flagged.
+      - name: File per-source auto-fix issues for the auto-fix agent
+        # main only: a test dispatch from a branch still runs the drift check and its report, but files no issue and
+        # starts no agent (Mike, 2026-11-13: branch tests had been handing issues to Copilot).
+        if: github.ref == 'refs/heads/main'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # User token (Copilot-licensed) -- the Actions token can't start a coding-agent session. Unset -> issues
+          # are filed but unassigned.
+          COPILOT_TOKEN: ${{ secrets.COPILOT_TOKEN }}
+          AUTOFIX_ENGINE: ${{ inputs.autofix_engine }}
+          # "true" if a Claude credential is set: then an issue Copilot hasn't fixed in a week goes to
+          # claude-autofix.yml once (2026-11-11).
+          AUTOFIX_CLAUDE_FALLBACK: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' || secrets.ANTHROPIC_API_KEY != '' }}
+        run: Rscript .github/scripts/file_autofix_issues.R
+
+      - name: Regenerate the Connect Cloud manifest
+        run: |
+          Rscript -e 'rsconnect::writeManifest(appDir = Sys.getenv("APP_DIR"))'
+
+      - name: Verify the manifest actually includes app.R's packages
+        run: |
+          Rscript -e '
+          m <- jsonlite::fromJSON(file.path(Sys.getenv("APP_DIR"), "manifest.json"), simplifyVector = FALSE)
+          required <- c("shiny", "bslib", "shinyWidgets", "DT", "data.table", "leaflet", "plotly", "scales", "shinycssloaders", "curl", "jsonlite", "edjobs")
+          missing <- setdiff(required, names(m$packages))
+          if (length(missing) > 0) {
+            stop(sprintf(
+              "manifest.json is missing %s -- writeManifest() only captures packages actually installed in this job, so this workflow'\''s own package-install step is now out of sync with app.R. Refusing to push a manifest that would break the Connect Cloud deploy.",
+              paste(missing, collapse = ", ")
+            ))
+          }
+          # app.R attaches edjobs (phase 6): Connect Cloud installs it from GitHub only if the manifest says where.
+          ej <- m$packages$edjobs$description
+          pinned <- paste0("v", trimws(readLines("EDJOBS_VERSION")))
+          if (!identical(ej$RemoteType, "github") || !identical(ej$RemoteRef, pinned)) {
+            stop(sprintf("manifest.json records edjobs as RemoteType %s, RemoteRef %s; expected github, %s. Refusing to push a manifest Connect Cloud cannot install from.",
+                         format(ej$RemoteType), format(ej$RemoteRef), pinned))
+          }
+          cat("Manifest includes all", length(required), "app.R packages.\n")
+          '
+
+      - name: Commit and push if anything changed
+        env:
+          STATE_FILES: ${{ inputs.state_files }}
+          OPTIONAL_FILES: ${{ inputs.optional_files }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          shared=""
+          for f in combinedclean.csv oews_role_wages.csv ipeds_staff_salaries.csv qcew_county_school_pay.csv \
+                   allsum.csv allnow.csv allsum_he.csv allnow_he.csv hedata.xlsx k12jobanalysis.csv facultydata.csv \
+                   k12_district_weekly_totals.csv he_institution_weekly_totals.csv k12_jobtype_weekly_totals.csv \
+                   he_jobtype_weekly_totals.csv salarymap2.csv salarymap.csv job_duration_spells.csv \
+                   he_job_duration_spells.csv k12_salary_history.csv source_retrieved_dates.csv manifest.json; do
+            shared="$shared $APP_DIR/$f"
+          done
+          state=$(echo "$STATE_FILES" | xargs)
+          # Word splitting is wanted here: the archive globs and the file lists.
+          git add $shared $state Archived_HE_Data/*.xlsx Archivek12_Data/*.csv
+          for f in schoolspring_endings.csv posting_status.csv coverage_calendar.csv \
+                   posting_spells_k12.csv posting_durations_k12.csv posting_spells_he.csv posting_durations_he.csv \
+                   advertised_windows.csv "$APP_DIR/posting_first_seen.csv" $(echo "$OPTIONAL_FILES" | xargs); do
+            [ -f "$f" ] && git add "$f" || true
+          done
+          if git diff --cached --quiet; then
+            echo "No data changes this run -- nothing to commit."
+          else
+            git commit -m "Automated weekly data refresh ($(date +%Y-%m-%d))"
+            # A code commit can land on main while the run works (2026-11-03: the finished run's push was rejected).
+            # Rebase this data commit onto it; a conflict (someone else changed the same data files) still fails the
+            # step, rather than merging data silently. Rebase onto the branch this run is on (main, or a test-dispatch
+            # branch: rebasing a branch onto main in this shallow checkout replays its commits, 2026-11-17).
+            pushed=false
+            for attempt in 1 2 3; do
+              if git pull --rebase origin "$GITHUB_REF_NAME" && git push; then pushed=true; break; fi
+              git rebase --abort 2>/dev/null || true
+              sleep 15
+            done
+            if [ "$pushed" != "true" ]; then echo "Push failed after 3 attempts"; exit 1; fi
+          fi

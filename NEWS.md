@@ -1,3 +1,14 @@
+# edjobs 0.59.0
+
+* **`.github/workflows/weekly-run.yml`: the states' weekly data refresh as one reusable workflow** (package review
+  step 6, second half). Both states' `weekly-scrape.yml` had the same 37 steps in the same order and differed only in
+  state data (the app folder, the Rmd, one extra package, whether the pipeline gets `GEMINI_API_KEY`, the state's own
+  check, its commit files), which are now inputs; each state keeps a short caller with its cron, `concurrency`,
+  `permissions` and secrets. Secrets are passed one by one (GitHub documents `secrets: inherit` for organizations
+  only), and `AUTOFIX_ENGINE` and the time zone are inputs. The state's own checks run in one step, each even if one
+  before it crashed, and a crash is named in the drift issue. No R code changed. Montana's test dispatch on a branch
+  (run 44675428576) gave the same step outcomes as its 11-19 run and a commit dated in Mountain time.
+
 # edjobs 0.58.0
 
 * **A salary value range can be per unit of another column.** `salary_checks(bounds = )` takes optional `per` (divide
