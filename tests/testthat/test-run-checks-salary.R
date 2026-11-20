@@ -99,3 +99,28 @@ test_that("the committed-file baseline reads git's HEAD copy, or the folder EDJO
   expect_equal(nrow(prev("salarymap2.csv")), 2)
   expect_null(prev("salarymap.csv"))
 })
+
+test_that("a per-student range divides by its column, and a dollar range with `unless` checks only the rows it can't", {
+  k12 <- data.frame(District = c("Tiny", "Big", "Misread", "NoEnroll", "NoEnrollTiny"),
+                    Fund = c(105000, 134000000, 1300000, 2000000, 100000),
+                    Enrollment = c(4, 16000, 1400, NA, NA))
+  report <- salary_files(k12, he_pay())
+  use_config(salary_checks(
+    coverage = data.frame(name = "fund", file = "salarymap2.csv", column = "Fund"),
+    bounds = data.frame(name = c("Fund per student", "Fund"), file = "salarymap2.csv", column = "Fund",
+                        per = c("Enrollment", NA), unless = c(NA, "Enrollment"),
+                        min_ok = c(3000, 500000), max_ok = c(60000, 250000000))))
+  expect_output(salary_drift_step(report_path = report, previous = baseline(k12, he_pay())))
+  txt <- readLines(report)
+  flagged <- grep("is outside the expected", txt, value = TRUE)
+  expect_length(flagged, 2)
+  # Tiny ($26,250 a student) passes; Misread ($929 a student) fails; only NoEnrollTiny falls to the dollar range.
+  expect_true(any(grepl("**Fund per student** (Misread): $929 is outside the expected $3,000-$60,000 range", flagged, fixed = TRUE)))
+  expect_true(any(grepl("**Fund** (NoEnrollTiny): $100,000 is outside the expected $500,000-$250,000,000 range", flagged, fixed = TRUE)))
+})
+
+test_that("bounds without per/unless columns behave as before", {
+  b <- salary_checks(data.frame(name = "x", file = "salarymap2.csv", column = "y"),
+                     bounds = data.frame(name = "x", file = "salarymap2.csv", column = "y", min_ok = 1, max_ok = 2))$bounds
+  expect_equal(c(b$per, b$unless), c("", ""))
+})

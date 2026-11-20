@@ -10,7 +10,10 @@ salary_checks(coverage, bounds = NULL, yoy = NULL, extra = NULL)
 \item{coverage}{One row per source column whose coverage is watched: \code{name} (as the report shows it), \code{file},
 \code{column}. A source is flagged when fewer rows have a value than in the last committed file.}
 
-\item{bounds}{One row per value range: \code{name}, \code{file}, \code{column}, \code{min_ok}, \code{max_ok} (\code{\link[=check_salary_value_bounds]{check_salary_value_bounds()}}).}
+\item{bounds}{One row per value range: \code{name}, \code{file}, \code{column}, \code{min_ok}, \code{max_ok} (\code{\link[=check_salary_value_bounds]{check_salary_value_bounds()}}).
+Optional columns: \code{per}, a column \code{column} is divided by (a range per student: rows without a positive \code{per}
+are skipped); \code{unless}, a column whose rows with a value are skipped (a dollar range kept only for the rows a
+\code{per} range can't check). NA or "" means none.}
 
 \item{yoy}{One row per year-over-year pair: \code{file}, \code{current}, \code{prior} (column names;
 \code{\link[=check_salary_yoy_plausibility]{check_salary_yoy_plausibility()}}).}
