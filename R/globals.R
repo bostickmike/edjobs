@@ -19,4 +19,11 @@ utils::globalVariables(c("N_Rows", ".data", "parts_sum", "total_value", "Distric
                          "Faculty_Avg_Salary_Y1Ago", "Institution", "is_admin", "is_cte", "is_elementary", "is_health",
                          "is_secondary", "is_sped", "is_stem", "is_support_staff", "Link", "Location", "MatchingCount",
                          "MatchingSample", "Median_Days", "Name", "SampleTitles", "Status", "Type", "Value",
-                         "WeeklyNew"))
+                         "WeeklyNew",
+                         # app_server_configured.R
+                         "Adjunct/part-time faculty", "Enrollment_Change_Pct", "Faculty_Avg_Salary_Professor",
+                         "Faculty_Avg_Salary_Y2Ago", "Faculty_Count", "Faculty/instructor (non-adjunct)", "Latitude",
+                         "Longitude", "Median_Gross_Rent", "Median_Gross_Rent_MOE", "Median_Household_Income",
+                         "Median_Household_Income_MOE", "Mining_Employment_Share", "Mining_Employment_Share_MOE",
+                         "Openings", "Pell_Recipient_Share", "Pell_Year", "Population_Change_Pct", "Salary_Note",
+                         "Students_Per_Teacher", "Vacancy_Rate"))

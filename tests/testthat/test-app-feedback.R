@@ -47,7 +47,7 @@ test_that("per-visit and per-hour limits, and exact repeats", {
 })
 
 test_that("the issue text can't ping people or cross-link issues, and carries the labels", {
-  iss <- fb$feedback_issue(good$type, "Hamilton <b>SD</b>", "", "Ask @someone about #12 please", "Montana", now = t0)
+  iss <- fb$feedback_issue(good$type, "Hamilton <b>SD</b>", "", "Ask @someone about #12 please", "Montana", "America/Denver", now = t0)
   expect_match(iss$title, "^\\[Data Issue\\]: Expired / Closed Job")
   expect_false(grepl("<b>", iss$title, fixed = TRUE))
   expect_false(grepl("@someone", iss$body, fixed = TRUE))
@@ -55,7 +55,7 @@ test_that("the issue text can't ping people or cross-link issues, and carries th
   expect_match(iss$body, "_not given_", fixed = TRUE)
   expect_match(iss$body, "> Ask", fixed = TRUE)
   expect_equal(unlist(iss$labels), c("data-quality", "user-report"))
-  expect_lte(nchar(fb$feedback_issue(good$type, strrep("D", 500), "", good$details, "Montana")$title), 200)
+  expect_lte(nchar(fb$feedback_issue(good$type, strrep("D", 500), "", good$details, "Montana", "America/Denver")$title), 200)
 })
 
 test_that("without a token the Feedback button stays the GitHub link", {
