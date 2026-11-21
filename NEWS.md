@@ -1,3 +1,9 @@
+# edjobs 0.65.0
+
+* **`he_colleges_panel()`: the Higher Ed Colleges tab's UI** (step 7 slice 2b). Both states' `app.R` had the same
+  Institution Directory and Head-to-Head Comparator; the state passes the comparator's institutions and opening pair,
+  and what its directory's Salaries and County columns hold.
+
 # edjobs 0.64.0
 
 * **`he_trends_panel()`: the Higher Ed Trends tab's UI** (step 7 slice 2b). Both states' `app.R` had the same
