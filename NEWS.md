@@ -1,3 +1,10 @@
+# edjobs 0.67.0
+
+* **`home_tab_panel()`: the Home tab's UI** (step 7 slice 2b). Both states' `app.R` had the same KPI cards, switch
+  and four "top this week" tables. The state passes its name, its K-12 source line, the refreshed date, the credit
+  line and an optional card of its own (`extra`; Montana's K-12 coverage card). The switch label and the two notes on
+  what it leaves out move here from both states' `app.R`, where only Home used them.
+
 # edjobs 0.66.0
 
 * **`k12_trends_panel()`: the K-12 Trends tab's UI** (step 7 slice 2b). Both states' `app.R` had the same Current and
