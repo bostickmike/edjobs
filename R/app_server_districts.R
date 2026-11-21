@@ -57,7 +57,7 @@ district_popup_line <- function(label, value, range = NULL, also = NULL, also_la
 
 #' A source paragraph of the District Summary footnote
 #'
-#' `"<lead> <source> <year> — <link> <after>"`, from the first non-missing K-12 values of `source_col` and
+#' `"<lead> <source> <year> -- <link> <after>"`, from the first non-missing K-12 values of `source_col` and
 #' `year_col`. Left out when the source is missing, or the year is and `require_year` is TRUE.
 #' @param lead Opening words ("Salary data:").
 #' @param source_col Column naming the source document.
@@ -225,17 +225,17 @@ district_summary_footnote <- function(combined_map_data, spec) {
     year <- if (is.null(n$year_col)) NULL else first_value(k12[[n$year_col]])
     if (is.null(source) || (n$require_year && !is.null(n$year_col) && is.null(year))) return(NULL)
     year_part <- if (is.null(n$year_col)) NULL else if (is.null(year)) "" else sprintf(n$year_format, year)
-    link <- if (is.null(n$url)) NULL else list("—", htmltools::tags$a(href = n$url, target = "_blank", n$url_text))
+    link <- if (is.null(n$url)) NULL else list("\u2014", htmltools::tags$a(href = n$url, target = "_blank", n$url_text))
     do.call(shiny::helpText, c(list(n$lead, source), as.list(year_part), link, as.list(n$after)))
   })
   do.call(htmltools::tagList, c(source_notes, list(
     if (!is.null(acs_year)) {
       shiny::helpText(
         "County context (income, rent, mining/energy employment share, population trend): US Census Bureau, American Community Survey 5-Year Estimates",
-        paste0("(", acs_year, ")"), "—",
+        paste0("(", acs_year, ")"), "\u2014",
         htmltools::tags$a(href = "https://www.census.gov/data/developers/data-sets/acs-5year.html", target = "_blank", "census.gov"),
         ". County-level, not district-level -- sibling districts in the same county share the same figures.",
-        "± values are the Census Bureau's 90% margins of error (the mining share's from Census's formula for a",
+        "\u00b1 values are the Census Bureau's 90% margins of error (the mining share's from Census's formula for a",
         "proportion); a share whose margin is at least as large as the share is marked \"not distinguishable from 0\".",
         "County population totals are set to Census's population estimates, so the 5-year trend has no margin of error."
       )
@@ -252,7 +252,7 @@ district_summary_footnote <- function(combined_map_data, spec) {
     if (!is.null(saipe_year)) {
       shiny::helpText(
         "School-age children in poverty: US Census Bureau, Small Area Income and Poverty Estimates (SAIPE)",
-        paste0("(", saipe_year, ")"), "—",
+        paste0("(", saipe_year, ")"), "\u2014",
         htmltools::tags$a(href = "https://www.census.gov/programs-surveys/saipe/data/datasets.html", target = "_blank", "census.gov/saipe"),
         spec$saipe_scope_note,
         # Census: "A true poverty \"rate\" for children cannot be determined from these figures, because the
@@ -476,7 +476,7 @@ district_map_popups <- function(df, spec) {
            ""),
     pay_lines,
     ifelse(!is.na(Faculty_Avg_Salary),
-           paste0("<div>Avg. salary, full-time instructional staff (IPEDS, 9–12-month contracts): ", scales::dollar(Faculty_Avg_Salary),
+           paste0("<div>Avg. salary, full-time instructional staff (IPEDS, 9\u201312-month contracts): ", scales::dollar(Faculty_Avg_Salary),
                   ifelse(!is.na(Faculty_Avg_Salary_Professor),
                          paste0(" (Professor rank: ", scales::dollar(Faculty_Avg_Salary_Professor), ")"),
                          ""),

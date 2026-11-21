@@ -34,6 +34,6 @@ district_source_note(
 A list of class \code{edjobs_district_source_note}.
 }
 \description{
-\code{"<lead> <source> <year> — <link> <after>"}, from the first non-missing K-12 values of \code{source_col} and
+\code{"<lead> <source> <year> -- <link> <after>"}, from the first non-missing K-12 values of \code{source_col} and
 \code{year_col}. Left out when the source is missing, or the year is and \code{require_year} is TRUE.
 }
