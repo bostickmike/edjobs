@@ -1,6 +1,6 @@
 Package: edjobs
 Title: Shared Code for State Education Jobs Dashboards
-Version: 0.65.0
+Version: 0.66.0
 Authors@R: person("Mike", "Bostick", email = "michael.bostick@montana.edu", role = c("aut", "cre"))
 Description: Code shared by state education jobs dashboards (today Montana
     and Wyoming): platform and site-family scrapers, posting classification and
