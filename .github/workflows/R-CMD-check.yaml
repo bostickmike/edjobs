@@ -45,3 +45,7 @@ jobs:
         with:
           args: 'c("--no-manual", "--as-cran")'
           error-on: '"warning"'
+      - name: Tests that read the package sources
+        # test-no-state-names.R reads R/*.R, which R CMD check's installed copy doesn't have, so it skips there.
+        # app_feedback.R shipped a hard-coded "America/Denver" from 0.60.0 to 0.69.0 for that reason.
+        run: Rscript -e 'testthat::test_file("tests/testthat/test-no-state-names.R", package = "edjobs", load_package = "source", stop_on_failure = TRUE)'
