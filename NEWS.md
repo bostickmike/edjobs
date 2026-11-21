@@ -1,3 +1,10 @@
+# edjobs 0.66.0
+
+* **`k12_trends_panel()`: the K-12 Trends tab's UI** (step 7 slice 2b). Both states' `app.R` had the same Current and
+  Multi-Year Trends sub-tabs. The state passes `k12nowsum`, `k12sum` and the slider's opening window; Montana also
+  turns on its slider label (`slider_label = TRUE`) and passes its note on how postings are counted
+  (`counting_note`).
+
 # edjobs 0.65.0
 
 * **`he_colleges_panel()`: the Higher Ed Colleges tab's UI** (step 7 slice 2b). Both states' `app.R` had the same
