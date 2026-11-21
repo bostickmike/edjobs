@@ -1,3 +1,10 @@
+# edjobs 0.68.0
+
+* **`k12_districts_panel()`: the K-12 Districts tab's UI** (step 7 slice 2b, the last tab). Both states' `app.R`
+  had the same District Directory and Head-to-Head Comparator; the state passes its text (Openings note, the
+  directory's pay/finance/county paragraphs and source, the comparator blurb, the openings source), the comparator's
+  districts and opening pair, and its salary chart's card.
+
 # edjobs 0.67.0
 
 * **`home_tab_panel()`: the Home tab's UI** (step 7 slice 2b). Both states' `app.R` had the same KPI cards, switch
