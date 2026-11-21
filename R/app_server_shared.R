@@ -18,6 +18,8 @@
 #'   form's report time.
 #' @param map_view The map's opening view (and where "All counties" returns it): a list of `lng`, `lat`, `zoom`.
 #' @param he_page_length Rows per page of the Institution Summary table.
+#' @param district_spec The Districts tab's pay columns, popup pay lines, compare plot and footnote text: a
+#'   `district_spec()`.
 #' @param he_shared_salary_note A short note for the Institution Summary's `Note` column on institutions with a
 #'   `Salary_Note` (Wyoming: salary and vacancy rate reported with another college), or NULL for no `Note` column.
 #' @return A named list of the reactives and helper functions it defines. The state's own blocks read
@@ -26,11 +28,12 @@
 #'   `shared$name`.
 #' @export
 dashboard_server_shared <- function(input, output, session, data, state_name, feedback_repo, timezone, map_view,
-                                    he_page_length, he_shared_salary_note = NULL) {
+                                    he_page_length, district_spec, he_shared_salary_note = NULL) {
   if (!requireNamespace("shiny", quietly = TRUE)) stop("dashboard_server_shared() needs the shiny package.", call. = FALSE)
   missing <- setdiff(dashboard_server_data_names(), names(data))
   if (length(missing)) stop("dashboard_server_shared(): `data` lacks ", paste(missing, collapse = ", "), call. = FALSE)
   check_map_view(map_view)
+  check_district_spec(district_spec, data[["combined_map_data"]])
   file_prefix <- tolower(state_name)
   ccdata <- data[["ccdata"]]
   combined_map_data <- data[["combined_map_data"]]
@@ -60,6 +63,7 @@ dashboard_server_shared <- function(input, output, session, data, state_name, fe
   NOT_MARKED_SHOWING <- data[["NOT_MARKED_SHOWING"]]
   NOT_MARKED_SHOWING_HE <- data[["NOT_MARKED_SHOWING_HE"]]
   PAY_BANDS <- data[["PAY_BANDS"]]
+  qcew_school_pay <- data[["qcew_school_pay"]]
   vacancy_rate_domain <- data[["vacancy_rate_domain"]]
   vacancy_rate_palette <- data[["vacancy_rate_palette"]]
   WINDOW_WEEKS <- data[["WINDOW_WEEKS"]]
@@ -1438,6 +1442,10 @@ dashboard_server_shared <- function(input, output, session, data, state_name, fe
                               vacancy_rate_domain = vacancy_rate_domain, WINDOW_WEEKS = WINDOW_WEEKS,
                               filtered_hesum = filtered_hesum, map_view = map_view, he_page_length = he_page_length,
                               he_shared_salary_note = he_shared_salary_note)
+  # The District Summary, its footnote, the compare cards and plot, and the map markers: R/app_server_districts.R.
+  dashboard_server_districts(input, output, session, combined_map_data = combined_map_data,
+                             qcew_school_pay = qcew_school_pay, vacancy_rate_palette = vacancy_rate_palette,
+                             map_filtered = map_filtered, district_spec = district_spec)
 
   list(selected_district = selected_district, selected_institution = selected_institution,
        selected_k12_query = selected_k12_query, selected_he_query = selected_he_query,
@@ -1461,7 +1469,7 @@ dashboard_server_data_names <- function() {
     "he_job_duration_spells", "he_jobtype_weekly_totals", "he_new_this_week", "k12_new_this_week", "hesum_he", "hesum_he_agg",
     "HIDDEN_COLS", "IPEDS_SALARY_SOURCE_URL", "job_duration_spells", "K12_CATEGORY_COLORS_AGG",
     "K12_CATEGORY_COLORS_DETAIL", "k12_district_weekly_totals", "k12_jobtype_weekly_totals", "k12sum",
-    "k12sum_agg", "last_refreshed_date", "NOT_MARKED_SHOWING", "NOT_MARKED_SHOWING_HE", "PAY_BANDS",
+    "k12sum_agg", "last_refreshed_date", "NOT_MARKED_SHOWING", "NOT_MARKED_SHOWING_HE", "PAY_BANDS", "qcew_school_pay",
     "vacancy_rate_domain", "vacancy_rate_palette", "WINDOW_WEEKS")
 }
 
