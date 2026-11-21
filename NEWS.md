@@ -1,3 +1,25 @@
+# edjobs 0.71.0
+
+* **`dashboard_server_shared()` takes the Districts tab and the map markers** (step 7 slice 3, part 3;
+  `R/app_server_districts.R`): the District Summary table and its footnote, the compare cards, the compare salary
+  plot, and the map marker observer (hover labels and popups). What differed between the states, their pay and
+  budget columns and those columns' source notes, now comes in through a new required argument, `district_spec`:
+  * `district_spec()`: the columns, the popup pay lines, the compare plot's bars and y-axis title, the footnote's
+    source paragraphs, the poverty paragraph's state sentences, an optional extra footnote paragraph, the table's
+    page length, and an optional remark for a vacancy rate reported for two colleges together
+    (`Vacancy_Rate_Shared`).
+  * `district_column()`: a table column (dollar amount or a low-high range), its header with a year label from a
+    column (or the school year before it), and its compare-card row (above Enrollment or below Students / Teacher).
+  * `district_popup_line()` and `district_source_note()`: a popup pay line and a footnote source paragraph.
+  * `dashboard_server_shared()` checks that every column the spec names is in `combined_map_data`.
+* The builders are exported for tests: `district_summary_df()`, `district_summary_footnote()`,
+  `district_compare_cards()`, `district_compare_salary_plot()`. `prior_school_year_label()` (from Wyoming's `app.R`).
+* Both states' outputs were compared with their old `app.R` code on the committed data: the table data and widget,
+  the footnote, the cards and plot (none, four and two districts selected) and every popup and label of the opening
+  and a search view are identical. One rule changed: a popup pay line's " &middot; year" is left out when the year
+  is missing (it printed "NA"; no row in either state's data has a pay amount without its year).
+* `data` now also needs `qcew_school_pay`.
+
 # edjobs 0.70.0
 
 * **One "new this week" rule for K-12, `find_k12_new_postings()`** (step 7 slice 3, part 2; Mike chose rule A in

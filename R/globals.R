@@ -26,4 +26,9 @@ utils::globalVariables(c("N_Rows", ".data", "parts_sum", "total_value", "Distric
                          "Longitude", "Median_Gross_Rent", "Median_Gross_Rent_MOE", "Median_Household_Income",
                          "Median_Household_Income_MOE", "Mining_Employment_Share", "Mining_Employment_Share_MOE",
                          "Openings", "Pell_Recipient_Share", "Pell_Year", "Population_Change_Pct", "Salary_Note",
-                         "Students_Per_Teacher", "Vacancy_Rate"))
+                         "Students_Per_Teacher", "Vacancy_Rate",
+                         # app_server_districts.R
+                         "Campus_Note", "Campus_Of", "Child_Poverty_Basis", "Child_Poverty_High", "Child_Poverty_Low",
+                         "Child_Poverty_Rate", "Data_Coverage", "Free_Reduced_Lunch_Share", "FRL_Year", "Salary_Source",
+                         "Salary_Year", "School_Pay_County", "School_Pay_Year", "SearchActive", "SearchBand",
+                         "SearchKeyword", "SearchQuery"))

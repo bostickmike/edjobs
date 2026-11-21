@@ -14,6 +14,7 @@ dashboard_server_shared(
   timezone,
   map_view,
   he_page_length,
+  district_spec,
   he_shared_salary_note = NULL
 )
 }
@@ -32,6 +33,9 @@ form's report time.}
 \item{map_view}{The map's opening view (and where "All counties" returns it): a list of \code{lng}, \code{lat}, \code{zoom}.}
 
 \item{he_page_length}{Rows per page of the Institution Summary table.}
+
+\item{district_spec}{The Districts tab's pay columns, popup pay lines, compare plot and footnote text: a
+\code{district_spec()}.}
 
 \item{he_shared_salary_note}{A short note for the Institution Summary's \code{Note} column on institutions with a
 \code{Salary_Note} (Wyoming: salary and vacancy rate reported with another college), or NULL for no \code{Note} column.}
