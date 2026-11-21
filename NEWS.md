@@ -1,3 +1,9 @@
+# edjobs 0.64.0
+
+* **`he_trends_panel()`: the Higher Ed Trends tab's UI** (step 7 slice 2b). Both states' `app.R` had the same
+  Current and Multi-Year Trends sub-tabs; only the timeline slider's opening window differed, so the state passes it
+  (`timeline_value`; the default is the last 365 days, Wyoming's). The state also passes `henowsum` and `hesum`.
+
 # edjobs 0.63.0
 
 * **`jobs_tab_panel()`: the K-12 and Higher Ed Jobs tabs' UI** (step 7 slice 2b). Both Jobs tabs were the same
