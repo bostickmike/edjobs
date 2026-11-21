@@ -21,14 +21,20 @@ Shiny app:
 
 - `<State>_ED_Jobs.Rmd` scrapes every source, classifies postings, and appends this week's rows to the accumulated
   CSVs the app reads.
-- `<app dir>/app.R` is the dashboard. It reads the committed CSVs and never scrapes.
+- `<app dir>/app.R` is the dashboard. It reads the committed CSVs and never scrapes. Since edjobs 0.60-0.68 its
+  tabs and most of its server come from the package (`home_tab_panel()`, `map_tab_panel()`, ...,
+  `dashboard_server_shared()`); app.R keeps the state's data loading, its text for each tab, and the server blocks
+  that still differ by state.
 - Registries (`k12_district_registry.csv`, `he_institution_registry.csv`) list every board the state scrapes:
   one row per district or college, with its platform and URL.
-- `.github/workflows/weekly-scrape.yml` runs the tests, the pipeline and the monitoring steps, then commits the
-  data, which redeploys the app.
+- `.github/workflows/weekly-scrape.yml` is a short caller of the package's reusable `weekly-run.yml` at the
+  pinned tag: it holds the state's cron, secrets and state check, and the package workflow runs the tests, the
+  pipeline and the monitoring steps (most now `*_step()` functions here), then commits the data, which redeploys
+  the app.
 
 **edjobs** holds the functions those pipelines share: platform scrapers, the classifier, posting spells, posting
-status checks, the coverage calendar, drift and data-quality checks, run expectations and federal pay benchmarks.
+status checks, the coverage calendar, drift and data-quality checks, run expectations, federal pay benchmarks and
+context sources, pipeline stages, the weekly run's steps and workflow, and the dashboard's shared tabs and server.
 It has no data of its own. Every state-specific thing arrives as an argument, a registry row or a rules object.
 
 ## How a state uses the package
@@ -96,6 +102,13 @@ The migration runs in phases (plan: the workspace's `claude-notes/2026-11-10_r-p
    match what it committed.
 5. Federal context sources by FIPS.
 6. The app's shared helpers.
+
+After the 2026-11-17 package review (`claude-notes/2026-11-17_edjobs-package-review.md`) the work went by its steps:
+a hardening release, the toy state in package CI, package-held scraper specs, pipeline stages as package
+functions, the reusable weekly workflow with the run's checks as `*_step()` functions, and the app as package code
+(step 7: the shared server, then one tab function per tab, 0.60.0 to 0.68.0). Still to come: the server blocks
+that differ by state, driven by a state's district columns spec, and the long tail of each state's one-off
+scrapers.
 
 For each move: the functions, their tests and their real fixtures come here; roxygen comments document them
 (`tools/roxygenize_moved_file.R` turns a state file's comments into roxygen); the state replaces every `source()`
