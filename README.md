@@ -2,8 +2,8 @@
 
 Shared code for the [Montana](https://github.com/bostickmike/Montana-Education-Jobs-Dashboard) and
 [Wyoming](https://github.com/bostickmike/Wyoming-Education-Jobs-Dashboard) Education Jobs Dashboards: scraping
-platform job boards, classifying postings, posting spells and durations, and the checks each weekly run makes on
-its own output.
+platform job boards, classifying postings, posting spells and durations, the checks each weekly run makes on its own
+output, the weekly run itself (a reusable workflow), and the dashboard's shared server code and tabs.
 
 Each state repository pins a tagged version (`EDJOBS_VERSION` at its root) and installs it in its workflows. Code
 moves here from the state repositories in phases, so a shared function is defined, tested and reviewed once. The
@@ -17,7 +17,7 @@ general-purpose scraping tool.
 |---|---|
 | Understand how the package and the state repos fit together | `vignette("edjobs")` ([source](vignettes/edjobs.Rmd)) |
 | Understand posting spells and listing durations | `vignette("posting-spells")` ([source](vignettes/posting-spells.Rmd)) |
-| Look up a function | `?function_name`, or `help(package = "edjobs")`. Exported: what a state calls (about 250 names); helpers no state calls are internal (`edjobs:::name`, documented with `@keywords internal`) |
+| Look up a function | `?function_name`, or `help(package = "edjobs")`. Exported: what a state calls (312 names in `NAMESPACE`); helpers no state calls are internal (`edjobs:::name`, documented with `@keywords internal`) |
 | See what changed in each version | [NEWS.md](NEWS.md) |
 | See the migration plan and phase status | the workspace's `claude-notes/2026-11-10_r-package-migration-plan.md` |
 
@@ -48,6 +48,18 @@ general-purpose scraping tool.
 | `k12_salary_archive.R` | Yearly snapshots of a state's current-year K-12 salary source, so a multi-year trend exists |
 | `source_links.R`, `source_retrieved.R` | A link to each record's own page at its source; when each outside source was last retrieved |
 | `csv_quoting.R` | Write a data frame with the quoting an existing CSV uses, so a rewrite changes only its changed rows |
+| `pipeline_stages.R` | Pipeline chunks both states' Rmd wrote the same way, as one call each: `refresh_county_context()`, `refresh_file_columns()` (fetch, then swap a file's columns), `refresh_source_record_links()` |
+| `run_checks.R`, `run_checks_canary.R`, `run_checks_drift.R`, `run_checks_salary.R`, `run_checks_census.R`, `run_checks_autofix.R` | The weekly run's own steps as functions (`*_step()`): the pre-flight canary, schema and row-count checks, drift, posted-pay coverage, title quality, salary and Census coverage, run expectations, filing auto-fix issues and the auto-fix PR's live check. Each state's `.github/scripts/*.R` is a short call to one of these |
+| `app_server_shared.R` | `dashboard_server_shared()`: the dashboard server code both states share; each state's `server` calls it and keeps its own blocks |
+| `app_ui_helpers.R` | UI helpers the tabs share (`dash_card()`, `help_popover()`, ...) |
+| `app_ui_home.R`, `app_ui_map.R`, `app_ui_jobs.R`, `app_ui_k12_trends.R`, `app_ui_k12_districts.R`, `app_ui_he_trends.R`, `app_ui_he_colleges.R`, `app_ui_spells.R`, `app_ui_data.R` | One function per dashboard tab (`home_tab_panel()`, `map_tab_panel()`, ...): the package builds the tab, the state passes its own text and any one-state piece |
+| `app_feedback.R` | The public feedback form: checks a report and opens a GitHub issue in the state's repo |
+| `globals.R`, `edjobs-package.R` | Column names for R CMD check; the package help page |
+
+Outside `R/`: `.github/workflows/weekly-run.yml` is the weekly data refresh each state's `weekly-scrape.yml` calls at
+its pinned tag (the state keeps its cron, secrets and state check); `presence.yml` is the daily presence check, which each state calls the same way;
+`inst/toystate/` is a made-up four-district state run end to end in the package's tests (what a third state would
+write); `inst/extdata/` holds the OEWS area definitions.
 
 ## Installing
 
