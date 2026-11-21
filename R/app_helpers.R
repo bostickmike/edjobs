@@ -341,6 +341,37 @@ latest_snapshot_per_week <- function(weekly_totals) {
   weekly_totals[!is.na(d) & d == as.Date(latest[wk], origin = "1970-01-01"), , drop = FALSE]
 }
 
+# Step 7 slice 3 (Mike chose A, then its paired form, 2026-11-21): MT counted a Posting_ID missing from last week, WY
+# a title + location + District missing from last week. Each rule has its own false "new": an ID change with no
+# change to the posting (MT 11-03: 159; WY 10-30: 17 AppliTrack postings moving off fallback IDs), and an edited
+# title (WY 11-13: 5 postings dropping "(Open Until Filled)", same AppliTrack ID). A new ID is an ID change only when
+# it takes the place of a posting with the same title, location and district whose ID is gone this week, one for
+# one: a second same-title opening next to one still listed is new (MT 18, WY 76 over the archives). Replays:
+# claude-notes/2026-11-21_step7-slice3-prep/new_this_week_rules.R, 2026-11-21_step7-slice3a/rule_a_paired.R.
+#' K-12 postings new this week
+#'
+#' Rows of the latest snapshot whose `Posting_ID` was not in the previous snapshot, less the ID changes: a new ID
+#' that takes the place of a previous posting with the same title, location and district whose ID is gone this week
+#' (paired one for one). A posting whose title was edited keeps its ID, so it isn't new either.
+#' @param k12_history Weekly K-12 snapshots (`k12jobanalysis.csv` after [latest_snapshot_per_week()]), with
+#'   `Archive_Date`, `Posting_ID`, `title`, `location`, `District`.
+#' @return The latest snapshot's new rows (none when there are fewer than two snapshots).
+#' @export
+find_k12_new_postings <- function(k12_history) {
+  dates <- sort(unique(as.Date(k12_history$Archive_Date)))
+  if (length(dates) < 2) return(k12_history[0, , drop = FALSE])
+  latest <- k12_history[as.Date(k12_history$Archive_Date) == dates[length(dates)], , drop = FALSE]
+  previous <- k12_history[as.Date(k12_history$Archive_Date) == dates[length(dates) - 1], , drop = FALSE]
+  key <- function(d) paste(d$title, d$location, d$District, sep = "@@@")
+  new_id <- latest[!latest$Posting_ID %in% previous$Posting_ID, , drop = FALSE]
+  gone <- previous[!previous$Posting_ID %in% latest$Posting_ID, , drop = FALSE]
+  k <- key(new_id)
+  nth <- stats::ave(seq_along(k), k, FUN = seq_along)          # the nth new-ID row with this key
+  replaced <- as.integer(table(key(gone))[k])                 # previous postings with this key whose ID is gone
+  replaced[is.na(replaced)] <- 0L
+  new_id[nth > replaced, , drop = FALSE]
+}
+
 # Statewide totals smooth per-district noise into a real signal (WY 2026-08-05: K-12 totals move ~20-50 a week,
 # per-district week-over-week changes have a median absolute value of 0). Archive cadence isn't regular (several
 # same-week CI runs, e.g. WY's 2026-08-03 archives), so without min_days_back an extra same-week run would make

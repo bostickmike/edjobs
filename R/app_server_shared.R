@@ -44,6 +44,7 @@ dashboard_server_shared <- function(input, output, session, data, state_name, fe
   he_job_duration_spells <- data[["he_job_duration_spells"]]
   he_jobtype_weekly_totals <- data[["he_jobtype_weekly_totals"]]
   he_new_this_week <- data[["he_new_this_week"]]
+  k12_new_this_week <- data[["k12_new_this_week"]]
   hesum_he <- data[["hesum_he"]]
   hesum_he_agg <- data[["hesum_he_agg"]]
   HIDDEN_COLS <- data[["HIDDEN_COLS"]]
@@ -680,6 +681,29 @@ dashboard_server_shared <- function(input, output, session, data, state_name, fe
     shiny::req(!is.null(result))
     result
   }, sanitize.text.function = function(x) x)
+
+  # -------- K-12 --------
+  # Both states' app.R had this block apart from the "new this week" filter (step 7 slice 3, 2026-11-21): both now
+  # filter by find_k12_new_postings()'s Posting_IDs. The identity columns are for the filter, not for display.
+  output$k12_jobs <- DT::renderDT({
+    df <- combineddata
+    if (!is.null(selected_district())) df <- df %>% dplyr::filter(District == selected_district())
+    if (!is.null(selected_k12_type())) df <- df %>% dplyr::filter(Position == selected_k12_type())
+    if (k12_not_marked_only()) df <- df %>% dplyr::filter(.Not_Marked)
+    # Same matcher and searchable text as map_filtered(), so the count here
+    # equals the popup's "N matching openings".
+    if (!is.null(selected_k12_query())) {
+      df <- df[match_job_query(paste(dplyr::coalesce(df$Title, ""), dplyr::coalesce(df$Position, "")), selected_k12_query()), , drop = FALSE]
+    }
+    if (!is.null(selected_pay_band())) df <- df[in_pay_band(df$.Pay_Value, df$.Pay_Unit, selected_pay_band(), PAY_BANDS), , drop = FALSE]
+    df <- df %>% dplyr::select(-dplyr::any_of(HIDDEN_COLS))
+    if (isTRUE(identical(input$k12_quick_filter, "new"))) {
+      df <- df %>% dplyr::filter(Posting_ID %in% k12_new_this_week$Posting_ID)
+    }
+    df <- df %>% dplyr::select(-dplyr::any_of(c("Posting_ID", "Identity method", "Posting_Identity_Method", ".salary_district")))
+    DT::datatable(df, filter = "top", escape = FALSE, extensions = "Buttons",
+                  options = list(scrollX = TRUE, dom = "Bfrtip", buttons = c("copy", "csv", "print")))
+  })
 
   # -------- Higher Ed --------
   output$he_jobs <- DT::renderDT({
@@ -1434,7 +1458,7 @@ dashboard_server_shared <- function(input, output, session, data, state_name, fe
 dashboard_server_data_names <- function() {
   c("ccdata", "combined_map_data", "combineddata", "data_dictionary", "DATA_LOAD_ISSUES",
     "HE_CATEGORY_COLORS_AGG", "HE_CATEGORY_COLORS_DETAIL", "he_faculty_counts", "he_institution_weekly_totals",
-    "he_job_duration_spells", "he_jobtype_weekly_totals", "he_new_this_week", "hesum_he", "hesum_he_agg",
+    "he_job_duration_spells", "he_jobtype_weekly_totals", "he_new_this_week", "k12_new_this_week", "hesum_he", "hesum_he_agg",
     "HIDDEN_COLS", "IPEDS_SALARY_SOURCE_URL", "job_duration_spells", "K12_CATEGORY_COLORS_AGG",
     "K12_CATEGORY_COLORS_DETAIL", "k12_district_weekly_totals", "k12_jobtype_weekly_totals", "k12sum",
     "k12sum_agg", "last_refreshed_date", "NOT_MARKED_SHOWING", "NOT_MARKED_SHOWING_HE", "PAY_BANDS",
