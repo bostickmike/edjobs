@@ -1,3 +1,11 @@
+# edjobs 0.62.0
+
+* **`map_tab_panel()`: the Map tab's UI** (step 7 slice 2b, second tab). Both states' `app.R` had the same filters
+  and map; the state passes its card title (`state_name`), the "About this map" paragraphs before the shared one on
+  vacancy rates, what its red "Partial" badge means, the note under the map, and the county choices, `PAY_BANDS`
+  and college placement note it already builds. leaflet joins the Suggests. Each state's page HTML is the same as
+  before (`ui_parity.R`).
+
 # edjobs 0.61.0
 
 * **`data_tab_panel()`: the Data tab's UI** (package review step 7, slice 2b; Mike, 2026-11-21: the package builds
