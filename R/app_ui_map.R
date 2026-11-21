@@ -52,7 +52,7 @@ map_tab_panel <- function(state_name, about, partial_note, map_note, county_choi
             shiny::actionLink("map_chip_science", "Science"),
             shiny::actionLink("map_chip_music", "Music / Art"),
             shiny::actionLink("map_chip_driver", "Bus Driver"),
-            shiny::actionLink("map_chip_clear", "✕ Clear", class = "text-danger fw-semibold")
+            shiny::actionLink("map_chip_clear", "\u2715 Clear", class = "text-danger fw-semibold")
           ),
           shiny::selectInput(
             "map_county", "County:",
