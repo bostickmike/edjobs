@@ -186,9 +186,9 @@ dashboard_server_configured <- function(input, output, session, combined_map_dat
         # and CSV buttons export clean text. NULL leaves the column out.
         Note = if (is.null(he_shared_salary_note)) NULL else ifelse(is.na(Salary_Note), "", he_shared_salary_note)
       )
-    names(df)[names(df) == "AvgFacultySalary"] <- paste0("Avg. salary, full-time instructional staff (IPEDS, 9–12-month contracts), ", year_label)
-    names(df)[names(df) == "AvgFacultySalaryY1"] <- paste0("Avg. salary, full-time instructional staff (IPEDS, 9–12-month contracts), ", y1_label)
-    names(df)[names(df) == "AvgFacultySalaryY2"] <- paste0("Avg. salary, full-time instructional staff (IPEDS, 9–12-month contracts), ", y2_label)
+    names(df)[names(df) == "AvgFacultySalary"] <- paste0("Avg. salary, full-time instructional staff (IPEDS, 9\u201312-month contracts), ", year_label)
+    names(df)[names(df) == "AvgFacultySalaryY1"] <- paste0("Avg. salary, full-time instructional staff (IPEDS, 9\u201312-month contracts), ", y1_label)
+    names(df)[names(df) == "AvgFacultySalaryY2"] <- paste0("Avg. salary, full-time instructional staff (IPEDS, 9\u201312-month contracts), ", y2_label)
     names(df)[names(df) == "ProfessorAvgSalary"] <- paste0("Professor Avg Salary (", year_label, ")")
 
     DT::datatable(df, filter = "top", extensions = "Buttons",
