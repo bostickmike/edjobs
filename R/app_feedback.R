@@ -85,13 +85,14 @@ feedback_sanitize <- function(x) {
   gsub("#(\\d)", "#\u200b\\1", x, perl = TRUE)
 }
 
-feedback_issue <- function(type, district, job, details, state_name, now = Sys.time()) {
+# tz: the state's time zone for the report time (`state_config(timezone = )`; the package names none).
+feedback_issue <- function(type, district, job, details, state_name, tz, now = Sys.time()) {
   s <- function(x) feedback_sanitize(trimws(as.character(x)))
   title <- substr(paste0("[Data Issue]: ", type, " -- ", s(district)), 1, 200)
   quote <- function(x) paste0("> ", gsub("\n", "\n> ", s(x)))
   body <- paste0(
     "Reported through the ", state_name, " dashboard's Feedback form (no GitHub account; ",
-    format(now, "%Y-%m-%d %H:%M %Z", tz = "America/Denver"), ").\n\n",
+    format(now, "%Y-%m-%d %H:%M %Z", tz = tz), ").\n\n",
     "**Issue Type:** ", type, "\n\n",
     "**School District or Institution:** ", s(district), "\n\n",
     "**Job Title or Listing URL:** ", if (nzchar(trimws(job))) s(job) else "_not given_", "\n\n",
@@ -169,8 +170,9 @@ feedback_modal <- function(repo) {
 #' @param input,output,session The Shiny server arguments.
 #' @param repo GitHub repo ("owner/name"); the `FEEDBACK_REPO` environment variable overrides it.
 #' @param state_name State name for the issue text.
+#' @param timezone The state's time zone (an `OlsonNames()` entry), for the report time in the issue.
 #' @export
-feedback_server <- function(input, output, session, repo, state_name) {
+feedback_server <- function(input, output, session, repo, state_name, timezone) {
   need_shiny_ui("feedback_server")
   opened_at <- NULL
   sent <- 0
@@ -187,7 +189,7 @@ feedback_server <- function(input, output, session, repo, state_name) {
       return()
     }
     if (chk$action == "post") {
-      res <- feedback_post(feedback_issue(input$fb_type, input$fb_district, input$fb_job, input$fb_details, state_name),
+      res <- feedback_post(feedback_issue(input$fb_type, input$fb_district, input$fb_job, input$fb_details, state_name, timezone),
                            Sys.getenv("FEEDBACK_REPO", repo))
       if (!isTRUE(res$ok)) {
         message("feedback post failed: ", res$error)

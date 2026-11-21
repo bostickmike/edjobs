@@ -1,3 +1,20 @@
+# edjobs 0.69.0
+
+* **`dashboard_server_shared()` takes the server blocks that differed only by a setting** (step 7 slice 3, part 1;
+  `R/app_server_configured.R`): the map's basemaps, legend and opening view (`map_view`, also where "All counties"
+  returns), the county zoom, the Institution Summary table (`he_page_length`, and `he_shared_salary_note` for
+  Wyoming's `Note` column), the HE timeline slider's opening range, and both slider labels. New arguments
+  `map_view` and `he_page_length` are required. `data` now also needs `vacancy_rate_domain`,
+  `vacancy_rate_palette` and `WINDOW_WEEKS`.
+* `bounded_timeline_value()` and `timeline_history_note()` (from Montana's `app.R`): a slider's opening range bounded
+  by the archive's first date, and a note when the archive covers under a year. Wyoming's HE slider now uses them:
+  on its data the opening range is the same, and the note is empty.
+* The Feedback form's report time takes the state's time zone: `dashboard_server_shared(timezone = )` and
+  `feedback_server(timezone = )` (required; both states pass "America/Denver", so the issue text is unchanged).
+  `app_feedback.R` named the zone since 0.60.0; `test-no-state-names.R` caught it, but only from source
+  (`devtools::test()`): under R CMD check the test skips, which is why CI passed.
+* `output$he_new_table` removed: no tab in either app showed it (its `he_new_appointment` filter had no input).
+
 # edjobs 0.68.0
 
 * **`k12_districts_panel()`: the K-12 Districts tab's UI** (step 7 slice 2b, the last tab). Both states' `app.R`

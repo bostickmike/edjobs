@@ -10,7 +10,11 @@ dashboard_server_shared(
   session,
   data,
   state_name,
-  feedback_repo
+  feedback_repo,
+  timezone,
+  map_view,
+  he_page_length,
+  he_shared_salary_note = NULL
 )
 }
 \arguments{
@@ -21,6 +25,16 @@ dashboard_server_shared(
 \item{state_name}{State name, as shown and in download file names ("Montana" gives "montana_...csv").}
 
 \item{feedback_repo}{GitHub repo the Feedback form files issues in ("owner/name").}
+
+\item{timezone}{The state's time zone (an \code{OlsonNames()} entry, as in \code{state_config(timezone = )}): the Feedback
+form's report time.}
+
+\item{map_view}{The map's opening view (and where "All counties" returns it): a list of \code{lng}, \code{lat}, \code{zoom}.}
+
+\item{he_page_length}{Rows per page of the Institution Summary table.}
+
+\item{he_shared_salary_note}{A short note for the Institution Summary's \code{Note} column on institutions with a
+\code{Salary_Note} (Wyoming: salary and vacancy rate reported with another college), or NULL for no \code{Note} column.}
 }
 \value{
 A named list of the reactives and helper functions it defines. The state's own blocks read

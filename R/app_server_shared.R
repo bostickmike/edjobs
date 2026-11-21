@@ -14,15 +14,23 @@
 #' @param data Named list of the app-level objects the shared code reads (see `dashboard_server_data_names()`).
 #' @param state_name State name, as shown and in download file names ("Montana" gives "montana_...csv").
 #' @param feedback_repo GitHub repo the Feedback form files issues in ("owner/name").
+#' @param timezone The state's time zone (an `OlsonNames()` entry, as in `state_config(timezone = )`): the Feedback
+#'   form's report time.
+#' @param map_view The map's opening view (and where "All counties" returns it): a list of `lng`, `lat`, `zoom`.
+#' @param he_page_length Rows per page of the Institution Summary table.
+#' @param he_shared_salary_note A short note for the Institution Summary's `Note` column on institutions with a
+#'   `Salary_Note` (Wyoming: salary and vacancy rate reported with another college), or NULL for no `Note` column.
 #' @return A named list of the reactives and helper functions it defines. The state's own blocks read
 #'   `k12_not_marked_only`, `selected_district`, `selected_k12_query`, `selected_k12_type`,
 #'   `selected_pay_band`, `map_filtered`, `filtered_hesum`; the state's tests reach the others as
 #'   `shared$name`.
 #' @export
-dashboard_server_shared <- function(input, output, session, data, state_name, feedback_repo) {
+dashboard_server_shared <- function(input, output, session, data, state_name, feedback_repo, timezone, map_view,
+                                    he_page_length, he_shared_salary_note = NULL) {
   if (!requireNamespace("shiny", quietly = TRUE)) stop("dashboard_server_shared() needs the shiny package.", call. = FALSE)
   missing <- setdiff(dashboard_server_data_names(), names(data))
   if (length(missing)) stop("dashboard_server_shared(): `data` lacks ", paste(missing, collapse = ", "), call. = FALSE)
+  check_map_view(map_view)
   file_prefix <- tolower(state_name)
   ccdata <- data[["ccdata"]]
   combined_map_data <- data[["combined_map_data"]]
@@ -51,8 +59,11 @@ dashboard_server_shared <- function(input, output, session, data, state_name, fe
   NOT_MARKED_SHOWING <- data[["NOT_MARKED_SHOWING"]]
   NOT_MARKED_SHOWING_HE <- data[["NOT_MARKED_SHOWING_HE"]]
   PAY_BANDS <- data[["PAY_BANDS"]]
+  vacancy_rate_domain <- data[["vacancy_rate_domain"]]
+  vacancy_rate_palette <- data[["vacancy_rate_palette"]]
+  WINDOW_WEEKS <- data[["WINDOW_WEEKS"]]
 
-  feedback_server(input, output, session, repo = feedback_repo, state_name = state_name)
+  feedback_server(input, output, session, repo = feedback_repo, state_name = state_name, timezone = timezone)
 
   selected_district <- shiny::reactiveVal(NULL)
   selected_institution <- shiny::reactiveVal(NULL)
@@ -177,17 +188,6 @@ dashboard_server_shared <- function(input, output, session, data, state_name, fe
     keep <- !home_not_marked() | ccdata$.Not_Marked
     top_job_types_table(ccdata$.Job_Type[keep], he_jobtype_weekly_totals, "#4a3aa7", "jobtype_view_he")
   }, sanitize.text.function = function(x) x)
-
-  output$he_new_table <- DT::renderDT({
-    df <- he_new_this_week
-    if (!identical(input$he_new_appointment, "all")) {
-      df <- df %>% dplyr::filter(Appointment == input$he_new_appointment)
-    }
-    DT::datatable(
-      df %>% dplyr::select(Title, Institution, Location, Appointment, Category, Link),
-      options = list(scrollX = TRUE)
-    )
-  })
 
   # ------------------ Open Research Downloads ------------------
   output$download_active_k12 <- shiny::downloadHandler(
@@ -1408,6 +1408,13 @@ dashboard_server_shared <- function(input, output, session, data, state_name, fe
     )
   })
 
+  # The blocks that take a state setting (map view, Institution Summary, HE slider): R/app_server_configured.R.
+  dashboard_server_configured(input, output, session, combined_map_data = combined_map_data, ccdata = ccdata,
+                              k12sum = k12sum, hesum_he = hesum_he, vacancy_rate_palette = vacancy_rate_palette,
+                              vacancy_rate_domain = vacancy_rate_domain, WINDOW_WEEKS = WINDOW_WEEKS,
+                              filtered_hesum = filtered_hesum, map_view = map_view, he_page_length = he_page_length,
+                              he_shared_salary_note = he_shared_salary_note)
+
   list(selected_district = selected_district, selected_institution = selected_institution,
        selected_k12_query = selected_k12_query, selected_he_query = selected_he_query,
        selected_pay_band = selected_pay_band, selected_k12_type = selected_k12_type,
@@ -1430,6 +1437,7 @@ dashboard_server_data_names <- function() {
     "he_job_duration_spells", "he_jobtype_weekly_totals", "he_new_this_week", "hesum_he", "hesum_he_agg",
     "HIDDEN_COLS", "IPEDS_SALARY_SOURCE_URL", "job_duration_spells", "K12_CATEGORY_COLORS_AGG",
     "K12_CATEGORY_COLORS_DETAIL", "k12_district_weekly_totals", "k12_jobtype_weekly_totals", "k12sum",
-    "k12sum_agg", "last_refreshed_date", "NOT_MARKED_SHOWING", "NOT_MARKED_SHOWING_HE", "PAY_BANDS")
+    "k12sum_agg", "last_refreshed_date", "NOT_MARKED_SHOWING", "NOT_MARKED_SHOWING_HE", "PAY_BANDS",
+    "vacancy_rate_domain", "vacancy_rate_palette", "WINDOW_WEEKS")
 }
 

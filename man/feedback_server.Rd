@@ -4,7 +4,7 @@
 \alias{feedback_server}
 \title{Feedback form server}
 \usage{
-feedback_server(input, output, session, repo, state_name)
+feedback_server(input, output, session, repo, state_name, timezone)
 }
 \arguments{
 \item{input, output, session}{The Shiny server arguments.}
@@ -12,6 +12,8 @@ feedback_server(input, output, session, repo, state_name)
 \item{repo}{GitHub repo ("owner/name"); the \code{FEEDBACK_REPO} environment variable overrides it.}
 
 \item{state_name}{State name for the issue text.}
+
+\item{timezone}{The state's time zone (an \code{OlsonNames()} entry), for the report time in the issue.}
 }
 \description{
 Checks a submitted report (spam and validation rules) and, if it passes, opens one GitHub issue in \code{repo}.
