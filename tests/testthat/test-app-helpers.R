@@ -210,3 +210,23 @@ test_that("part-time staff aren't adjunct faculty (2026-11-17 review, bug 9)", {
   expect_equal(classify_he_appointment(t), c(rep("Other / not faculty", 3), rep("Adjunct/part-time faculty", 3),
                                              "Faculty/instructor (non-adjunct)"))
 })
+
+test_that("find_k12_new_postings(): an ID change or a title edit is not new; a second same-title opening is", {
+  h <- data.frame(
+    Archive_Date = as.Date(c(rep("2026-11-13", 3), rep("2026-11-20", 4))),
+    Posting_ID = c("a", "b", "c", "a2", "b", "d", "c"),
+    title = c("Math Teacher", "Aide (Open Until Filled)", "Cook", "Math Teacher", "Aide", "Counselor", "Cook"),
+    location = c("HS", "MS", "ES", "HS", "MS", "HS", "ES"),
+    District = "Fort Washakie",
+    stringsAsFactors = FALSE
+  )
+  # a -> a2: a gone, same title/location/district (ID change); b: same ID, edited title; d: new
+  expect_equal(find_k12_new_postings(h)$Posting_ID, "d")
+  expect_equal(nrow(find_k12_new_postings(h[h$Archive_Date == as.Date("2026-11-20"), ])), 0)
+  # Same title at another location is new
+  h2 <- rbind(h, transform(h[4, ], Posting_ID = "e", location = "MS"))
+  expect_setequal(find_k12_new_postings(h2)$Posting_ID, c("d", "e"))
+  # A second Cook next to c (still listed) is new; two new Math Teachers replacing one gone: one is new
+  h3 <- rbind(h, transform(h[7, ], Posting_ID = "c2"), transform(h[4, ], Posting_ID = "a3"))
+  expect_setequal(find_k12_new_postings(h3)$Posting_ID, c("d", "c2", "a3"))
+})

@@ -1,3 +1,15 @@
+# edjobs 0.70.0
+
+* **One "new this week" rule for K-12, `find_k12_new_postings()`** (step 7 slice 3, part 2; Mike chose rule A in
+  its paired form, 2026-11-21): a posting is new when its `Posting_ID` was not in the previous weekly snapshot,
+  except an ID change: a new ID taking the place, one for one, of a previous posting with the same title, location
+  and district whose ID is gone. Montana counted every new `Posting_ID` (ID churn showed as new: MT 11-03, 159
+  postings); Wyoming a new title + location + district (a title edit showed as new: WY 11-13, 5; a second same-title
+  opening did not), and its Jobs filter also kept every current posting sharing a new one's title and district
+  (198 rows over the archive). Over the archives: MT 889 by ID -> 578, WY 2,371 by its rule -> 2,439.
+* `output$k12_jobs` (the K-12 Jobs table) moves into `dashboard_server_shared()`, filtering "new this week" by
+  `Posting_ID`. `data` now also needs `k12_new_this_week`, and `combineddata` needs `Posting_ID`.
+
 # edjobs 0.69.0
 
 * **`dashboard_server_shared()` takes the server blocks that differed only by a setting** (step 7 slice 3, part 1;
