@@ -1,3 +1,9 @@
+# edjobs 0.63.0
+
+* **`jobs_tab_panel()`: the K-12 and Higher Ed Jobs tabs' UI** (step 7 slice 2b). Both Jobs tabs were the same
+  `nav_panel()` in both states' `app.R`: quick filter, filter status, pay line and table; Higher Ed adds the
+  Appointment filter. The state passes the level and its "About the pay columns" note.
+
 # edjobs 0.62.0
 
 * **`map_tab_panel()`: the Map tab's UI** (step 7 slice 2b, second tab). Both states' `app.R` had the same filters
