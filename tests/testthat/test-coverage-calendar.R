@@ -51,6 +51,38 @@ test_that("the latest attempt of a rerun wins, and off-registry sources need a p
   expect_equal(r2$Status[r2$Entity == "Niobrara County School District 1"], "not_logged")
 })
 
+test_that("an entity with extra sources is healthy only when all are; boards it shares take that status", {
+  # UM: staff jobs on NEOGOV, faculty jobs on Interfolio (MT, 2026-11-21).
+  um <- c("University of Montana" = "University of Montana (Interfolio faculty)")
+  log_ok <- cc_log(c("2026-11-23 07:50:00", "University of Montana", "ok", "39"),
+                   c("2026-11-23 07:51:00", "University of Montana (Interfolio faculty)", "ok", "19"))
+  r <- build_coverage_calendar(log_ok, "2026-11-23", he_entities = c("University of Montana", "Missoula College"),
+                               shared_boards = c("Missoula College" = "University of Montana"), extra_sources = um)
+  expect_equal(r$Entity, c("Missoula College", "University of Montana"))   # the second source is no entity of its own
+  expect_equal(r$Status, c("ok", "ok"))
+  expect_equal(r$N_Rows, c(58L, 58L))
+  expect_equal(r$Source[2], "University of Montana; University of Montana (Interfolio faculty)")
+
+  log_bad <- cc_log(c("2026-11-23 07:50:00", "University of Montana", "ok", "39"),
+                    c("2026-11-23 07:51:00", "University of Montana (Interfolio faculty)", "error", "0", "HTTP 503"))
+  r <- build_coverage_calendar(log_bad, "2026-11-23", he_entities = c("University of Montana", "Missoula College"),
+                               shared_boards = c("Missoula College" = "University of Montana"), extra_sources = um)
+  expect_equal(r$Status, c("error", "error"))
+  expect_equal(r$Error, c("HTTP 503", "HTTP 503"))
+  expect_equal(r$N_Rows, c(39L, 39L))
+
+  # The extra source not logged at all is not healthy either; with no extra_sources nothing changes.
+  log_one <- cc_log(c("2026-11-23 07:50:00", "University of Montana", "ok", "39"))
+  expect_equal(build_coverage_calendar(log_one, "2026-11-23", he_entities = "University of Montana",
+                                       extra_sources = um)$Status, "not_logged")
+  expect_equal(build_coverage_calendar(log_one, "2026-11-23", he_entities = "University of Montana")$Status, "ok")
+  # Neither logged: no source, not_logged.
+  none <- build_coverage_calendar(cc_log(c("2026-11-23 07:00:00", "Montana Tech", "ok", "5")), "2026-11-23",
+                                  he_entities = "University of Montana", extra_sources = um)
+  expect_equal(none$Status, "not_logged")
+  expect_true(is.na(none$Source))
+})
+
 test_that("refresh_coverage_calendar replaces a same-day rerun and keeps other runs", {
   dir <- withr::local_tempdir()
   log_path <- file.path(dir, "scrape_log.csv"); path <- file.path(dir, "coverage_calendar.csv")

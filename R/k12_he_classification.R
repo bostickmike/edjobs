@@ -690,7 +690,10 @@ extract_posted_pay <- function(text) {
         grepl("\\bworth\\b|valued at|benefits? (package )?value", near_before) ||
         # District housing offered with the job ("3 houses and 7 apartments
         # starting at $350 per month") is a cost, not pay.
-        grepl("apartment|housing|\\bhouses?\\b|\\brent\\b|\\brental|\\blease|teacherage|utilities", near_before)
+        grepl("apartment|housing|\\bhouses?\\b|\\brent\\b|\\brental|\\blease|teacherage|utilities", near_before) ||
+        # An amount in millions or billions ("access to proceeds from the $1M Jessie Bierman endowment", UM's
+        # Interfolio, 2026-11-21) is a fund or a grant, never one person's pay; "$1M" was read as $1.
+        grepl("^\\s?(m|mm|mil|million|billion|bn?)(?![a-z-])", after, perl = TRUE)
       # An amount continuing a list that starts with a skipped one ("Loan
       # Assistance of up to $3,000, $4,000 & $5,000") is skipped with it,
       # unless it carries its own pay unit ("bonus $1,000, $42,000 annual salary").

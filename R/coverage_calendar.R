@@ -28,6 +28,14 @@
 #' - Institutions without a board of their own (MT: Highlands College on
 #'   Montana Tech's JazzHR; Helena College, Missoula College and UM Western on
 #'   UM's NEOGOV) take their parent board's status (`shared_boards`).
+#' - An entity whose postings come from more than one scrape (MT: University
+#'   of Montana's staff jobs on NEOGOV and its faculty jobs on Interfolio)
+#'   lists the other sources' logged names in `extra_sources`. It is healthy
+#'   only when every one of them is: otherwise a failed second scrape would
+#'   read that source's postings as ended. Its row's Status is the first
+#'   unhealthy one (own source first), Source joins the names with "; ",
+#'   N_Rows is their total, and Error the first error. Institutions sharing
+#'   its board take this combined status.
 #' - Postings that come only through a statewide feed (OPI in MT; WSBA in WY,
 #'   e.g. BOCES and academies) take the feed's row.
 #' - Reference tables, Census/IPEDS context and the LLM shadow pilot are not
@@ -76,11 +84,13 @@ latest_log_entries <- function(scrape_log, run_date) {
 #' @param data_he See the description.
 #' @param feeds See the description.
 #' @param shared_boards See the description.
+#' @param extra_sources Named list (or named character vector): entity -> the
+#'   other source names it logs under.
 #' @param previous See the description.
 #' @keywords internal
 build_coverage_calendar <- function(scrape_log, run_date, k12_entities = character(0), he_entities = character(0),
                                     data_k12 = character(0), data_he = character(0), feeds = character(0),
-                                    shared_boards = character(0), previous = NULL) {
+                                    shared_boards = character(0), extra_sources = list(), previous = NULL) {
   l <- latest_log_entries(scrape_log, run_date)
   l$entity <- coverage_entity_name(l$source)
 
@@ -106,11 +116,19 @@ build_coverage_calendar <- function(scrape_log, run_date, k12_entities = charact
   entity_rows <- function(entities, segment) {
     if (length(entities) == 0) return(NULL)
     via <- ifelse(entities %in% names(shared_boards), shared_boards[entities], entities)
-    m <- match(via, l$entity)
-    data.frame(Segment = segment, Entity = entities, Source = l$source[m],
-               Status = ifelse(is.na(m), "not_logged", l$status[m]),
-               N_Rows = ifelse(is.na(m), 0L, as.integer(l$n_rows[m])),
-               Error = l$error_message[m])
+    dplyr::bind_rows(lapply(seq_along(entities), function(i) {
+      sources <- c(via[i], if (via[i] %in% names(extra_sources)) as.character(extra_sources[[via[i]]]))
+      m <- match(sources, l$entity)
+      status <- ifelse(is.na(m), "not_logged", l$status[m])
+      errors <- l$error_message[m]
+      bad <- which(status != COVERAGE_HEALTHY_STATUS)
+      data.frame(Segment = segment, Entity = entities[i],
+                 Source = if (all(is.na(m))) NA_character_ else paste(l$source[m[!is.na(m)]], collapse = "; "),
+                 Status = if (length(bad)) status[bad[1]] else COVERAGE_HEALTHY_STATUS,
+                 N_Rows = sum(ifelse(is.na(m), 0L, as.integer(l$n_rows[m]))),
+                 Error = if (any(!is.na(errors))) errors[!is.na(errors)][1] else NA_character_,
+                 stringsAsFactors = FALSE)
+    }))
   }
 
   out <- dplyr::bind_rows(entity_rows(k12, "K-12"), entity_rows(he, "HE"), dplyr::bind_rows(feed_rows))
