@@ -1,3 +1,18 @@
+# edjobs 0.75.0
+
+* **Title lint: "document, not a job"** (`lint_title_shape()`, `TITLE_DOCUMENT_PATTERN`; test-kit plan item 2,
+  2026-11-21). A title naming a notice, notification, handbook, lunch or breakfast menu, minutes, agenda,
+  newsletter, calendar, checklist, a Title I parent letter or an enrollment or application form, or a title that is
+  a heading or a no-openings line ("Job Description", "Requirements:", "Summary:", "Click here", "No open/current
+  ..."), goes into the drift report's title section. MT's Ulm counted a Title I parent notice as a posting from 11-03
+  to 11-19. The lint only reports; no row is dropped.
+* Replayed on every distinct archived title in both states (14,749 source-title pairs, all K-12 and HE archives):
+  5 newly flagged, all real non-jobs: Deer Lodge "No current openings", Terry "No open positions at this time",
+  Fair-Mont-Egan "Job Description", Ennis's "Summary: ..." paragraph and Stone Child College's "H1 B Hiring
+  Notification". Ulm's notice and Judith Gap's "Requirements: ..." were already flagged by other rules. Words that
+  hit real jobs in the replay are left out: "policy", "I-9", "W-4", "registration", a bare "menu", and "Job
+  Description" with a job after it ("Job Description - Music Teacher K12").
+
 # edjobs 0.74.0
 
 * **New weekly check: sources with no rows in their last weekly runs** (`check_silent_sources_step()`,

@@ -355,10 +355,25 @@ test_that("lint_title_shape flags the misread titles found in the archives", {
                  "remainder of the 2026-2027 school year. The ideal candidate will work closely with the building",
                  "principal to ensure proper supervision of students, work with staff to help provide appropriate",
                  "virtual classes, and help to develop virtual programs at the secondary level.")
-  expect_equal(lint_title_shape(ennis), "schedule or detail sentence; field label; too long")
+  expect_equal(lint_title_shape(ennis), "schedule or detail sentence; field label; document, not a job; too long")
   expect_equal(lint_title_shape("CustodianEndFragment (NEW)$18.90–$20.00/hour"), "markup left in")  # Cheyenne Classical
   expect_equal(lint_title_shape(c(NA_character_, "", "  ")), rep("blank title", 3))
   expect_equal(lint_title_shape(character(0)), character(0))
+})
+
+test_that("lint_title_shape flags a document or page read as a posting (test-kit item 2)", {
+  docs <- c("Annual Parent Notice - Right to Request Teacher Qualifications Title I Part A Targeted Assistance",  # Ulm
+            "No current openings",             # Deer Lodge
+            "No open positions at this time",  # Terry
+            "Job Description",                 # Fair-Mont-Egan
+            "H1 B Hiring Notification",        # Stone Child College
+            "2026-27 Lunch Menu", "Board Meeting Minutes", "Student Handbook", "Parent and Family Engagement Policy")
+  expect_true(all(grepl("document, not a job", lint_title_shape(docs), fixed = TRUE)))
+  # Replayed on every archived title in both states: these name real jobs
+  jobs <- c("Rural Policy Reporter, Broadcast Media-Montana Public Radio", "Human Resources & I-9 Specialist",
+            "Registrar and Registration Coordinator", "Registration and Records Process Assistant",
+            "School Menu Coordinator", "Job Description - Music Teacher K12")
+  expect_false(any(grepl("document, not a job", lint_title_shape(jobs), fixed = TRUE)))
 })
 
 test_that("lint_title_shape leaves real titles alone, abbreviations and start dates included", {
