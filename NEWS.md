@@ -8,6 +8,12 @@
   Source joins the logged names with "; ", N_Rows is their total, and Error the first error. Institutions on its
   board (`shared_boards`: Missoula College, Helena College, UM Western) take the combined status. With no
   `extra_sources`, rows are as before.
+* **Posted pay: an amount in millions or billions is not pay** (`extract_posted_pay()`). UM's Flathead Lake
+  Biological Station director posting mentions "the $1M Jessie Bierman endowment", which was read as pay of $1. An
+  amount followed by M, MM, mil, million, billion or B is now skipped like a bonus or fee, so a salary in the same
+  posting is still read. "$45,000 MA degree" and "$18.50 per hour M-F" are unaffected. No archived posting in
+  either state has a Pay_Text with such an amount (4,338 archived rows with pay, 2026-11-21), so no committed value
+  changes.
 
 # edjobs 0.71.0
 

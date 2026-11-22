@@ -58,6 +58,19 @@ test_that("extract_posted_pay skips a benefits package value and a $0.00 blank p
   expect_equal(p$Pay_Unit, c(NA, NA, "year", "year"))
 })
 
+test_that("extract_posted_pay skips an amount in millions (a fund or grant), not a salary beside it", {
+  # UM's Interfolio Flathead Lake Bio Station director, 2026-11-21 ("$1M" was read as $1).
+  p <- extract_posted_pay(c(
+    "the successful applicant may be provided access to proceeds from the $1M Jessie Bierman endowment",
+    "a $2.5 million NSF award; Salary: $85,000- $98,000 (salary commensurate with experience)",
+    "Research funding of $1.2 billion annually",
+    "Salary: $45,000 MA degree preferred",
+    "$18.50 per hour M-F schedule"
+  ))
+  expect_equal(p$Pay_Min, c(NA, 85000, NA, 45000, 18.5))
+  expect_equal(p$Pay_Max, c(NA, 98000, NA, 45000, 18.5))
+})
+
 test_that("ensure_posted_pay_columns pads a zero-row frame", {
   out <- ensure_posted_pay_columns(data.frame(Title = character(0)))
   expect_equal(names(out), c("Title", "Pay_Min", "Pay_Max", "Pay_Unit", "Pay_Text"))
