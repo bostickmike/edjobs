@@ -129,3 +129,47 @@ test_that("mark_drift_repeats_step puts the block on top, and works with no hist
   unlink("report.md")
   expect_output(mark_drift_repeats_step("report.md", "prev.json"), "No drift report")
 })
+
+test_that("an acknowledgement with Details covers only what was checked; anything else is new again", {
+  sec <- "On OPI but not on our scrape (counted from OPI; possible scraper misses)"
+  baker <- function(...) report("#### On OPI but not on our scrape (counted from OPI; possible scraper misses)", "",
+                                sprintf("- **Baker Public Schools** (%d): %s", length(c(...)), paste(c(...), collapse = "; ")))
+  checked <- c("English (posted 2026-10-28)", "Special Education (posted 2026-10-05)")
+  expect_equal(drift_report_items(baker(checked))$details, paste(checked, collapse = "; "))
+  prev <- lapply(c("2026-11-03", "2026-11-10"), function(d) list(created = d, body = paste(baker(checked), collapse = "\n")))
+  ack <- data.frame(Section = sec, Item = "Baker Public Schools", Details = paste(checked, collapse = "; "),
+                    Reason = "checked on the board", Acknowledged = "2026-11-22")
+  # The checked postings, or fewer of them (one closed): acknowledged.
+  r <- classify_drift_repeats(baker(checked), prev, ack)
+  expect_true(r$acknowledged); expect_equal(r$unchecked, "")
+  expect_true(classify_drift_repeats(baker(checked[1]), prev, ack)$acknowledged)
+  # A posting nobody checked: back as new, naming it; the run count is kept.
+  r <- classify_drift_repeats(baker(c(checked, "Mathematics (posted 2026-11-20)")), prev, ack)
+  expect_false(r$acknowledged); expect_equal(r$status, "new"); expect_equal(r$runs, 3L)
+  expect_equal(r$unchecked, "Mathematics (posted 2026-11-20)")
+  g <- build_drift_glance_markdown(r)
+  expect_true(paste0("- ", sec, ": Baker Public Schools -- not yet checked: Mathematics (posted 2026-11-20)") %in% g)
+  # A relisting with a new date is a new posting too.
+  expect_false(classify_drift_repeats(baker("English (posted 2026-11-21)"), prev, ack)$acknowledged)
+  # A figure: acknowledged while the report says the same thing.
+  swan <- function(v) report("Automated salary VALUE plausibility check flagged something worth a human look.", "",
+    sprintf("- **K-12 teacher 10th pctile salary (MT DLI)** (Swan River School District #4): %s is outside the expected $20,000-$150,000 range", v))
+  a2 <- data.frame(Section = "salary VALUE plausibility check", Item = "K-12 teacher 10th pctile salary (MT DLI) (Swan River School District #4)",
+                   Details = "$16,900 is outside the expected $20,000-$150,000 range")
+  expect_true(classify_drift_repeats(swan("$16,900"), list(), a2)$acknowledged)
+  expect_false(classify_drift_repeats(swan("$1,690"), list(), a2)$acknowledged)
+  # A line with nothing to check against (postings on nested lines) isn't covered by a Details acknowledgement.
+  nested <- report("#### On OPI but not on our scrape (counted from OPI; possible scraper misses)", "",
+                   "- **Baker Public Schools** (2):", "  - English (posted 2026-10-28)")
+  r <- classify_drift_repeats(nested, prev, ack)
+  expect_false(r$acknowledged); expect_equal(r$status, "new"); expect_match(r$unchecked, "nothing to check")
+  # A count on a part: another copy of the same title and date changes the part, so it is new.
+  a4 <- transform(ack, Details = "Physical Ed (posted 2026-10-25, 2 postings)")
+  expect_true(classify_drift_repeats(baker("Physical Ed (posted 2026-10-25, 2 postings)"), prev, a4)$acknowledged)
+  expect_false(classify_drift_repeats(baker("Physical Ed (posted 2026-10-25, 3 postings)"), prev, a4)$acknowledged)
+  # An en dash after the name is stripped like a colon.
+  expect_equal(drift_report_items(report("#### X", "", "- **Y** \u2013 a; b"))$details, "a; b")
+  # Empty or missing Details: the whole item, as before.
+  a3 <- transform(ack, Details = ""); expect_true(classify_drift_repeats(baker("Mathematics (posted 2026-11-20)"), prev, a3)$acknowledged)
+  expect_true(classify_drift_repeats(baker("Mathematics (posted 2026-11-20)"), prev, ack[, c("Section", "Item")])$acknowledged)
+})
