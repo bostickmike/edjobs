@@ -113,6 +113,10 @@ attach_scrape_log_errors <- function(flagged, scrape_log) {
   # that errored earlier in the run but succeeded on a later retry/re-run
   # must NOT be reported as currently broken, so status is checked on the
   # latest attempt, not on "was there ever an error this run".
+  # Rows that aren't a source's own scrape: MT's LLM shadow pilot ("LLMExtract: <district>", which never feeds the
+  # data) and reference-table refreshes ("Reference: ..."). A Gemini error must not read as the district's.
+  scrape_log <- scrape_log[!grepl("^(LLMExtract|Reference):", scrape_log$source), , drop = FALSE]
+  if (nrow(scrape_log) == 0) return(flagged)
   latest <- scrape_log[order(scrape_log$timestamp), ]
   latest <- latest[!duplicated(latest$source, fromLast = TRUE), ]
   errors <- latest[!is.na(latest$status) & latest$status == "error", ]
@@ -501,6 +505,10 @@ AUTOFIX_LABEL <- "scraper-autofix"
 #' `AUTOFIX_ELIGIBLE_VERDICTS`
 #' @export
 AUTOFIX_ELIGIBLE_VERDICTS <- "likely_broken"
+
+# A parser error that says the page no longer looks like the board (a redesign or a moved page), not that the site
+# failed: corroboration still renders the page and the source can get an auto-fix issue (edjobs 0.77.0).
+PAGE_CHANGED_ERROR_PATTERN <- "has no jobs list"
 
 #' `AUTOFIX_MARKER_RE`
 #' @keywords internal
@@ -1386,20 +1394,26 @@ find_silent_sources <- function(counts, sources, n_runs = 4, acknowledged = char
 
 #' The drift-report section for silent sources
 #'
-#' @param silent `find_silent_sources()`'s result with a `type` column ("K-12" / "Higher Ed").
+#' @param silent `find_silent_sources()`'s result with a `type` column ("K-12" / "Higher Ed"), and optionally
+#'   `scrape_error` (this run's error for the source; an errored source is listed even when acknowledged).
 #' @param n_runs The runs the sources were silent in.
 #' @param date The run date for the heading.
 #' @param ack_file The acknowledgement file named in the text.
-#' @return Markdown lines; none when no unacknowledged source is silent.
+#' @return Markdown lines; none when every silent source is acknowledged and none errored.
 #' @export
 build_silent_sources_report_markdown <- function(silent, n_runs, date = Sys.Date(),
                                                  ack_file = "silent_sources_acknowledged.csv") {
-  new <- silent[!silent$acknowledged, , drop = FALSE]
+  if (!"scrape_error" %in% names(silent)) silent$scrape_error <- rep(NA_character_, nrow(silent))
+  errored <- !is.na(silent$scrape_error) & nzchar(silent$scrape_error)
+  new <- silent[!silent$acknowledged | errored, , drop = FALSE]
   if (nrow(new) == 0) return(character(0))
   new <- new[order(new$type != "K-12", new$source), , drop = FALSE]
   since <- ifelse(is.na(new$last_with_rows), "no rows in any archived weekly run",
                   paste("last rows", new$last_with_rows))
-  n_ack <- sum(silent$acknowledged)
+  err <- !is.na(new$scrape_error) & nzchar(new$scrape_error)
+  since[err] <- paste0(since[err], ifelse(new$acknowledged[err], " (acknowledged as empty)", ""),
+                       "; this run's scrape errored: ", new$scrape_error[err])
+  n_ack <- sum(silent$acknowledged & !errored)
   c(
     paste0("### Sources with no rows in their last ", n_runs, " weekly runs (", date, ")"),
     "",

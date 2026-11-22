@@ -389,7 +389,8 @@ corroborate_drift_step <- function(flagged_path = "/tmp/drift_flagged.csv", resu
       0L
     }
 
-    if (!is.na(row$scrape_error)) {
+    page_changed <- !is.na(row$scrape_error) && grepl(PAGE_CHANGED_ERROR_PATTERN, row$scrape_error)
+    if (!is.na(row$scrape_error) && !page_changed) {
       verdict <- "confirmed_broken"
     } else if (is.null(url)) {
       verdict <- "no_url_available"
@@ -404,6 +405,12 @@ corroborate_drift_step <- function(flagged_path = "/tmp/drift_flagged.csv", resu
                                                                      error = function(e) NULL))
       verdict <- combined$verdict
       llm_note <- combined$note
+    }
+
+    # The parser said the page no longer has its board: a code or registry fix, so an auto-fix issue.
+    if (page_changed && verdict %in% c("looks_genuinely_empty", "inconclusive", "likely_broken")) {
+      verdict <- "likely_broken"
+      llm_note <- paste0("the scraper says the page changed: ", row$scrape_error)
     }
 
     # Scored empty, but the statewide feed lists postings for it that its own board doesn't: the scraper is broken.

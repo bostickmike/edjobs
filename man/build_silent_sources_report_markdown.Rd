@@ -12,7 +12,8 @@ build_silent_sources_report_markdown(
 )
 }
 \arguments{
-\item{silent}{\code{find_silent_sources()}'s result with a \code{type} column ("K-12" / "Higher Ed").}
+\item{silent}{\code{find_silent_sources()}'s result with a \code{type} column ("K-12" / "Higher Ed"), and optionally
+\code{scrape_error} (this run's error for the source; an errored source is listed even when acknowledged).}
 
 \item{n_runs}{The runs the sources were silent in.}
 
@@ -21,7 +22,7 @@ build_silent_sources_report_markdown(
 \item{ack_file}{The acknowledgement file named in the text.}
 }
 \value{
-Markdown lines; none when no unacknowledged source is silent.
+Markdown lines; none when every silent source is acknowledged and none errored.
 }
 \description{
 The drift-report section for silent sources

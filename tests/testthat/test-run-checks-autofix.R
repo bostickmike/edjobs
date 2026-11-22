@@ -126,3 +126,27 @@ test_that("drift report: judged-empty sources come after the ones needing a look
   expect_equal(build_drift_report_markdown(row("Broken U", "likely_broken"), date = as.Date("2026-11-22"))[1],
                "Automated drift check flagged 1 source(s) as of 2026-11-22.")
 })
+
+test_that("corroboration: a parser's 'page changed' error is rendered and can get an auto-fix issue", {
+  # edjobs 0.77.0: a classic CyberSchool page with no jobs list stops the parser. That is a redesign or a moved
+  # page (a fix in code or the registry), unlike a site failure, so it isn't confirmed_broken.
+  old <- current_state_config(); withr::defer(set_state_config(old))
+  root <- withr::local_tempdir(); withr::local_dir(root); dir.create("app")
+  set_state_config(state_config("T", "00", "app",
+    feed = list(short_name = "FEED", label = "Statewide feed", url = "https://feed.example", discrepancy_file = "d.csv"),
+    scraper_sources = list(scraper_calls(list(
+      "Highwood" = list(fn = "f", args = list(), url = "https://highwood.example/District/Jobs/")), where = "a test"))))
+  write.csv(data.frame(District = "Other", title = "Cook", Posting_Source = "board"),
+            file.path("app", "combinedclean.csv"), row.names = FALSE)
+  write.csv(data.frame(name = "Highwood", mean_count = 4, n_weeks = 4, count = 0, type = "K-12",
+                       scrape_error = "CyberSchool page has no jobs list (div.pageData > div.listItem_list): not the jobs page, or the site changed",
+                       safety_net_vacancies = 0), "flagged.csv", row.names = FALSE)
+  rendered <- character(0)
+  withr::local_envvar(GEMINI_API_KEY = "")
+  capture.output(res <- corroborate_drift_step("flagged.csv", "results.csv", "report.md",
+                                               render = function(url) { rendered <<- c(rendered, url); "Jobs" },
+                                               today = as.Date("2026-11-22")))
+  expect_equal(rendered, "https://highwood.example/District/Jobs/")
+  expect_equal(res$verdict, "likely_broken")
+  expect_match(res$llm_note, "the scraper says the page changed", fixed = TRUE)
+})

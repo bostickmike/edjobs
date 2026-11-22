@@ -46,6 +46,20 @@ test_that("an empty board and non-CyberSchool HTML give zero rows with the colum
   }
 })
 
+test_that("a classic CyberSchool page with no jobs list is an error, not an empty board", {
+  # Frontier's real empty board, with its list container taken out: what a district's non-jobs page (or a changed
+  # site) looks like to the parser. Test-kit item 6, 2026-11-22.
+  html <- rd_fixture("cyberschool_frontier_empty_2026-11-14.html")
+  doc <- xml2::read_html(html)
+  expect_length(rvest::html_elements(doc, "div.pageData > div.listItem_list"), 1)
+  xml2::xml_remove(rvest::html_elements(doc, ".listItem_list"))
+  expect_error(parse_cyberschool_postings(as.character(doc), "https://www.frontierk8.org/District/Jobs/", "Wolf Point"),
+               "no jobs list")
+  # Mode "text" pages (Hinsdale, Lavina: "Untitled" pages) and pages that aren't classic CyberSchool are not checked.
+  expect_equal(nrow(parse_cyberschool_postings('<html><head><meta name="generator" content="Other CMS"></head><body></body></html>',
+                                               "https://x.org", "X")), 0)
+})
+
 test_that("cyberschool_date reads the platform's date forms, NA otherwise", {
   expect_equal(cyberschool_date(c("Friday, Aug 14, 2026 12:00:00 AM", "09/09/2026", "November 20, 2026", "2026-11-20",
                                   "Until position is filled.", "Feb 30, 2026", NA)),
