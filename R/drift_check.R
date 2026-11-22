@@ -679,6 +679,20 @@ TITLE_ABBREVIATION_PATTERN <- paste0(
   "Mr|Mrs|Ms|Dr|No|Vo|Ag|Phys|Res|Prof|Approx|Hrs|P\\.E|Ft)\\."
 )
 
+#' `TITLE_DOCUMENT_PATTERN`
+#'
+#' Titles that name a document or page, not a job (`lint_title_shape()`'s "document, not a job").
+#' @keywords internal
+# A page or file the scraper read as a posting: a notice, handbook, menu, minutes, a Title I parent letter, a
+# heading ("Job Description", "Requirements:"), a no-openings line (test-kit plan item 2, 2026-11-21; MT's Ulm read
+# a Title I parent notice for three weeks). "Policy", "I-9", "W-4", "registration" and a bare "menu" are left out:
+# they name real jobs ("Rural Policy Reporter", "Human Resources & I-9 Specialist", "Registration Coordinator",
+# "School Menu Coordinator"; replayed on every archived title in both states, 2026-11-22).
+TITLE_DOCUMENT_PATTERN <- paste0(
+  "(?i)\\b(notice|notification|handbook|(lunch|breakfast) menu|minutes|agenda|newsletter|calendar|checklist|",
+  "targeted assistance|title i part|parent and family|annual parent|enrollment form|application form)\\b|",
+  "^\\s*(job description\\s*$|requirements:|summary:|click here|no (open|current))")
+
 #' Lint title shape
 #' @param title See the description.
 #' @param max_chars See the description.
@@ -704,6 +718,7 @@ lint_title_shape <- function(title, max_chars = 200) {
                           t, ignore.case = TRUE),
     "markup left in" = grepl("StartFragment|EndFragment|&[a-z]+;|&#[0-9]+;|<[a-z/][^>]*>|\u200b", t, ignore.case = TRUE, perl = TRUE),
     "file name" = grepl("[A-Za-z]{2,}_[A-Za-z]{2,}|\\s-\\sCopy$", t),
+    "document, not a job" = grepl(TITLE_DOCUMENT_PATTERN, t, perl = TRUE),
     "too long" = nchar(t) > max_chars
   )
   reasons <- do.call(cbind, lapply(names(rules), function(r) ifelse(rules[[r]], r, NA_character_)))
@@ -756,7 +771,7 @@ build_title_lint_report_markdown <- function(hits, date = Sys.Date(), max_per_so
   c(
     paste0("### Titles that don't look like job titles (", date, ")"),
     "",
-    paste("This week's postings whose title looks like something other than a job title: page text, a",
+    paste("This week's postings whose title looks like something other than a job title: page text, a document or notice, a",
           "summary, a heading, or pay the Posted Pay column doesn't carry. Usually the scraper is reading",
           "the wrong element. These titles are classified as they are, so they can land in the wrong bucket."),
     "",
