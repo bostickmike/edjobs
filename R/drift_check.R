@@ -1363,7 +1363,7 @@ build_silent_sources_report_markdown <- function(silent, n_runs, date = Sys.Date
   new <- silent[!silent$acknowledged, , drop = FALSE]
   if (nrow(new) == 0) return(character(0))
   new <- new[order(new$type != "K-12", new$source), , drop = FALSE]
-  since <- ifelse(is.na(new$last_with_rows), "no rows in any archive checked",
+  since <- ifelse(is.na(new$last_with_rows), "no rows in any archived weekly run",
                   paste("last rows", new$last_with_rows))
   n_ack <- sum(silent$acknowledged)
   c(
