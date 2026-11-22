@@ -13,6 +13,7 @@ build_coverage_calendar(
   data_he = character(0),
   feeds = character(0),
   shared_boards = character(0),
+  extra_sources = list(),
   previous = NULL
 )
 }
@@ -32,6 +33,9 @@ build_coverage_calendar(
 \item{feeds}{See the description.}
 
 \item{shared_boards}{See the description.}
+
+\item{extra_sources}{Named list (or named character vector): entity -> the
+other source names it logs under.}
 
 \item{previous}{See the description.}
 }

@@ -36,6 +36,14 @@ dropped to match the registry.
 \item Institutions without a board of their own (MT: Highlands College on
 Montana Tech's JazzHR; Helena College, Missoula College and UM Western on
 UM's NEOGOV) take their parent board's status (\code{shared_boards}).
+\item An entity whose postings come from more than one scrape (MT: University
+of Montana's staff jobs on NEOGOV and its faculty jobs on Interfolio)
+lists the other sources' logged names in \code{extra_sources}. It is healthy
+only when every one of them is: otherwise a failed second scrape would
+read that source's postings as ended. Its row's Status is the first
+unhealthy one (own source first), Source joins the names with "; ",
+N_Rows is their total, and Error the first error. Institutions sharing
+its board take this combined status.
 \item Postings that come only through a statewide feed (OPI in MT; WSBA in WY,
 e.g. BOCES and academies) take the feed's row.
 \item Reference tables, Census/IPEDS context and the LLM shadow pilot are not

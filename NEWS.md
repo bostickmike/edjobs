@@ -1,3 +1,14 @@
+# edjobs 0.72.0
+
+* **Coverage calendar: an entity can have more than one source** (`build_coverage_calendar()` /
+  `refresh_coverage_calendar()`, new argument `extra_sources`: entity -> the other names it logs under). Montana's
+  University of Montana gets its faculty jobs from Interfolio as well as its staff jobs from NEOGOV. An entity is
+  healthy only when every one of its sources is, so a failed Interfolio scrape leaves those postings' ends unknown
+  (censored) instead of reading them as closed. The row's Status is the first unhealthy one (own source first),
+  Source joins the logged names with "; ", N_Rows is their total, and Error the first error. Institutions on its
+  board (`shared_boards`: Missoula College, Helena College, UM Western) take the combined status. With no
+  `extra_sources`, rows are as before.
+
 # edjobs 0.71.0
 
 * **`dashboard_server_shared()` takes the Districts tab and the map markers** (step 7 slice 3, part 3;
