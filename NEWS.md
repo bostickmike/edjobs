@@ -1,3 +1,14 @@
+# edjobs 0.80.0
+
+* **An acknowledged drift item covers only what was checked** (`classify_drift_repeats()`, `parse_drift_report()`,
+  `build_drift_glance_markdown()`; MT drift triage, 2026-11-22). `drift_acknowledged.csv` takes an optional `Details`
+  column: what the report listed when a person checked it, "; "-separated (the postings at a district, as "Title
+  (posted YYYY-MM-DD)", or the figure flagged). Such an entry acknowledges the item only while every "; "-separated
+  part of the bullet's text after its name is one of those. A new posting at an acknowledged district, or a changed
+  figure, brings the item back under "New this run", naming what isn't checked yet (`unchecked`). Without `Details`,
+  or with it empty, an entry covers the whole item, as before. `parse_drift_report()` items gain a `details` column.
+  This keeps an acknowledgement from hiding a later scraper miss at the same district.
+
 # edjobs 0.79.0
 
 * **A "$"-less number below a pay amount no longer makes a range** (`extract_posted_pay()`; MT drift triage,
