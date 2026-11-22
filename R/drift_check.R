@@ -1317,3 +1317,65 @@ summarize_live_check <- function(source_name, result, expected_titles = characte
   }
   list(pass = TRUE, markdown = out)
 }
+
+#' Sources that produced no rows in their last weekly runs
+#'
+#' A source whose scraper reads the wrong page, or a board that is gone, can return zero rows every week without
+#' anything failing: the drift check judges a source only against its own average, and a source that never had rows
+#' has none (test-kit plan item 1, 2026-11-21: MT had 14 K-12 boards and one college with no row in any archive).
+#' Counts each source's rows in each run (one per week, the week's last run) and lists those with none in any of
+#' the last `n_runs`. Fewer runs than `n_runs` on hand: nothing is listed.
+#' @param counts A list of named integer vectors, one per run (names: sources; values: that run's rows), oldest first.
+#' @param sources The sources expected to produce rows (a registry's names).
+#' @param n_runs How many of the latest runs a source must be silent in.
+#' @param acknowledged Sources already known to be silent (listed apart, not as new findings).
+#' @return A data frame: `source`, `acknowledged` (TRUE/FALSE), `last_with_rows` (the latest run with rows among
+#'   `counts`' names, NA if none), one row per silent source.
+#' @export
+find_silent_sources <- function(counts, sources, n_runs = 4, acknowledged = character(0)) {
+  empty <- data.frame(source = character(0), acknowledged = logical(0), last_with_rows = character(0),
+                      stringsAsFactors = FALSE)
+  if (length(counts) < n_runs || !length(sources)) return(empty)
+  rows_in <- function(run, s) { v <- run[s]; v[is.na(v)] <- 0L; as.integer(v) }
+  latest <- utils::tail(counts, n_runs)
+  silent <- Reduce(`&`, lapply(latest, function(run) rows_in(run, sources) == 0L))
+  src <- sources[silent]
+  if (!length(src)) return(empty)
+  run_names <- names(counts)
+  last <- vapply(src, function(s) {
+    has <- vapply(counts, function(run) rows_in(run, s) > 0L, logical(1))
+    if (!any(has) || is.null(run_names)) NA_character_ else run_names[max(which(has))]
+  }, character(1))
+  data.frame(source = src, acknowledged = src %in% acknowledged, last_with_rows = unname(last),
+             stringsAsFactors = FALSE)
+}
+
+#' The drift-report section for silent sources
+#'
+#' @param silent `find_silent_sources()`'s result with a `type` column ("K-12" / "Higher Ed").
+#' @param n_runs The runs the sources were silent in.
+#' @param date The run date for the heading.
+#' @param ack_file The acknowledgement file named in the text.
+#' @return Markdown lines; none when no unacknowledged source is silent.
+#' @export
+build_silent_sources_report_markdown <- function(silent, n_runs, date = Sys.Date(),
+                                                 ack_file = "silent_sources_acknowledged.csv") {
+  new <- silent[!silent$acknowledged, , drop = FALSE]
+  if (nrow(new) == 0) return(character(0))
+  new <- new[order(new$type != "K-12", new$source), , drop = FALSE]
+  since <- ifelse(is.na(new$last_with_rows), "no rows in any archive checked",
+                  paste("last rows", new$last_with_rows))
+  n_ack <- sum(silent$acknowledged)
+  c(
+    paste0("### Sources with no rows in their last ", n_runs, " weekly runs (", date, ")"),
+    "",
+    paste("Registry sources that returned nothing in each of the last", n_runs, "weekly runs. A board with no",
+          "openings is possible, but so is a scraper reading the wrong page or a board that moved. Check the page;",
+          "fix the scraper or registry row, or add the source with a reason to", paste0("`", ack_file, "`"),
+          "if it is really empty."),
+    "",
+    sprintf("- **%s** (%s): %s", new$source, new$type, since),
+    if (n_ack > 0) c("", sprintf("%d acknowledged silent source(s) not listed (`%s`).", n_ack, ack_file)),
+    ""
+  )
+}

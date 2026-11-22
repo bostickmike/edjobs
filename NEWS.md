@@ -1,3 +1,20 @@
+# edjobs 0.74.0
+
+* **New weekly check: sources with no rows in their last weekly runs** (`check_silent_sources_step()`,
+  `find_silent_sources()`, `build_silent_sources_report_markdown()`; test-kit plan item 1, 2026-11-21). A K-12
+  registry district or HE institution with no rows in any of the last 4 weekly runs (one per week, the week's last
+  run, today's included) goes into the drift report, unless it is listed with a reason in the repo's
+  `silent_sources_acknowledged.csv` (`Type`, `Source`, `Reason`, `Acknowledged`). The drift check judges a source
+  against its own average, so a source that never had rows was never flagged: MT's Ulm read a parent notice for
+  weeks, and five CyberSchool parsers were written against empty boards. K-12 counts the board's rows, not the
+  statewide feed's; an archive without `Posting_Source` counts every row under its district (it can only make a
+  source look less silent). `skip_platforms` leaves out registry rows with no board (MT's `OPIOnly`). The weekly
+  workflow runs it after the title-quality check when the repo has `.github/scripts/check_silent_sources.R`, and
+  the self-check lists it if it crashes.
+* Measured on the archives (2026-11-22): MT 14 K-12 districts and Missoula College (the review's list A, less the
+  three districts now `OPIOnly`); WY none yet. Its archives before 11-13 have no `Posting_Source`, so WSBA rows
+  still count for Sheridan County SD 3 in two of the four runs; it can be listed from WY's fourth labeled run.
+
 # edjobs 0.73.0
 
 * **HE faculty category fixes** (`classify_he_faculty_category()`), from the University of Montana's Interfolio faculty

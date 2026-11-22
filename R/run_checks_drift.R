@@ -302,3 +302,65 @@ check_title_quality_step <- function(app_dir = NULL, today = format(Sys.Date(), 
   }
   invisible(list(title_lint = hits, other_share = other_flagged, keyword_conflicts = conflict_hits))
 }
+
+#' The weekly check for sources that produce no rows
+#'
+#' Non-blocking and informational: registry sources (K-12 districts, HE institutions) with no rows in any of the
+#' last `n_runs` weekly runs (`find_silent_sources()`) go into the drift report, apart from those listed in
+#' `ack_file` (columns `Type` "K-12"/"Higher Ed", `Source`, `Reason`, `Acknowledged`). K-12 counts direct-board rows
+#' only (the statewide feed's rows are not the board's); an archive without `Posting_Source` counts every row under
+#' its district, so it can only make a source look less silent. Today's archives are included: the check is on
+#' what the run just collected.
+#' @param app_dir Unused today (the archives are read from the repo root); kept for the steps' common signature.
+#' @param today The run date.
+#' @param n_runs How many of the latest weekly runs a source must be silent in.
+#' @param skip_platforms K-12 registry Platforms with no board to scrape (MT's "OPIOnly").
+#' @param ack_file The acknowledgement file.
+#' @param out_csv,report_path Where the silent sources and the drift-report section go.
+#' @return The silent sources, invisibly.
+#' @export
+check_silent_sources_step <- function(app_dir = NULL, today = format(Sys.Date(), "%Y-%m-%d"), n_runs = 4,
+                                      skip_platforms = character(0), ack_file = "silent_sources_acknowledged.csv",
+                                      out_csv = "/tmp/silent_sources.csv", report_path = "/tmp/drift_report.md") {
+  config <- current_state_config()
+  feed_label <- config$feed$label
+  runs <- function(dir, pattern) {
+    f <- sort(list.files(dir, pattern = pattern, full.names = TRUE))
+    f <- f[regmatches(basename(f), regexpr("\\d{4}-\\d{2}-\\d{2}", basename(f))) <= today]
+    f <- last_run_each_week(f)
+    stats::setNames(f, regmatches(basename(f), regexpr("\\d{4}-\\d{2}-\\d{2}", basename(f))))
+  }
+  tally <- function(x) { t <- table(x); stats::setNames(as.integer(t), names(t)) }
+  k12_counts <- lapply(runs("Archivek12_Data", "^combined_.*\\.csv$"), function(f) {
+    d <- utils::read.csv(f, stringsAsFactors = FALSE)
+    if (!nrow(d)) return(integer(0))
+    if (!"Posting_Source" %in% names(d)) d$Posting_Source <- ""   # no source column: every row counts under its district
+    nm <- if (is.null(config$k12_source_names)) d$District else config$k12_source_names(d)
+    if (is.null(nm)) nm <- d$District
+    direct <- is.null(feed_label) | is.na(d$Posting_Source) | d$Posting_Source != feed_label
+    tally(nm[direct])
+  })
+  he_counts <- lapply(runs("Archived_HE_Data", "^hedata_.*\\.xlsx$"), function(f) tally(readxl::read_xlsx(f)$Institution))
+
+  k12_reg <- if (file.exists("k12_district_registry.csv")) utils::read.csv("k12_district_registry.csv", stringsAsFactors = FALSE) else NULL
+  k12_sources <- if (is.null(k12_reg)) character(0) else unique(k12_reg$District[!k12_reg$Platform %in% skip_platforms])
+  he_sources <- if (file.exists("he_institution_registry.csv")) unique(utils::read.csv("he_institution_registry.csv", stringsAsFactors = FALSE)$Institution) else character(0)
+  ack <- if (file.exists(ack_file)) utils::read.csv(ack_file, stringsAsFactors = FALSE) else data.frame(Type = character(0), Source = character(0))
+  ack_for <- function(type) ack$Source[ack$Type == type]
+
+  silent <- rbind(
+    transform(find_silent_sources(k12_counts, k12_sources, n_runs, ack_for("K-12")), type = rep("K-12", length(source))),
+    transform(find_silent_sources(he_counts, he_sources, n_runs, ack_for("Higher Ed")), type = rep("Higher Ed", length(source)))
+  )
+  stale_ack <- setdiff(paste(ack$Type, ack$Source), paste(silent$type, silent$source))
+  cat(sprintf("Silent sources: %d K-12 and %d HE registry source(s) with no rows in the last %d weekly runs (%d acknowledged); %d K-12 and %d HE weekly runs on hand.\n",
+              sum(silent$type == "K-12"), sum(silent$type == "Higher Ed"), n_runs, sum(silent$acknowledged),
+              length(k12_counts), length(he_counts)))
+  if (length(stale_ack)) cat("Acknowledged but producing rows again (remove from ", ack_file, "): ",
+                             paste(stale_ack, collapse = ", "), "\n", sep = "")
+  if (nrow(silent) > 0) print(silent, row.names = FALSE)
+  utils::write.csv(silent, out_csv, row.names = FALSE)
+  report_lines <- build_silent_sources_report_markdown(silent, n_runs, date = today, ack_file = ack_file)
+  if (length(report_lines) > 0) append_drift_report(report_lines, report_path)
+  invisible(silent)
+}
