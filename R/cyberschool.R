@@ -56,8 +56,9 @@ parse_cyberschool_postings <- function(html_text, url, location, mode = "items",
   # Montana City, Denton, Clancy). A classic page without it is the wrong page or a changed site, not an empty
   # board, so it errors and the scrape log says so (test-kit item 6, 2026-11-22). The newer IES layout has no
   # marker of its own when empty, so it isn't checked.
-  if (nrow(out) == 0 && cyberschool_is_classic(doc) && length(rvest::html_elements(doc, ".listItem_list")) == 0) {
-    stop("CyberSchool page has no jobs list (.listItem_list): not the jobs page, or the site changed", call. = FALSE)
+  if (nrow(out) == 0 && cyberschool_is_classic(doc) && length(rvest::html_elements(doc, "div.pageData > div.listItem_list")) == 0) {
+    stop("CyberSchool page has no jobs list (div.pageData > div.listItem_list): not the jobs page, or the site changed",
+         call. = FALSE)
   }
   unique(out)
 }

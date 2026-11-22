@@ -307,7 +307,8 @@ check_title_quality_step <- function(app_dir = NULL, today = format(Sys.Date(), 
 #'
 #' Non-blocking and informational: registry sources (K-12 districts, HE institutions) with no rows in any of the
 #' last `n_runs` weekly runs (`find_silent_sources()`) go into the drift report, apart from those listed in
-#' `ack_file` (columns `Type` "K-12"/"Higher Ed", `Source`, `Reason`, `Acknowledged`). K-12 counts direct-board rows
+#' `ack_file` (columns `Type` "K-12"/"Higher Ed", `Source`, `Reason`, `Acknowledged`) whose latest scrape this run
+#' didn't error: an acknowledged source that errored is listed with its error. K-12 counts direct-board rows
 #' only (the statewide feed's rows are not the board's); an archive without `Posting_Source` counts every row under
 #' its district, so it can only make a source look less silent. Today's archives are included: the check is on
 #' what the run just collected.
@@ -362,8 +363,9 @@ check_silent_sources_step <- function(app_dir = NULL, today = format(Sys.Date(),
   silent$scrape_error <- attach_scrape_log_errors(data.frame(name = silent$source, stringsAsFactors = FALSE),
                                                   scrape_log)$scrape_error
   stale_ack <- setdiff(paste(ack$Type, ack$Source), paste(silent$type, silent$source))
-  cat(sprintf("Silent sources: %d K-12 and %d HE registry source(s) with no rows in the last %d weekly runs (%d acknowledged); %d K-12 and %d HE weekly runs on hand.\n",
-              sum(silent$type == "K-12"), sum(silent$type == "Higher Ed"), n_runs, sum(silent$acknowledged),
+  cat(sprintf("Silent sources: %d K-12 and %d HE registry source(s) with no rows in the last %d weekly runs (%d acknowledged and not erroring); %d K-12 and %d HE weekly runs on hand.\n",
+              sum(silent$type == "K-12"), sum(silent$type == "Higher Ed"), n_runs,
+              sum(silent$acknowledged & (is.na(silent$scrape_error) | !nzchar(silent$scrape_error))),
               length(k12_counts), length(he_counts)))
   if (length(stale_ack)) cat("Acknowledged but producing rows again (remove from ", ack_file, "): ",
                              paste(stale_ack, collapse = ", "), "\n", sep = "")

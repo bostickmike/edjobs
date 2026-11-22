@@ -37,7 +37,8 @@ The silent sources, invisibly.
 \description{
 Non-blocking and informational: registry sources (K-12 districts, HE institutions) with no rows in any of the
 last \code{n_runs} weekly runs (\code{find_silent_sources()}) go into the drift report, apart from those listed in
-\code{ack_file} (columns \code{Type} "K-12"/"Higher Ed", \code{Source}, \code{Reason}, \code{Acknowledged}). K-12 counts direct-board rows
+\code{ack_file} (columns \code{Type} "K-12"/"Higher Ed", \code{Source}, \code{Reason}, \code{Acknowledged}) whose latest scrape this run
+didn't error: an acknowledged source that errored is listed with its error. K-12 counts direct-board rows
 only (the statewide feed's rows are not the board's); an archive without \code{Posting_Source} counts every row under
 its district, so it can only make a source look less silent. Today's archives are included: the check is on
 what the run just collected.

@@ -105,3 +105,16 @@ test_that("check_silent_sources_step reads this run's scrape log", {
   expect_true(any(grepl("**Acked** (K-12): no rows in any archived weekly run (acknowledged as empty); this run's scrape errored: no jobs list",
                         readLines(rep), fixed = TRUE)))
 })
+
+test_that("a district's LLM shadow-pilot or reference-table error is not the district's scrape error", {
+  log <- data.frame(timestamp = c("2026-11-23 10:00:00", "2026-11-23 10:00:05", "2026-11-23 10:00:06"),
+                    source = c("Zurich Elementary School District #17", "LLMExtract: Zurich Elementary School District #17",
+                               "Reference: Zurich Elementary School District #17"),
+                    status = c("empty", "error", "error"), n_rows = 0L,
+                    error_message = c(NA, "HTTP 429 (Gemini)", "timeout"))
+  got <- attach_scrape_log_errors(data.frame(name = "Zurich Elementary School District #17"), log)
+  expect_true(is.na(got$scrape_error))
+  log$status[1] <- "error"; log$error_message[1] <- "no jobs list"
+  expect_identical(attach_scrape_log_errors(data.frame(name = "Zurich Elementary School District #17"), log)$scrape_error,
+                   "no jobs list")
+})

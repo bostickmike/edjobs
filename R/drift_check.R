@@ -113,6 +113,10 @@ attach_scrape_log_errors <- function(flagged, scrape_log) {
   # that errored earlier in the run but succeeded on a later retry/re-run
   # must NOT be reported as currently broken, so status is checked on the
   # latest attempt, not on "was there ever an error this run".
+  # Rows that aren't a source's own scrape: MT's LLM shadow pilot ("LLMExtract: <district>", which never feeds the
+  # data) and reference-table refreshes ("Reference: ..."). A Gemini error must not read as the district's.
+  scrape_log <- scrape_log[!grepl("^(LLMExtract|Reference):", scrape_log$source), , drop = FALSE]
+  if (nrow(scrape_log) == 0) return(flagged)
   latest <- scrape_log[order(scrape_log$timestamp), ]
   latest <- latest[!duplicated(latest$source, fromLast = TRUE), ]
   errors <- latest[!is.na(latest$status) & latest$status == "error", ]
@@ -501,6 +505,10 @@ AUTOFIX_LABEL <- "scraper-autofix"
 #' `AUTOFIX_ELIGIBLE_VERDICTS`
 #' @export
 AUTOFIX_ELIGIBLE_VERDICTS <- "likely_broken"
+
+# A parser error that says the page no longer looks like the board (a redesign or a moved page), not that the site
+# failed: corroboration still renders the page and the source can get an auto-fix issue (edjobs 0.77.0).
+PAGE_CHANGED_ERROR_PATTERN <- "has no jobs list"
 
 #' `AUTOFIX_MARKER_RE`
 #' @keywords internal

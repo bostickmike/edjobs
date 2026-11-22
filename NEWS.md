@@ -6,6 +6,11 @@
   `IESAres404`) without it, read in mode "items", is a non-jobs page or a changed site, so it stops and the scrape
   log records an error. Mode "text" and the newer IES layout (no marker when empty) are not checked. Live check
   11-22 on all 12 MT CyberSchool boards: no new errors (5 empty boards 0 rows, the other 7 unchanged).
+  In drift corroboration this error (`PAGE_CHANGED_ERROR_PATTERN`) is not `confirmed_broken`: the page is still
+  rendered, and the source is `likely_broken`, so it can get an auto-fix issue (a redesign needs a code or registry
+  fix; a site failure doesn't).
+* `attach_scrape_log_errors()` ignores scrape-log rows that aren't a source's own scrape (`LLMExtract: ...`, MT's
+  shadow pilot; `Reference: ...`): a Gemini error was matched to the district (review of this release).
 * **The silent-source check reads this run's scrape log** (`check_silent_sources_step(scrape_log_path = )`). A
   source with no rows in its last runs whose latest scrape errored is listed with the error even when
   `silent_sources_acknowledged.csv` lists it: the acknowledgement says the board is empty, not that it may break.
