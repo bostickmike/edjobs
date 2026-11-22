@@ -11,7 +11,8 @@ check_silent_sources_step(
   skip_platforms = character(0),
   ack_file = "silent_sources_acknowledged.csv",
   out_csv = "/tmp/silent_sources.csv",
-  report_path = "/tmp/drift_report.md"
+  report_path = "/tmp/drift_report.md",
+  scrape_log_path = "scrape_log.csv"
 )
 }
 \arguments{
@@ -26,6 +27,9 @@ check_silent_sources_step(
 \item{ack_file}{The acknowledgement file.}
 
 \item{out_csv, report_path}{Where the silent sources and the drift-report section go.}
+
+\item{scrape_log_path}{This run's scrape log: a silent source whose latest attempt errored is listed with the
+error, acknowledged or not.}
 }
 \value{
 The silent sources, invisibly.

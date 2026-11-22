@@ -317,11 +317,14 @@ check_title_quality_step <- function(app_dir = NULL, today = format(Sys.Date(), 
 #' @param skip_platforms K-12 registry Platforms with no board to scrape (MT's "OPIOnly").
 #' @param ack_file The acknowledgement file.
 #' @param out_csv,report_path Where the silent sources and the drift-report section go.
+#' @param scrape_log_path This run's scrape log: a silent source whose latest attempt errored is listed with the
+#'   error, acknowledged or not.
 #' @return The silent sources, invisibly.
 #' @export
 check_silent_sources_step <- function(app_dir = NULL, today = format(Sys.Date(), "%Y-%m-%d"), n_runs = 4,
                                       skip_platforms = character(0), ack_file = "silent_sources_acknowledged.csv",
-                                      out_csv = "/tmp/silent_sources.csv", report_path = "/tmp/drift_report.md") {
+                                      out_csv = "/tmp/silent_sources.csv", report_path = "/tmp/drift_report.md",
+                                      scrape_log_path = "scrape_log.csv") {
   config <- current_state_config()
   feed_label <- config$feed$label
   runs <- function(dir, pattern) {
@@ -337,7 +340,8 @@ check_silent_sources_step <- function(app_dir = NULL, today = format(Sys.Date(),
     if (!"Posting_Source" %in% names(d)) d$Posting_Source <- ""   # no source column: every row counts under its district
     nm <- if (is.null(config$k12_source_names)) d$District else config$k12_source_names(d)
     if (is.null(nm)) nm <- d$District
-    direct <- is.null(feed_label) | is.na(d$Posting_Source) | d$Posting_Source != feed_label
+    # No statewide feed: every row is the board's (`x != NULL` is logical(0), which dropped every row).
+    direct <- if (is.null(feed_label)) rep(TRUE, nrow(d)) else is.na(d$Posting_Source) | d$Posting_Source != feed_label
     tally(nm[direct])
   })
   he_counts <- lapply(runs("Archived_HE_Data", "^hedata_.*\\.xlsx$"), function(f) tally(readxl::read_xlsx(f)$Institution))
@@ -352,6 +356,11 @@ check_silent_sources_step <- function(app_dir = NULL, today = format(Sys.Date(),
     transform(find_silent_sources(k12_counts, k12_sources, n_runs, ack_for("K-12")), type = rep("K-12", length(source))),
     transform(find_silent_sources(he_counts, he_sources, n_runs, ack_for("Higher Ed")), type = rep("Higher Ed", length(source)))
   )
+  # This run's scrape errors (a CyberSchool page with no jobs list, a dead link): an acknowledgement says a board is
+  # really empty, not that it may break, so a silent source whose latest attempt errored is listed either way.
+  scrape_log <- if (file.exists(scrape_log_path)) utils::read.csv(scrape_log_path, stringsAsFactors = FALSE) else data.frame()
+  silent$scrape_error <- attach_scrape_log_errors(data.frame(name = silent$source, stringsAsFactors = FALSE),
+                                                  scrape_log)$scrape_error
   stale_ack <- setdiff(paste(ack$Type, ack$Source), paste(silent$type, silent$source))
   cat(sprintf("Silent sources: %d K-12 and %d HE registry source(s) with no rows in the last %d weekly runs (%d acknowledged); %d K-12 and %d HE weekly runs on hand.\n",
               sum(silent$type == "K-12"), sum(silent$type == "Higher Ed"), n_runs, sum(silent$acknowledged),

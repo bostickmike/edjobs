@@ -62,3 +62,46 @@ test_that("check_silent_sources_step counts board rows, not the feed's, and read
   expect_true("- **FeedOnly** (K-12): no rows in any archived weekly run" %in% md)
   expect_false(any(grepl("Acked|NoBoard|Busy", md)))
 })
+
+test_that("a silent source whose scrape errored this run is listed, acknowledged or not", {
+  # An acknowledgement says the board is really empty; an error means it may be broken (test-kit item 6).
+  silent <- data.frame(source = c("Clancy", "Zurich", "Saco"), acknowledged = c(TRUE, FALSE, TRUE),
+                       last_with_rows = NA_character_, type = "K-12",
+                       scrape_error = c("CyberSchool page has no jobs list (.listItem_list): not the jobs page, or the site changed",
+                                        NA, NA))
+  md <- build_silent_sources_report_markdown(silent, 4, date = "2026-11-23")
+  expect_true(paste0("- **Clancy** (K-12): no rows in any archived weekly run (acknowledged as empty); this run's ",
+                     "scrape errored: CyberSchool page has no jobs list (.listItem_list): not the jobs page, or the site changed") %in% md)
+  expect_true("- **Zurich** (K-12): no rows in any archived weekly run" %in% md)
+  expect_false(any(grepl("Saco", md)))
+  expect_true(any(grepl("^1 acknowledged silent source", md)))
+})
+
+test_that("check_silent_sources_step reads this run's scrape log", {
+  dir <- withr::local_tempdir()
+  withr::local_dir(dir)
+  dir.create("Archivek12_Data"); dir.create("Archived_HE_Data")
+  for (d in c("2026-11-02", "2026-11-09")) {
+    utils::write.csv(data.frame(title = "Teacher", District = "Busy", Posting_Source = "Busy board"),
+                     file.path("Archivek12_Data", paste0("combined_", d, ".csv")), row.names = FALSE)
+    writexl::write_xlsx(data.frame(Title = "Dean", Institution = "College A"),
+                        file.path("Archived_HE_Data", paste0("hedata_", d, ".xlsx")))
+  }
+  utils::write.csv(data.frame(District = c("Busy", "Acked"), Platform = "CyberSchool"), "k12_district_registry.csv",
+                   row.names = FALSE)
+  utils::write.csv(data.frame(Institution = "College A"), "he_institution_registry.csv", row.names = FALSE)
+  utils::write.csv(data.frame(Type = "K-12", Source = "Acked", Reason = "empty board", Acknowledged = "2026-11-22"),
+                   "silent_sources_acknowledged.csv", row.names = FALSE)
+  utils::write.csv(data.frame(timestamp = c("2026-11-09 10:00:00", "2026-11-09 10:00:01"),
+                              source = c("Busy", "CyberSchool: Acked"), status = c("ok", "error"), n_rows = 0L,
+                              error_message = c(NA, "no jobs list")), "scrape_log.csv", row.names = FALSE)
+  old <- current_state_config(); withr::defer(set_state_config(old))
+  set_state_config(state_config("Test", "99", "app"))
+  rep <- file.path(dir, "report.md")
+  utils::capture.output(res <- check_silent_sources_step(today = "2026-11-09", n_runs = 2,
+                                                         out_csv = file.path(dir, "s.csv"), report_path = rep))
+  expect_identical(res$source, "Acked")
+  expect_identical(res$scrape_error, "no jobs list")
+  expect_true(any(grepl("**Acked** (K-12): no rows in any archived weekly run (acknowledged as empty); this run's scrape errored: no jobs list",
+                        readLines(rep), fixed = TRUE)))
+})

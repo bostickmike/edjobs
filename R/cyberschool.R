@@ -52,7 +52,20 @@ parse_cyberschool_postings <- function(html_text, url, location, mode = "items",
 
   out <- cyberschool_classic_items(doc, url, location)
   if (nrow(out) == 0) out <- cyberschool_ies_items(doc, url, location)
+  # An empty classic board still has its list container (div.pageData > div.listItem_list, empty: Frontier, Saco,
+  # Montana City, Denton, Clancy). A classic page without it is the wrong page or a changed site, not an empty
+  # board, so it errors and the scrape log says so (test-kit item 6, 2026-11-22). The newer IES layout has no
+  # marker of its own when empty, so it isn't checked.
+  if (nrow(out) == 0 && cyberschool_is_classic(doc) && length(rvest::html_elements(doc, ".listItem_list")) == 0) {
+    stop("CyberSchool page has no jobs list (.listItem_list): not the jobs page, or the site changed", call. = FALSE)
+  }
   unique(out)
+}
+
+# Classic CyberSchool 2.0 pages carry <meta name="generator" content="IESAres404 ...">.
+cyberschool_is_classic <- function(doc) {
+  gen <- rvest::html_attr(rvest::html_elements(doc, "meta[name=generator]"), "content")
+  any(grepl("^IESAres404", gen))
 }
 
 cyberschool_empty <- function() {
