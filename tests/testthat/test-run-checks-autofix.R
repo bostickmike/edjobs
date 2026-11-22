@@ -84,3 +84,45 @@ test_that("corroboration: nothing flagged does nothing", {
   expect_null(res)
   expect_false(file.exists("results.csv"))
 })
+
+test_that("corroboration: a source judged genuinely empty is still named in the report", {
+  # University of Providence dropped to 0 on 2026-11-10, its page was judged empty, and it appeared in no drift
+  # comment (claude-notes/2026-11-21_step8-review/, section B; test-kit item 7).
+  old <- current_state_config(); withr::defer(set_state_config(old))
+  root <- withr::local_tempdir(); withr::local_dir(root); dir.create("app")
+  set_state_config(state_config("T", "00", "app",
+    feed = list(short_name = "FEED", label = "Statewide feed", url = "https://feed.example", discrepancy_file = "d.csv"),
+    scraper_sources = list(scraper_calls(list(
+      "Delta College" = list(fn = "f", args = list(), url = "https://delta.example/jobs")), where = "a test"))))
+  write.csv(data.frame(District = "Other", title = "Cook", Posting_Source = "board"),
+            file.path("app", "combinedclean.csv"), row.names = FALSE)
+  write.csv(data.frame(name = "Delta College", mean_count = 4, n_weeks = 4, count = 0, type = "Higher Ed",
+                       scrape_error = NA, safety_net_vacancies = 0), "flagged.csv", row.names = FALSE)
+  withr::local_envvar(GEMINI_API_KEY = "")
+  capture.output(res <- corroborate_drift_step("flagged.csv", "results.csv", "report.md",
+                                               render = function(url) "Careers. There are currently no open positions.",
+                                               today = as.Date("2026-11-22")))
+  expect_equal(res$verdict, "looks_genuinely_empty")
+  report <- readLines("report.md")
+  expect_true(any(grepl("flagged 1 source(s) as of 2026-11-22. 1 of them looked genuinely empty", report, fixed = TRUE)))
+  expect_true(any(grepl("### Judged genuinely empty", report, fixed = TRUE)))
+  expect_false(any(grepl("still need a human look", report, fixed = TRUE)))
+  expect_true(any(grepl("- **Delta College** (Higher Ed): averaged 4.0/week, now 0 -- https://delta.example/jobs",
+                        report, fixed = TRUE)))
+})
+
+test_that("drift report: judged-empty sources come after the ones needing a look; none of either gives no report", {
+  row <- function(name, verdict) data.frame(name = name, type = "Higher Ed", mean_count = 3, count = 0,
+                                            url = NA_character_, verdict = verdict, error_message = NA_character_,
+                                            llm_note = NA_character_, stringsAsFactors = FALSE)
+  lines <- build_drift_report_markdown(row("Broken U", "likely_broken"), judged_empty = row("Quiet U", "looks_genuinely_empty"),
+                                       date = as.Date("2026-11-22"), feed_short_name = "FEED")
+  expect_equal(lines[1], "Automated drift check flagged 2 source(s) as of 2026-11-22. 1 of them looked genuinely empty on the live page (listed last).")
+  expect_lt(grep("Broken U", lines), grep("Quiet U", lines))
+  expect_lt(grep("### Likely broken", lines), grep("### Judged genuinely empty", lines))
+  expect_equal(build_drift_report_markdown(row("x", "likely_broken")[0, ], judged_empty = row("y", "looks_genuinely_empty")[0, ]),
+               character(0))
+  # Without judged_empty the report is as before.
+  expect_equal(build_drift_report_markdown(row("Broken U", "likely_broken"), date = as.Date("2026-11-22"))[1],
+               "Automated drift check flagged 1 source(s) as of 2026-11-22.")
+})

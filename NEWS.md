@@ -1,3 +1,13 @@
+# edjobs 0.76.0
+
+* **The drift report names sources judged genuinely empty** (`build_drift_report_markdown(judged_empty = )`,
+  `corroborate_drift_step()`; test-kit plan item 7, 2026-11-22). A flagged source whose live page reads as having
+  no openings (`looks_genuinely_empty`) used to be dropped from the report, so a source could fall to 0 and appear
+  in no drift comment (MT's University of Providence, 4 rows on 11-03, 0 from 11-10). They are now listed last,
+  under "Judged genuinely empty", and counted in the opening line; a run where every flagged source is judged
+  empty still writes the report, with its own opening line. A source stays listed every run it is flagged. No
+  verdict changes, and judged-empty sources still get no auto-fix issue.
+
 # edjobs 0.75.0
 
 * **Title lint: "document, not a job"** (`lint_title_shape()`, `TITLE_DOCUMENT_PATTERN`; test-kit plan item 2,
