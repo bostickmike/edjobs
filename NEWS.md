@@ -1,3 +1,11 @@
+# edjobs 0.79.0
+
+* **A "$"-less number below a pay amount no longer makes a range** (`extract_posted_pay()`; MT drift triage,
+  2026-11-22). Missoula County's "$24.00/hour - 2/hour minimum" (a two-hour minimum shift) read as $2-$24 an hour,
+  which `drop_implausible_pay()` then blanked, so the posting showed no pay. A high end written without "$" that is
+  smaller than the low end is now dropped: $24 an hour. Replayed on every archived `Pay_Text` in both states
+  (1,095 distinct): this is the only change.
+
 # edjobs 0.78.0
 
 * **The drift issue says what is new and what keeps coming back** (`mark_drift_repeats_step()`,

@@ -705,6 +705,10 @@ extract_posted_pay <- function(text) {
       }
       cap <- function(k) if (cl[j, k] > 0) substr(t, cs[j, k], cs[j, k] + cl[j, k] - 1) else NA_character_
       lo <- to_num(cap(1), cap(2)); hi <- if (!is.na(cap(3))) to_num(cap(3), cap(4)) else lo
+      # A high end written without "$" that is below the low end isn't one: Missoula County's "$24.00/hour - 2/hour
+      # minimum" (a two-hour minimum shift, 2026-11-19) read as $2-$24 an hour and was blanked as implausible.
+      if (!is.na(cap(3)) && !is.na(hi) && hi < lo &&
+          !grepl("$", substr(t, cs[j, 1] + cl[j, 1], cs[j, 3] - 1), fixed = TRUE)) hi <- lo
       # "$42-48K": the K after the high end covers the low end too.
       if (!is.na(cap(4)) && is.na(cap(2)) && !is.na(lo) && lo < 1000 && lo * 1000 <= hi) lo <- lo * 1000
       # "$45.000": a thousands separator written as a period (a salary), not $45 with three decimals, unless an

@@ -36,6 +36,18 @@ test_that("extract_posted_pay splits an amount run into the next number", {
   expect_equal(p$Pay_Unit, c("hour", "hour"))
 })
 
+test_that("extract_posted_pay keeps a lone amount when a $-less number after it is smaller", {
+  # Missoula County Public Schools (MT), 2026-11-17 and 11-19: "2/hour minimum" is a two-hour minimum shift, not $2.
+  p <- extract_posted_pay(c(
+    "tion attached at the bottom right of this posting*$24.00/hour - 2/hour minimum This position covers O",
+    "Salary: $45,000 - 60,000 DOE",
+    "$18.50 - $16.00 per hour"
+  ))
+  expect_equal(p$Pay_Min, c(24, 45000, 16))
+  expect_equal(p$Pay_Max, c(24, 60000, 18.5))
+  expect_equal(p$Pay_Unit, c("hour", "year", "hour"))
+})
+
 test_that("extract_posted_pay ignores bonuses, fees and differentials", {
   p <- extract_posted_pay(c(
     "*We offer a one-time $1,000 signing bonus. Starting salary will be a minimum of $46,225 to max of $86,400 DOE",
