@@ -428,12 +428,14 @@ corroborate_drift_step <- function(flagged_path = "/tmp/drift_flagged.csv", resu
 
   utils::write.csv(results, results_path, row.names = FALSE)
   actionable <- results[results$verdict %in% c("confirmed_broken", "likely_broken", "inconclusive", "no_url_available"), ]
-  if (nrow(actionable) == 0) {
-    cat("All flagged sources corroborated as genuinely empty -- nothing to report.\n")
+  judged_empty <- results[results$verdict == "looks_genuinely_empty", ]
+  if (nrow(actionable) == 0 && nrow(judged_empty) == 0) {
+    cat("No flagged source to report.\n")
     return(invisible(results))
   }
   lines <- build_drift_report_markdown(actionable = actionable, safety_net_summary = safety_net_summary, date = today,
-                                       feed_short_name = config$feed$short_name, intro_explanation = config$drift_intro)
+                                       feed_short_name = config$feed$short_name, intro_explanation = config$drift_intro,
+                                       judged_empty = judged_empty)
   writeLines(lines, report_path)
   cat("Report written to ", report_path, "\n", sep = "")
   invisible(results)

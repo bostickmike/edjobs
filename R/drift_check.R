@@ -1219,15 +1219,20 @@ summarize_central_safety_net <- function(
 #' @param date Report date.
 #' @param feed_short_name The feed's short name.
 #' @param intro_explanation Text to use instead of the default explanation.
+#' @param judged_empty Flagged sources whose live page looked genuinely empty (verdict `looks_genuinely_empty`),
+#'   listed last so a source that drops to zero is still named in the issue (University of Providence was judged
+#'   empty from 2026-11-10 and appeared in no drift comment). NULL or no rows: no section.
 #' @export
 build_drift_report_markdown <- function(
   actionable,
   safety_net_summary = NULL,
   date = Sys.Date(),
   feed_short_name = state_feed("short_name", "statewide feed"),
-  intro_explanation = NULL
+  intro_explanation = NULL,
+  judged_empty = NULL
 ) {
-  if (nrow(actionable) == 0) return(character(0))
+  n_empty <- if (is.null(judged_empty)) 0L else nrow(judged_empty)
+  if (nrow(actionable) == 0 && n_empty == 0) return(character(0))
 
   default_intro <- if (is.null(intro_explanation)) {
     "A source is flagged when it has at least 2 weeks of history averaging real postings, and this week's count dropped to 20% or less of that average. These entries are corroborated against the actual live page but still need a human look."
@@ -1236,7 +1241,8 @@ build_drift_report_markdown <- function(
   }
 
   lines <- c(
-    paste0("Automated drift check flagged ", nrow(actionable), " source(s) as of ", date, "."),
+    paste0("Automated drift check flagged ", nrow(actionable) + n_empty, " source(s) as of ", date, ".",
+           if (n_empty > 0) sprintf(" %d of them looked genuinely empty on the live page (listed last).", n_empty) else ""),
     "",
     default_intro,
     ""
@@ -1276,6 +1282,17 @@ build_drift_report_markdown <- function(
           lines <- c(lines, sprintf("  - **On %s**: nothing for this district beyond what its own board lists", feed_short_name))
         }
       }
+    }
+    lines <- c(lines, "")
+  }
+
+  if (n_empty > 0) {
+    lines <- c(lines, "### Judged genuinely empty -- the live page shows no postings; no action unless you know it has some", "")
+    for (i in seq_len(n_empty)) {
+      r <- judged_empty[i, ]
+      url_part <- if (is.na(r$url)) "" else sprintf(" -- %s", r$url)
+      lines <- c(lines, sprintf("- **%s** (%s): averaged %.1f/week, now %d%s", r$name, r$type, r$mean_count, r$count, url_part))
+      if ("llm_note" %in% names(r) && !is.na(r$llm_note) && nzchar(r$llm_note)) lines <- c(lines, sprintf("  - %s", r$llm_note))
     }
     lines <- c(lines, "")
   }

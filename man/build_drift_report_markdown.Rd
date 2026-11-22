@@ -9,7 +9,8 @@ build_drift_report_markdown(
   safety_net_summary = NULL,
   date = Sys.Date(),
   feed_short_name = state_feed("short_name", "statewide feed"),
-  intro_explanation = NULL
+  intro_explanation = NULL,
+  judged_empty = NULL
 )
 }
 \arguments{
@@ -22,6 +23,10 @@ build_drift_report_markdown(
 \item{feed_short_name}{The feed's short name.}
 
 \item{intro_explanation}{Text to use instead of the default explanation.}
+
+\item{judged_empty}{Flagged sources whose live page looked genuinely empty (verdict \code{looks_genuinely_empty}),
+listed last so a source that drops to zero is still named in the issue (University of Providence was judged
+empty from 2026-11-10 and appeared in no drift comment). NULL or no rows: no section.}
 }
 \description{
 Flagged sources grouped by verdict, each with what the statewide feed says about it, then the feed
