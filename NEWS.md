@@ -8,6 +8,8 @@
   figure, brings the item back under "New this run", naming what isn't checked yet (`unchecked`). Without `Details`,
   or with it empty, an entry covers the whole item, as before. `parse_drift_report()` items gain a `details` column.
   This keeps an acknowledgement from hiding a later scraper miss at the same district.
+  A line with no details of its own (postings on nested lines) is not acknowledged by a `Details` entry, and an en
+  dash after the name is stripped like a colon (review, 2026-11-22).
 
 # edjobs 0.79.0
 

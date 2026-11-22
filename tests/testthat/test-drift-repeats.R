@@ -158,6 +158,17 @@ test_that("an acknowledgement with Details covers only what was checked; anythin
                    Details = "$16,900 is outside the expected $20,000-$150,000 range")
   expect_true(classify_drift_repeats(swan("$16,900"), list(), a2)$acknowledged)
   expect_false(classify_drift_repeats(swan("$1,690"), list(), a2)$acknowledged)
+  # A line with nothing to check against (postings on nested lines) isn't covered by a Details acknowledgement.
+  nested <- report("#### On OPI but not on our scrape (counted from OPI; possible scraper misses)", "",
+                   "- **Baker Public Schools** (2):", "  - English (posted 2026-10-28)")
+  r <- classify_drift_repeats(nested, prev, ack)
+  expect_false(r$acknowledged); expect_equal(r$status, "new"); expect_match(r$unchecked, "nothing to check")
+  # A count on a part: another copy of the same title and date changes the part, so it is new.
+  a4 <- transform(ack, Details = "Physical Ed (posted 2026-10-25, 2 postings)")
+  expect_true(classify_drift_repeats(baker("Physical Ed (posted 2026-10-25, 2 postings)"), prev, a4)$acknowledged)
+  expect_false(classify_drift_repeats(baker("Physical Ed (posted 2026-10-25, 3 postings)"), prev, a4)$acknowledged)
+  # An en dash after the name is stripped like a colon.
+  expect_equal(drift_report_items(report("#### X", "", "- **Y** \u2013 a; b"))$details, "a; b")
   # Empty or missing Details: the whole item, as before.
   a3 <- transform(ack, Details = ""); expect_true(classify_drift_repeats(baker("Mathematics (posted 2026-11-20)"), prev, a3)$acknowledged)
   expect_true(classify_drift_repeats(baker("Mathematics (posted 2026-11-20)"), prev, ack[, c("Section", "Item")])$acknowledged)

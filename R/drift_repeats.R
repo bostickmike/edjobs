@@ -72,7 +72,7 @@ parse_drift_report <- function(md) {
     name <- if (nzchar(paren)) paste0(item, " (", paren, ")") else item
     # What the bullet says after its name: the postings or the figure flagged ("(4): English (posted 2026-11-16);
     # Music (posted 2026-10-01)", ": $16,900 is outside ..."), which an acknowledgement's Details are checked against.
-    det <- trimws(sub("^\\s*[:\u2014-]+\\s*", "", sub("^ ?\\([^)]*\\)", "", rest)))
+    det <- trimws(sub("^\\s*[:\u2013\u2014-]+\\s*", "", sub("^ ?\\([^)]*\\)", "", rest)))
     out[[length(out) + 1]] <- data.frame(section = section, item = name, key = paste(section, name, sep = " | "),
                                          details = det, stringsAsFactors = FALSE)
   }
@@ -106,7 +106,9 @@ drift_report_items <- function(md) parse_drift_report(md)$items
 #'   ignored. `Details` (empty or NA = the whole item, whatever it lists) names what was checked, as the report writes
 #'   it, separated by "; " (the postings at a district, the figure flagged): the item is acknowledged only while every
 #'   "; "-separated part of its details is one of them. Anything else (a new posting at an acknowledged district) makes
-#'   it "new" again, listed in `unchecked`.
+#'   it "new" again, listed in `unchecked`; so does a line with no details at all. A report that repeats a posting
+#'   should say how many (MT: "Physical Ed (posted 2026-10-25, 2 postings)"), so a third copy is a new part. A row
+#'   with empty `Details` for the same item covers it whole and wins.
 #' @param min_runs An item is "still unresolved" once it is in this many run days in a row, this one included.
 #' @param today This run's date ("YYYY-MM-DD"), or NA.
 #' @return Data frame: `section`, `item`, `runs` (run days in a row, this one included), `since` (date of the earliest
@@ -143,7 +145,11 @@ classify_drift_repeats <- function(current, previous = list(), acknowledged = NU
       hit <- which(acknowledged$Item == cur$item[i] & (is.na(sec) | !nzchar(sec) | sec == cur$section[i]))
       if (!length(hit)) next
       if (any(is.na(det[hit]) | !nzchar(trimws(det[hit])))) { ack[i] <- TRUE; next }   # the whole item
-      left <- setdiff(parts(cur$details[i]), unlist(lapply(det[hit], parts)))
+      now <- parts(cur$details[i])
+      # Nothing on the bullet's own line to check (its postings on nested lines, or none listed): not acknowledged,
+      # since what was checked can't be compared with what is there now (review, 2026-11-22).
+      if (!length(now)) { unchecked[i] <- "(this run's line lists nothing to check against)"; next }
+      left <- setdiff(now, unlist(lapply(det[hit], parts)))
       if (length(left)) unchecked[i] <- paste(left, collapse = "; ") else ack[i] <- TRUE
     }
   }
@@ -189,7 +195,7 @@ build_drift_glance_markdown <- function(repeats, min_runs = 3, ack_file = "drift
     if (nrow(unres)) c(sprintf("#### Still unresolved (%d+ run days in a row)", min_runs), "",
                        bullets(unres, function(d) sprintf("- %s: %s -- %d run days, since %s", d$section, d$item, d$runs,
                                                          ifelse(is.na(d$since), "?", d$since))), ""),
-    sprintf("An item a person has looked at and accepts goes in `%s` (Section, Item, Reason, Acknowledged; Details, to accept only what was checked: the postings or figure as listed here, \"; \"-separated) and leaves these lists. With Details, anything not checked brings the item back as new.", ack_file),
+    sprintf("An item a person has looked at and accepts goes in `%s` (Section, Item, Reason, Acknowledged; Details, to accept only what was checked: the postings or figure exactly as the full report below lists them after the name, \"; \"-separated) and leaves these lists. With Details, anything not checked brings the item back as new.", ack_file),
     "",
     "---",
     GLANCE_END,
