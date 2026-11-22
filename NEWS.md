@@ -1,3 +1,19 @@
+# edjobs 0.73.0
+
+* **HE faculty category fixes** (`classify_he_faculty_category()`), from the University of Montana's Interfolio faculty
+  titles (MT, 2026-11-21), 6 of whose 19 were mislabeled:
+  * "Clinical" as a faculty rank ("Clinical Assistant Professor, Communication Studies") no longer makes a title
+    Health Sciences; the field decides. Clinical instructors, labs and medicine stay Health Sciences.
+  * "Speech, Language, Hearing" (not only "speech-language") is Health Sciences, not Humanities.
+  * Forestry, forest management and silviculture are Science, ahead of Business's "management"; the biological
+    sciences and biological stations are Science, ahead of Health's "biomed".
+  * The Wyoming Institute for Disabilities is Health Sciences (an academic unit of UW's College of Health Sciences,
+    uwyo.edu/wind), not Education from "disabilit".
+* Replayed over every archived title in both states (3,804 HE titles, 141 archives): 15 move, all WY. 14 Wyoming
+  Institute for Disabilities titles go from Education to Health Sciences, and "Clinical Assistant Professor -
+  Educational Health Center of Wyoming" (UW College of Education's clinic) goes from Health Sciences to Education.
+  No MT archived title moves; MT's UM Interfolio titles are first archived 2026-11-23.
+
 # edjobs 0.72.0
 
 * **Coverage calendar: an entity can have more than one source** (`build_coverage_calendar()` /

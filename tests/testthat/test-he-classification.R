@@ -106,6 +106,24 @@ test_that("HE faculty category substring misfires stay fixed", {
   expect_equal(classify_he_faculty_category("Instructional Design Librarian"), "Education")
 })
 
+test_that("HE faculty category: clinical ranks, speech-language, forestry and biology (UM Interfolio, 2026-11-21)", {
+  f <- classify_he_faculty_category
+  # "Clinical" as a rank: the field decides.
+  expect_equal(f("Clinical Assistant Professor, Communication Studies"), "Humanities")
+  expect_equal(f("Clinical Assistant Professor - Educational Health Center of Wyoming"), "Education")
+  # ...and still Health Sciences where the field is.
+  expect_equal(f("Clinical Assistant or Associate Professor of Medicine, Family Medicine Residency of Western Montana"), "CTE - Health Sciences")
+  expect_equal(f("Adjunct Nursing Clinical Instructor (CRRN)"), "CTE - Health Sciences")
+  expect_equal(f("Clinical Lab Specialist I (On-Call), Curry Health Center"), "CTE - Health Sciences")
+  expect_equal(f("Clinical Professor, Assistant - Wyoming Institute for Disabilities"), "CTE - Health Sciences")
+  expect_equal(f("Assistant or Associate Professor, School of Speech, Language, Hearing, and Occupational Sciences"), "CTE - Health Sciences")
+  expect_equal(f("Assistant Professor of Silviculture, Department of Forest Management, W.A. Franke College of Forestry and Conservation"), "Science")
+  expect_equal(f("Assistant Professor, Division of Biological and Biomedical Sciences"), "Science")
+  expect_equal(f("Director and Professor/Associate Professor Flathead Lake Biological Station, University of Montana"), "Science")
+  # Business's "management" elsewhere is unchanged.
+  expect_equal(f("Assistant Professor of Management Information Systems, College of Business"), "CTE - Business & Computing")
+})
+
 test_that("HE job type keeps staff and child-center aides out of faculty", {
   expect_equal(classify_he_job_type("Classroom Aide/Substitute Teacher (Part-Time)"), "Support Services")
   expect_equal(classify_he_job_type("Academic Instructional Technologist"), "Professional")
