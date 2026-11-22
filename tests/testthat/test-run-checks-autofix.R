@@ -106,6 +106,7 @@ test_that("corroboration: a source judged genuinely empty is still named in the 
   report <- readLines("report.md")
   expect_true(any(grepl("flagged 1 source(s) as of 2026-11-22. 1 of them looked genuinely empty", report, fixed = TRUE)))
   expect_true(any(grepl("### Judged genuinely empty", report, fixed = TRUE)))
+  expect_false(any(grepl("still need a human look", report, fixed = TRUE)))
   expect_true(any(grepl("- **Delta College** (Higher Ed): averaged 4.0/week, now 0 -- https://delta.example/jobs",
                         report, fixed = TRUE)))
 })

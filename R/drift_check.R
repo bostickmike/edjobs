@@ -1234,7 +1234,9 @@ build_drift_report_markdown <- function(
   n_empty <- if (is.null(judged_empty)) 0L else nrow(judged_empty)
   if (nrow(actionable) == 0 && n_empty == 0) return(character(0))
 
-  default_intro <- if (is.null(intro_explanation)) {
+  default_intro <- if (nrow(actionable) == 0) {
+    "Each flagged source's live page looked genuinely empty, so nothing needs a fix; they are listed so a source that drops to zero is still named."
+  } else if (is.null(intro_explanation)) {
     "A source is flagged when it has at least 2 weeks of history averaging real postings, and this week's count dropped to 20% or less of that average. These entries are corroborated against the actual live page but still need a human look."
   } else {
     intro_explanation
