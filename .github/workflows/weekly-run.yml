@@ -408,6 +408,16 @@ jobs:
           fi
           EXISTING=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
             --search "in:title \"Scraper drift check\"" --json number --jq '.[0].number')
+          # New vs still unresolved (edjobs mark_drift_repeats_step(), 0.78.0): the issue's earlier automated
+          # reports (its body and the workflow's own comments, oldest first, the last 30) go to the top of this
+          # one as an at-a-glance block. If this fails, the report is filed as it is.
+          echo '[]' > /tmp/drift_previous.json
+          if [ -n "$EXISTING" ]; then
+            gh issue view "$EXISTING" --repo "$GITHUB_REPOSITORY" --json createdAt,body,comments --jq \
+              '([{created: .createdAt, body: .body}] + [.comments[] | select(.author.login == "github-actions") | {created: .createdAt, body: .body}]) | .[-30:]' \
+              > /tmp/drift_previous.json || echo '[]' > /tmp/drift_previous.json
+          fi
+          Rscript -e 'edjobs::mark_drift_repeats_step()' || echo "Could not add the at-a-glance block; filing the report as it is."
           if [ -n "$EXISTING" ]; then
             gh issue comment "$EXISTING" --repo "$GITHUB_REPOSITORY" --body-file /tmp/drift_report.md
           else
