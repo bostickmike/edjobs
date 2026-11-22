@@ -1,3 +1,19 @@
+# edjobs 0.78.0
+
+* **The drift issue says what is new and what keeps coming back** (`mark_drift_repeats_step()`,
+  `classify_drift_repeats()`, `drift_report_items()`, `build_drift_glance_markdown()`; test-kit plan item 3, Mike's
+  option B, 2026-11-22). Before commenting, the weekly workflow reads the issue's earlier automated reports (its
+  body and the workflow's own comments, the last 30) and puts a block at the top of this run's report: items not in
+  the last report ("New this run") and items in 3 or more reports in a row ("Still unresolved", with the count and
+  the first date). An item is a top-level `- **Name**` bullet keyed by its section and name, so its numbers can
+  change from run to run; summary sections (feed totals, the safety-net summary) are not items. A state's
+  `drift_acknowledged.csv` (Section, Item, Reason, Acknowledged) takes items a person accepts out of both lists; the
+  full report below is unchanged. If the step fails the report is filed as before.
+* Replayed on MT drift issue #11's 10 run comments and WY #4's 6 (`claude-notes/2026-11-22_drift-repeats/`): the
+  last MT report would open with 0 new and 23 still unresolved, led by the 15 items flagged in 8-10 reports in a row
+  (11 "on OPI but not on our scrape", Frontier's empty board, Ulm's notice, OPI's own title lint, Swan River's DLI
+  salary); WY with Carbon 1's blanked pay (6 reports).
+
 # edjobs 0.77.0
 
 * **A classic CyberSchool page with no jobs list is an error, not an empty board** (`parse_cyberschool_postings()`;
