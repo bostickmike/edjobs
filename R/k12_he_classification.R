@@ -1029,9 +1029,16 @@ classify_he_faculty_category <- function(title) {
     # Plant/animal/range sciences are Science; "Plant Pathology" would
     # otherwise hit Health Sciences' "pathology".
     grepl("plant scien|plant patholog|animal (and range )?scien|range scien", title, ignore.case = TRUE) ~ "Science",
+    # Forestry before Business's "management" ("Assistant Professor of Silviculture, Department of Forest
+    # Management"), and the biological sciences before Health's "biomed" ("Division of Biological and Biomedical
+    # Sciences"; "Flathead Lake Biological Station"). UM's Interfolio titles, 2026-11-21.
+    grepl("forest(ry| management| ecology)|silvicult|biological (and biomedical )?scien|biological station", title, ignore.case = TRUE) ~ "Science",
 
     # 5. CTE - Health Sciences (before general Science so "Health Sciences" lands here)
-    grepl("health technology|nursing|\\brn\\b|\\blpn\\b|dental|\\bems\\b|paramedic|emergency medical|emergency care|\\becp\\b|medical|medicine|nutritional|nutrition|dietetics|pharmacy|pharmacist|global health|public health|allied health|health sciences?|physician assistant|physical therapy|occupational therapy|speech-language|pathology|audiol|respiratory therapy|surgical tech|phlebotom|radiolog|radiograph|x-ray|sonograph|ultrasound|biomed|clinical|medical assistant|massage|respiratory|cardiovascular|\\bdms\\b|\\bcna\\b|nurs(e|ing) assistant|physical therapist|\\bemt\\b|\\bcpr\\b|first aid|\\bfwwson\\b", title, ignore.case = TRUE) ~ "CTE - Health Sciences",
+    # "Clinical" as a faculty rank ("Clinical Assistant Professor, Communication Studies") isn't a health word; the
+    # rest of the title decides. "Speech, Language, Hearing" and UW's Wyoming Institute for Disabilities (in its
+    # College of Health Sciences, uwyo.edu/wind) are health. 2026-11-21.
+    grepl("health technology|nursing|\\brn\\b|\\blpn\\b|dental|\\bems\\b|paramedic|emergency medical|emergency care|\\becp\\b|medical|medicine|nutritional|nutrition|dietetics|pharmacy|pharmacist|global health|public health|allied health|health sciences?|physician assistant|physical therapy|occupational therapy|speech[-, ]+language|hearing scien|institute for disabilit|pathology|audiol|respiratory therapy|surgical tech|phlebotom|radiolog|radiograph|x-ray|sonograph|ultrasound|biomed|clinical(?! (assistant |associate |teaching )*(professor|faculty))|medical assistant|massage|respiratory|cardiovascular|\\bdms\\b|\\bcna\\b|nurs(e|ing) assistant|physical therapist|\\bemt\\b|\\bcpr\\b|first aid|\\bfwwson\\b", title, ignore.case = TRUE, perl = TRUE) ~ "CTE - Health Sciences",
 
     # 6. Social Science (before general Science so "Political Science", "Social Sciences", "Native American Studies" land here)
     grepl("social sciences?|political science|politics|government|public policy|public administration|tribal governance|native american studies|indigenous studies|ethnic studies|african american studies|chicano|latinx|gender|sexuality|women|international relations|global studies|sociology|sociological|anthropology|psychology|psychological|behavior|geography|urban planning", title, ignore.case = TRUE) ~ "Social Science",
