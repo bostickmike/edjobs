@@ -300,6 +300,19 @@ jobs:
         continue-on-error: true
         run: Rscript .github/scripts/check_title_quality.R
 
+      # Registry sources with no rows in any of their last 4 weekly runs (edjobs 0.74.0; test-kit plan item 1): a
+      # scraper on the wrong page or a board that moved returns zero every week, and the drift check has no average
+      # to judge such a source by. Repos without the script (older pins) skip it.
+      - name: Check for sources with no rows in their last weekly runs
+        id: check_silent_sources
+        continue-on-error: true
+        run: |
+          if [ -f .github/scripts/check_silent_sources.R ]; then
+            Rscript .github/scripts/check_silent_sources.R
+          else
+            echo "No .github/scripts/check_silent_sources.R in this repo; skipped."
+          fi
+
       # The state's own checks (MT's OPI cross-check, WY's frozen boards). Each runs even if one before it crashed;
       # the crashed ones are listed for the self-check below.
       - name: The state's own checks
@@ -363,6 +376,7 @@ jobs:
           [ "${{ steps.check_census_drift.outcome }}" = "failure" ] && FAILED="$FAILED check_census_drift.R"
           [ "${{ steps.check_pay_coverage.outcome }}" = "failure" ] && FAILED="$FAILED check_pay_coverage.R"
           [ "${{ steps.check_title_quality.outcome }}" = "failure" ] && FAILED="$FAILED check_title_quality.R"
+          [ "${{ steps.check_silent_sources.outcome }}" = "failure" ] && FAILED="$FAILED check_silent_sources.R"
           [ "${{ steps.state_checks.outcome }}" = "failure" ] && FAILED="$FAILED$(cat /tmp/state_check_failures 2>/dev/null | tr -d '\n')"
           [ "${{ steps.build_posting_spells.outcome }}" = "failure" ] && FAILED="$FAILED build_posting_spells.R"
           [ "${{ steps.check_run_expectations.outcome }}" = "failure" ] && FAILED="$FAILED check_run_expectations.R"
