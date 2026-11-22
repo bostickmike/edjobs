@@ -38,10 +38,61 @@ test_that("classify_drift_repeats counts reports in a row, with the date of the 
   expect_equal(r$runs, c(3L, 3L, 3L, 1L))
   expect_equal(r$status, c("unresolved", "unresolved", "unresolved", "new"))
   expect_equal(r$since[1], "2026-11-03")
-  # A gap restarts the count: missing from the last report means new again.
-  gap <- list(prev[[1]], list(created = "2026-11-10T20:00:00Z", body = "### Something else"))
+  # A real gap restarts the count: the section is there, the item isn't.
+  gap <- list(prev[[1]], list(created = "2026-11-10T20:00:00Z", body = paste(report(
+    "#### On OPI but not on our scrape (counted from OPI; possible scraper misses)", "", "- **Sidney Public Schools** (2): ",
+    "#### Districts we don't scrape that posted on OPI (adoption candidates)", "", "- **Dodson K-12** (Phillips County)"),
+    collapse = "\n")))
   expect_equal(classify_drift_repeats(opi(), gap)$status, rep("new", 3))
   expect_equal(classify_drift_repeats(opi(), prev[2], min_runs = 3)$status, rep("repeat", 3))
+})
+
+test_that("a report without the item's section, or with it cut short, neither extends nor breaks the run", {
+  # A crashed check writes nothing; MT's OPI list stops at 15 districts with "- ... and N more".
+  crashed <- list(created = "2026-11-10", body = "### Titles that don't look like job titles\n\n- **Ulm Public Schools** (K-12): x")
+  cut <- list(created = "2026-11-12", body = paste(report(
+    "#### On OPI but not on our scrape (counted from OPI; possible scraper misses)", "", "- **Sidney Public Schools** (9): ",
+    "- ... and 3 more districts"), collapse = "\n"))
+  prev <- list(list(created = "2026-11-03", body = paste(opi(), collapse = "\n")), crashed, cut)
+  r <- classify_drift_repeats(opi(), prev)
+  expect_equal(r$runs[1:2], c(2L, 2L))
+  expect_equal(r$since[1], "2026-11-03")
+})
+
+test_that("runs are run days: re-runs on one day count once, and today's earlier reports not at all", {
+  day <- function(t) list(created = t, body = paste(opi(), collapse = "\n"))
+  prev <- list(day("2026-11-17T20:49:00Z"), day("2026-11-17T21:32:00Z"), day("2026-11-17T22:15:00Z"))
+  expect_equal(classify_drift_repeats(opi(), prev, today = "2026-11-18")$runs, rep(2L, 3))
+  expect_equal(classify_drift_repeats(opi(), prev, today = "2026-11-17")$status, rep("new", 3))
+})
+
+test_that("each 'Automated ... flagged' line starts a section, so a salary coverage drop doesn't rename the value items", {
+  value <- report("---", "", "Automated salary VALUE plausibility check flagged something worth a human look.", "",
+                  "- **K-12 teacher 10th pctile salary (MT DLI)** (Swan River School District #4): $16,900 ...")
+  both <- report("---", "", "Automated salary-source coverage check flagged a drop.", "", "- **WSBA teacher salary**: 40 -> 10 districts",
+                 "", "Automated salary VALUE plausibility check flagged something worth a human look.", "",
+                 "- **K-12 teacher 10th pctile salary (MT DLI)** (Swan River School District #4): $16,900 ...",
+                 "", "Reference tables behind the pay estimates need a look.", "", "- **DLI wages**: stale")
+  it <- drift_report_items(both)
+  expect_equal(it$section, c("salary-source coverage check", "salary VALUE plausibility check",
+                             "Reference tables behind the pay estimates"))
+  prev <- list(list(created = "2026-11-03", body = paste(value, collapse = "\n")),
+               list(created = "2026-11-10", body = paste(value, collapse = "\n")))
+  r <- classify_drift_repeats(both, prev)
+  expect_equal(r$status[r$item == "K-12 teacher 10th pctile salary (MT DLI) (Swan River School District #4)"], "unresolved")
+})
+
+test_that("sections that flag without per-source items are named in the block", {
+  md <- report(opi(), "---", "", "### Rebuild parity", "", "| file | ok |", "|---|---|", "| combinedclean.csv | FALSE |",
+               "---", "", "**Monitoring self-check:** step(s) crashed: check_pay_coverage.R",
+               "---", "", "### Titles whose words point to a different bucket", "", "- \"Para Cook\" (K-12): Para")
+  p <- parse_drift_report(md)
+  expect_equal(p$unitemized, c("Rebuild parity", "Monitoring self-check", "Titles whose words point to a different bucket"))
+  g <- build_drift_glance_markdown(classify_drift_repeats(md), unitemized = p$unitemized)
+  expect_true(any(grepl("Also in this report, not counted above (read them below): Rebuild parity; Monitoring self-check;",
+                        g, fixed = TRUE)))
+  # A report of only unitemized sections still gets a block.
+  expect_true(length(build_drift_glance_markdown(classify_drift_repeats(character(0)), unitemized = "Rebuild parity")) > 0)
 })
 
 test_that("acknowledged items leave the lists; the block counts them and skips an earlier block", {
@@ -55,7 +106,7 @@ test_that("acknowledged items leave the lists; the block counts them and skips a
   g <- build_drift_glance_markdown(r)
   expect_equal(g[1], GLANCE_START)
   expect_true(any(grepl("^0 new, 1 still unresolved .* 2 acknowledged", g)))
-  expect_true("- On OPI but not on our scrape (counted from OPI; possible scraper misses): Baker Public Schools -- 3 reports, since 2026-11-03" %in% g)
+  expect_true("- On OPI but not on our scrape (counted from OPI; possible scraper misses): Baker Public Schools -- 3 run days, since 2026-11-03" %in% g)
   expect_false(any(grepl("Richey|Kinsey", g)))
   # A report that already carries a block (last week's comment) is read without it.
   expect_equal(drift_report_items(c(g, opi()))$key, drift_report_items(opi())$key)
@@ -70,7 +121,7 @@ test_that("mark_drift_repeats_step puts the block on top, and works with no hist
   utils::capture.output(r <- mark_drift_repeats_step("report.md", "prev.json", "none.csv"))
   out <- readLines("report.md")
   expect_equal(out[1], GLANCE_START)
-  expect_true(any(grepl("^0 new, 0 still unresolved .* 3 seen in the last report too", out)))
+  expect_true(any(grepl("^0 new, 0 still unresolved .* 3 seen on the last run day too", out)))
   expect_equal(utils::tail(out, length(opi())), opi())
   writeLines(opi(), "report.md")
   utils::capture.output(mark_drift_repeats_step("report.md", "missing.json", "none.csv"))

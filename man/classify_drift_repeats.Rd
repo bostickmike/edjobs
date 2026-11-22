@@ -8,7 +8,8 @@ classify_drift_repeats(
   current,
   previous = list(),
   acknowledged = NULL,
-  min_runs = 3
+  min_runs = 3,
+  today = NA
 )
 }
 \arguments{
@@ -17,14 +18,19 @@ classify_drift_repeats(
 \item{previous}{Earlier reports on the issue, oldest first: a list of \code{list(created = "<ISO time>", body = "...")}.}
 
 \item{acknowledged}{Data frame with \code{Item} and optionally \code{Section} (empty or NA = any section): items a person has
-looked at; matched on the item name as \code{\link[=drift_report_items]{drift_report_items()}} writes it.}
+looked at; matched on the item name as \code{\link[=drift_report_items]{drift_report_items()}} writes it. Without an \code{Item} column it is ignored.}
 
-\item{min_runs}{An item is "still unresolved" once it is in this many reports in a row, this one included.}
+\item{min_runs}{An item is "still unresolved" once it is in this many run days in a row, this one included.}
+
+\item{today}{This run's date ("YYYY-MM-DD"), or NA.}
 }
 \value{
-Data frame: \code{section}, \code{item}, \code{runs} (reports in a row, this one included), \code{since} (date of the earliest of
-those), \code{acknowledged}, \code{status} ("new", "unresolved" or "repeat").
+Data frame: \code{section}, \code{item}, \code{runs} (run days in a row, this one included), \code{since} (date of the earliest
+of those), \code{acknowledged}, \code{status} ("new", "unresolved" or "repeat").
 }
 \description{
-Which of this run's drift items are new and which keep coming back
+Counts run days, not reports: of the earlier reports, only the last on each date counts, and those dated \code{today}
+(an earlier re-run or test dispatch the same day) are left out. A report that doesn't show the item's section at
+all (that check wrote nothing, or crashed) or cut the section short ("... and N more", MT's 15-district OPI list)
+says nothing about the item: it neither extends nor breaks the run.
 }

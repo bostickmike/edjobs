@@ -8,7 +8,8 @@ mark_drift_repeats_step(
   report_path = "/tmp/drift_report.md",
   previous_path = "/tmp/drift_previous.json",
   ack_file = "drift_acknowledged.csv",
-  min_runs = 3
+  min_runs = 3,
+  today = format(Sys.Date(), "\%Y-\%m-\%d")
 )
 }
 \arguments{
@@ -18,7 +19,7 @@ mark_drift_repeats_step(
 
 \item{ack_file}{The state's acknowledgement file (columns \code{Section}, \code{Item}, \code{Reason}, \code{Acknowledged}).}
 
-\item{min_runs}{See \code{\link[=classify_drift_repeats]{classify_drift_repeats()}}.}
+\item{min_runs, today}{See \code{\link[=classify_drift_repeats]{classify_drift_repeats()}}.}
 }
 \value{
 The repeats table, invisibly.

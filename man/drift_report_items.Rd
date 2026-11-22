@@ -13,10 +13,5 @@ drift_report_items(md)
 Data frame: \code{section}, \code{item}, \code{key}, one row per distinct key.
 }
 \description{
-Items are the top-level bullets that start with a bold name (\verb{- **Name** ...}), keyed by their section heading
-(the nearest \verb{###}/\verb{####} heading, without a trailing run date, or for a part with no heading its "Automated
-\if{html}{\out{<what>}} check flagged" line) and the name. A parenthesis right after the name
-is part of the key when it names something ("(K-12)", "(Swan River School District #4)", "(Hill County)"), with
-counts taken out ("(5)", ", 7 postings"), so the same item matches from run to run while its numbers change.
-Summary sections (\code{DRIFT_SUMMARY_SECTIONS}) and the at-a-glance block itself are skipped.
+\code{\link[=parse_drift_report]{parse_drift_report()}}'s items.
 }

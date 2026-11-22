@@ -8,7 +8,8 @@ build_drift_glance_markdown(
   repeats,
   min_runs = 3,
   ack_file = "drift_acknowledged.csv",
-  max_list = 40
+  max_list = 40,
+  unitemized = character(0)
 )
 }
 \arguments{
@@ -19,6 +20,9 @@ build_drift_glance_markdown(
 \item{ack_file}{The acknowledgement file named in the text.}
 
 \item{max_list}{Most items listed under each heading.}
+
+\item{unitemized}{Sections in this report that flag something without a per-source item (a table, a paragraph:
+rebuild parity, run expectations, a crashed monitoring step), named so "0 new" can't hide them.}
 }
 \value{
 Markdown lines, wrapped in the \code{GLANCE_START}/\code{GLANCE_END} markers; none when there are no items.

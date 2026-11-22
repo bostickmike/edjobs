@@ -1,18 +1,26 @@
 # edjobs 0.78.0
 
 * **The drift issue says what is new and what keeps coming back** (`mark_drift_repeats_step()`,
-  `classify_drift_repeats()`, `drift_report_items()`, `build_drift_glance_markdown()`; test-kit plan item 3, Mike's
-  option B, 2026-11-22). Before commenting, the weekly workflow reads the issue's earlier automated reports (its
-  body and the workflow's own comments, the last 30) and puts a block at the top of this run's report: items not in
-  the last report ("New this run") and items in 3 or more reports in a row ("Still unresolved", with the count and
-  the first date). An item is a top-level `- **Name**` bullet keyed by its section and name, so its numbers can
-  change from run to run; summary sections (feed totals, the safety-net summary) are not items. A state's
-  `drift_acknowledged.csv` (Section, Item, Reason, Acknowledged) takes items a person accepts out of both lists; the
-  full report below is unchanged. If the step fails the report is filed as before.
-* Replayed on MT drift issue #11's 10 run comments and WY #4's 6 (`claude-notes/2026-11-22_drift-repeats/`): the
-  last MT report would open with 0 new and 23 still unresolved, led by the 15 items flagged in 8-10 reports in a row
-  (11 "on OPI but not on our scrape", Frontier's empty board, Ulm's notice, OPI's own title lint, Swan River's DLI
-  salary); WY with Carbon 1's blanked pay (6 reports).
+  `classify_drift_repeats()`, `parse_drift_report()`, `drift_report_items()`, `build_drift_glance_markdown()`;
+  test-kit plan item 3, Mike's option B, 2026-11-22). Before commenting, the weekly workflow reads the issue's earlier
+  automated reports (its body and the workflow's own comments, the last 30) and puts a block at the top of this
+  run's report: items not there on the last run day ("New this run") and items flagged on 3 or more run days in a
+  row ("Still unresolved", with the count and the first date). The full report below is unchanged; if the step
+  fails the report is filed as before.
+  - An item is a top-level `- **Name**` bullet keyed by its section and name, so its numbers can change from run to
+    run. Summary sections (feed totals, the safety-net summary) are not items. Sections that flag something without
+    per-source bullets (rebuild parity, run expectations, a crashed monitoring step, keyword conflicts) are named
+    in an "Also in this report" line, so "0 new" can't hide them.
+  - Run days, not reports: of the earlier reports only the last on each date counts, and today's earlier re-runs or
+    test dispatches are left out. A report without the item's section (a crashed check) or with it cut short ("...
+    and N more", MT's 15-district OPI list) neither extends nor breaks an item's run.
+  - A state's `drift_acknowledged.csv` (Section, Item, Reason, Acknowledged) takes items a person accepts out of both
+    lists. A report too long for GitHub's comment limit is filed without the block.
+* Replayed on MT drift issue #11's 10 run comments and WY #4's 6 (`claude-notes/2026-11-22_drift-repeats/`; the
+  workflow also reads the issue body, MT's 10-27 report, which the replay doesn't): the last MT report would open with
+  0 new and 23 still unresolved, led by 10 items flagged on all 6 run days since 11-03 (8 "on OPI but not on our
+  scrape", Frontier's empty board, Swan River's DLI salary) and 5 on 5 run days (3 more OPI misses, Ulm's notice,
+  OPI's own title lint); WY with Carbon 1's blanked pay.
 
 # edjobs 0.77.0
 
