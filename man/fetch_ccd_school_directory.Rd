@@ -11,6 +11,9 @@ fetch_ccd_school_directory(fips, year)
 
 \item{year}{Directory year.}
 }
+\value{
+Data frame of the CCD school directory records for that state and year.
+}
 \description{
 Fetch the CCD school directory for a state and year
 }

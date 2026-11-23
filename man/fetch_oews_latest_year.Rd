@@ -7,9 +7,9 @@
 fetch_oews_latest_year(state, api_key = Sys.getenv("BLS_API_KEY"))
 }
 \arguments{
-\item{state}{See the description.}
+\item{state}{A state's postal abbreviation or FIPS code.}
 
-\item{api_key}{See the description.}
+\item{api_key}{BLS API registration key.}
 }
 \description{
 Latest OEWS year the API serves, from one statewide series.

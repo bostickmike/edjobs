@@ -7,13 +7,16 @@
 check_total_matches_parts(total_rows, part_rows, group_cols, value_col = "sum")
 }
 \arguments{
-\item{total_rows}{See the description.}
+\item{total_rows}{The "Total" rows computed this update.}
 
-\item{part_rows}{See the description.}
+\item{part_rows}{The per-district or per-college rows they should sum.}
 
-\item{group_cols}{See the description.}
+\item{group_cols}{Columns that identify a total (category, date).}
 
-\item{value_col}{See the description.}
+\item{value_col}{The count column.}
+}
+\value{
+TRUE invisibly when every total equals the sum of its parts; otherwise an error listing the mismatches.
 }
 \description{
 Consistency check for the incremental-append mechanism itself (as opposed

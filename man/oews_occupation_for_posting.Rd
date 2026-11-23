@@ -7,9 +7,9 @@
 oews_occupation_for_posting(position, title)
 }
 \arguments{
-\item{position}{See the description.}
+\item{position}{K-12 position buckets (\code{classify_k12_position()}).}
 
-\item{title}{See the description.}
+\item{title}{Posting titles.}
 }
 \description{
 The OEWS occupation for a K-12 posting, from its position category and

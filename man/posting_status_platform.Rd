@@ -7,7 +7,7 @@
 posting_status_platform(url)
 }
 \arguments{
-\item{url}{See the description.}
+\item{url}{Posting URLs.}
 }
 \description{
 Posting status platform

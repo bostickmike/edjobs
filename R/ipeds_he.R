@@ -103,7 +103,7 @@ fetch_urban_college_year <- function(endpoint, year, fips = state_fips()) {
 #' @param endpoint One of the `*_ENDPOINT` constants.
 #' @param fips See [fetch_urban_college_year()].
 #' @param start_year,years_back Years searched: `start_year` down to `start_year - years_back`.
-#' @param quiet_errors See the description.
+#' @param quiet_errors TRUE to treat a failed request (a 404 for a year not yet published) as no rows and keep searching; FALSE to stop on it.
 #' @keywords internal
 find_latest_urban_college_year <- function(endpoint, fips = state_fips(),
                                            start_year = as.integer(format(Sys.Date(), "%Y")),
@@ -160,6 +160,7 @@ ipeds_avg_salary_9to12 <- function(df, rank = 99) {
 #' @param df Rows from the salaries-instructional-staff endpoint.
 #' @param year Survey year.
 #' @param unitid_map See the file header.
+#' @return Data frame with one row per `unitid_map` row: `Name`, `Faculty_Avg_Salary`, `Faculty_Avg_Salary_Professor`, `Faculty_Count`, `Salary_Year` (and `Salary_Note` when the map has it).
 #' @export
 parse_ipeds_he_salaries <- function(df, year, unitid_map) {
   check_unitid_map(unitid_map)
@@ -189,6 +190,7 @@ parse_ipeds_he_salaries <- function(df, year, unitid_map) {
 #' Fetch IPEDS instructional staff salaries for the latest year
 #' @inheritParams parse_ipeds_he_salaries
 #' @inheritParams fetch_urban_college_year
+#' @return As `parse_ipeds_he_salaries()`, for the latest IPEDS year with data.
 #' @export
 fetch_ipeds_he_salaries <- function(unitid_map, fips = state_fips()) {
   latest <- find_latest_ipeds_salary_year(fips)
@@ -217,6 +219,7 @@ parse_ipeds_salary_trend_year <- function(df, year, unitid_map) {
 #' year contributes no rows.
 #' @inheritParams fetch_ipeds_he_salaries
 #' @param n_years Number of years, counting the latest.
+#' @return Data frame with one row per institution and year: `Name`, `Year`, `Faculty_Avg_Salary`.
 #' @export
 fetch_ipeds_he_salary_trend <- function(unitid_map, fips = state_fips(), n_years = 3) {
   latest <- find_latest_ipeds_salary_year(fips)
@@ -263,6 +266,7 @@ parse_ipeds_he_enrollment <- function(df, year, unitid_map) {
 
 #' Fetch IPEDS fall enrollment for the latest year
 #' @inheritParams fetch_ipeds_he_salaries
+#' @return Data frame with one row per `unitid_map` row: `Name`, `Enrollment`, `Enrollment_Year`, for the latest IPEDS year with data.
 #' @export
 fetch_ipeds_he_enrollment <- function(unitid_map, fips = state_fips()) {
   latest <- find_latest_ipeds_enrollment_year(fips)
@@ -293,7 +297,8 @@ compute_enrollment_change <- function(current, prior) {
 #' Change from `trend_years_back` years before the latest year (5, the same
 #' window as the K-12 side's Population_Change_Pct).
 #' @inheritParams fetch_ipeds_he_salaries
-#' @param trend_years_back See the description.
+#' @param trend_years_back How many years before the latest the change is measured from.
+#' @return Data frame: `Name`, `Enrollment_Change_Pct` (a proportion; NA without both years).
 #' @export
 fetch_ipeds_he_enrollment_trend <- function(unitid_map, fips = state_fips(), trend_years_back = 5) {
   latest <- find_latest_ipeds_enrollment_year(fips)
@@ -323,7 +328,7 @@ find_latest_fsa_grants_year <- function(fips = state_fips(), start_year = as.int
 #' per map row. `enrollment_df` must be [parse_ipeds_he_enrollment()] for the
 #' same year as `grants_df`.
 #' @param grants_df Rows from the fsa/grants endpoint.
-#' @param enrollment_df See the description.
+#' @param enrollment_df [parse_ipeds_he_enrollment()] output for the same year as `grants_df`.
 #' @inheritParams parse_ipeds_he_salaries
 #' @keywords internal
 parse_ipeds_he_pell_share <- function(grants_df, enrollment_df, year, unitid_map) {
@@ -346,6 +351,7 @@ parse_ipeds_he_pell_share <- function(grants_df, enrollment_df, year, unitid_map
 #'
 #' Pairs the latest FSA grants year with IPEDS enrollment for that same year.
 #' @inheritParams fetch_ipeds_he_salaries
+#' @return Data frame with one row per `unitid_map` row: `Name`, `Pell_Recipient_Share`, `Pell_Year`.
 #' @export
 fetch_ipeds_he_pell_share <- function(unitid_map, fips = state_fips()) {
   latest <- find_latest_fsa_grants_year(fips)
@@ -365,6 +371,7 @@ fetch_ipeds_he_pell_share <- function(unitid_map, fips = state_fips()) {
 #' For checks on the unitid map itself, such as whether two institutions that
 #' share a unitid have started reporting separately.
 #' @inheritParams find_latest_urban_college_year
+#' @return `list(year, data)` for the latest directory year with rows, or `list(year = NA, data = data.frame())`.
 #' @export
 find_latest_ipeds_directory_year <- function(fips = state_fips(), start_year = as.integer(format(Sys.Date(), "%Y")),
                                              years_back = 5) {

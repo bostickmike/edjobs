@@ -19,7 +19,7 @@ find_latest_urban_college_year(
 
 \item{start_year, years_back}{Years searched: \code{start_year} down to \code{start_year - years_back}.}
 
-\item{quiet_errors}{See the description.}
+\item{quiet_errors}{TRUE to treat a failed request (a 404 for a year not yet published) as no rows and keep searching; FALSE to stop on it.}
 }
 \description{
 Walks back from \code{start_year} and returns \code{list(year, data)} for the first

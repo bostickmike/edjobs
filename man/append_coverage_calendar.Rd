@@ -7,9 +7,9 @@
 append_coverage_calendar(calendar, rows)
 }
 \arguments{
-\item{calendar}{See the description.}
+\item{calendar}{The calendar so far, or NULL.}
 
-\item{rows}{See the description.}
+\item{rows}{This update's rows from \code{build_coverage_calendar()}.}
 }
 \description{
 Replaces this run's rows (a same-day rerun) and keeps the rest.

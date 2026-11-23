@@ -12,13 +12,16 @@ fetch_ipeds_staff_salaries(
 )
 }
 \arguments{
-\item{fips}{See the description.}
+\item{fips}{State FIPS code.}
 
-\item{unitids}{See the description.}
+\item{unitids}{IPEDS unit IDs of the state's tracked institutions.}
 
-\item{start_year}{See the description.}
+\item{start_year}{First year to try.}
 
-\item{lookback}{See the description.}
+\item{lookback}{How many earlier years to try.}
+}
+\value{
+Data frame with one row per institution and staff category (at least 3 staff): \code{IPEDS_UNITID}, \code{Staff_Category}, \code{Category_Label}, \code{Staff_Count}, \code{Avg_Salary}, \code{Year}; an error when no year has data.
 }
 \description{
 The most recent year with data for this state, searched back from this

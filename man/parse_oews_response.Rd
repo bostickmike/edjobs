@@ -7,7 +7,7 @@
 parse_oews_response(json_text)
 }
 \arguments{
-\item{json_text}{See the description.}
+\item{json_text}{Body of one BLS API v2 response.}
 }
 \description{
 Parses one API response into series_id / year / value. "-" (suppressed or

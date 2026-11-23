@@ -7,9 +7,9 @@
 dropped_postings(prev, cur)
 }
 \arguments{
-\item{prev}{See the description.}
+\item{prev}{Previous archive's postings (\code{url}, \code{title}, \code{District}).}
 
-\item{cur}{See the description.}
+\item{cur}{This archive's postings, same columns.}
 }
 \description{
 Postings with a checkable page that were on their board in the previous

@@ -14,12 +14,15 @@ fetch_census_county_context(
 \arguments{
 \item{api_key}{See \code{\link[=census_api_key]{census_api_key()}}.}
 
-\item{trend_years_back}{See the description.}
+\item{trend_years_back}{How many ACS vintages back the population change is measured from.}
 
 \item{fips}{Two-digit state FIPS code; defaults to the current state config's.}
 
 \item{county_suffix}{Text removed from the end of Census's county NAME
 (", Montana"); NULL keeps the full name.}
+}
+\value{
+Data frame with one row per county: median household income, median gross rent and population (with margins of error), the mining and energy employment share, and the population change.
 }
 \description{
 The latest vintage's income, rent and population, joined with the mining

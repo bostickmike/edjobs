@@ -51,7 +51,8 @@ COVERAGE_HEALTHY_STATUS <- "ok"
 #' scrape_log.csv, including logs written before log_scrape_result() doubled
 #' quotes (a backslash-escaped quote in an error message broke read.csv for
 #' every later row).
-#' @param log_path See the description.
+#' @param log_path Path to `scrape_log.csv`.
+#' @return Data frame of the log, all columns character.
 #' @export
 read_scrape_log <- function(log_path) {
   txt <- gsub('\\\\"', '""', readLines(log_path, warn = FALSE, encoding = "UTF-8"))
@@ -59,15 +60,15 @@ read_scrape_log <- function(log_path) {
 }
 
 #' Coverage entity name
-#' @param source See the description.
+#' @param source Logged source names.
 #' @keywords internal
 coverage_entity_name <- function(source) sub("^Apptegy/chromote: ", "", source)
 
 #' Latest log entries
 #'
 #' The latest logged attempt per source on run_date.
-#' @param scrape_log See the description.
-#' @param run_date See the description.
+#' @param scrape_log The scrape log (data frame).
+#' @param run_date The update's date.
 #' @keywords internal
 latest_log_entries <- function(scrape_log, run_date) {
   l <- scrape_log[!is.na(scrape_log$timestamp) & substr(scrape_log$timestamp, 1, 10) == format(as.Date(run_date)), , drop = FALSE]
@@ -76,17 +77,17 @@ latest_log_entries <- function(scrape_log, run_date) {
 }
 
 #' Build coverage calendar
-#' @param scrape_log See the description.
-#' @param run_date See the description.
-#' @param k12_entities See the description.
-#' @param he_entities See the description.
-#' @param data_k12 See the description.
-#' @param data_he See the description.
-#' @param feeds See the description.
-#' @param shared_boards See the description.
+#' @param scrape_log The scrape log (data frame).
+#' @param run_date The update's date.
+#' @param k12_entities K-12 sources expected every update (registry districts).
+#' @param he_entities College sources expected every update.
+#' @param data_k12 K-12 entity names present in this update's data, added when they logged.
+#' @param data_he College entity names present in this update's data.
+#' @param feeds Named character vector: statewide feed label -> regex on the logged source name.
+#' @param shared_boards Named character vector: entity -> the entity whose board it shares.
 #' @param extra_sources Named list (or named character vector): entity -> the
 #'   other source names it logs under.
-#' @param previous See the description.
+#' @param previous The calendar so far; entities it already tracks stay tracked.
 #' @keywords internal
 build_coverage_calendar <- function(scrape_log, run_date, k12_entities = character(0), he_entities = character(0),
                                     data_k12 = character(0), data_he = character(0), feeds = character(0),
@@ -150,8 +151,8 @@ coverage_calendar_empty <- function() {
 #' Append coverage calendar
 #'
 #' Replaces this run's rows (a same-day rerun) and keeps the rest.
-#' @param calendar See the description.
-#' @param rows See the description.
+#' @param calendar The calendar so far, or NULL.
+#' @param rows This update's rows from `build_coverage_calendar()`.
 #' @keywords internal
 append_coverage_calendar <- function(calendar, rows) {
   if (!is.null(calendar) && nrow(calendar) > 0) {
@@ -166,10 +167,11 @@ append_coverage_calendar <- function(calendar, rows) {
 #'
 #' Weekly step (run once every source has been scraped, i.e. after the HE
 #' archive is written). Returns the run's rows invisibly.
-#' @param path See the description.
-#' @param log_path See the description.
-#' @param run_date See the description.
-#' @param ... See the description.
+#' @param path The coverage calendar CSV to read and rewrite.
+#' @param log_path This update's `scrape_log.csv`.
+#' @param run_date The update's date.
+#' @param ... Passed to `build_coverage_calendar()` (entities, feeds, shared boards).
+#' @return This update's calendar rows (data frame), invisibly; the whole calendar is written to `path`.
 #' @export
 refresh_coverage_calendar <- function(path = "coverage_calendar.csv", log_path = "scrape_log.csv",
                                       run_date = Sys.Date(), ...) {

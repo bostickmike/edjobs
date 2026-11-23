@@ -7,11 +7,14 @@
 attach_ipeds_staff_estimates(postings, staff, unitid_of_institution)
 }
 \arguments{
-\item{postings}{See the description.}
+\item{postings}{College postings with \code{Title} and \code{Institution}.}
 
-\item{staff}{See the description.}
+\item{staff}{Output of \code{fetch_ipeds_staff_salaries()}.}
 
-\item{unitid_of_institution}{See the description.}
+\item{unitid_of_institution}{Each posting's IPEDS unit ID (one per row of \code{postings}).}
+}
+\value{
+\code{postings} with \code{Est_Pay} (per year), \code{Est_Pay_Unit}, \code{Est_Occupation} (the category), \code{Est_Area} (the institution) and \code{Est_Year}; NA where no category or figure fits.
 }
 \description{
 Adds Est_* to higher-ed postings: the institution's IPEDS average for the

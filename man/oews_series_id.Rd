@@ -7,13 +7,13 @@
 oews_series_id(area_code, type, soc, datatype)
 }
 \arguments{
-\item{area_code}{See the description.}
+\item{area_code}{OEWS area code.}
 
-\item{type}{See the description.}
+\item{type}{"state" or "area".}
 
-\item{soc}{See the description.}
+\item{soc}{2018 SOC code without the dash.}
 
-\item{datatype}{See the description.}
+\item{datatype}{OEWS data type code (\code{OEWS_ANNUAL_MEDIAN} or \code{OEWS_HOURLY_MEDIAN}).}
 }
 \description{
 "OEUS" + area + industry (000000 = all) + SOC + datatype for a state;

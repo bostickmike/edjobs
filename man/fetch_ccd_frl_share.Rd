@@ -18,6 +18,9 @@ fetch_ccd_frl_share(
 
 \item{start_year, years_back}{Years searched.}
 }
+\value{
+Data frame with one row per \code{id_map} entity: \code{District}, \code{Free_Reduced_Lunch_Share}, \code{FRL_Schools_Reporting}, \code{FRL_Year}.
+}
 \description{
 Each entity takes the newest year in which it has a share (FRL_Year says
 which): some districts skip a year (WY 2024: 8 of 48 reported no counts).

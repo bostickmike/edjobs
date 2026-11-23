@@ -9,7 +9,7 @@ parse_ipeds_he_pell_share(grants_df, enrollment_df, year, unitid_map)
 \arguments{
 \item{grants_df}{Rows from the fsa/grants endpoint.}
 
-\item{enrollment_df}{See the description.}
+\item{enrollment_df}{\code{\link[=parse_ipeds_he_enrollment]{parse_ipeds_he_enrollment()}} output for the same year as \code{grants_df}.}
 
 \item{year}{Survey year.}
 

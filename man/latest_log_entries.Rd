@@ -7,9 +7,9 @@
 latest_log_entries(scrape_log, run_date)
 }
 \arguments{
-\item{scrape_log}{See the description.}
+\item{scrape_log}{The scrape log (data frame).}
 
-\item{run_date}{See the description.}
+\item{run_date}{The update's date.}
 }
 \description{
 The latest logged attempt per source on run_date.

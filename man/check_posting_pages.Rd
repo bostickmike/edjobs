@@ -13,15 +13,18 @@ check_posting_pages(
 )
 }
 \arguments{
-\item{urls}{See the description.}
+\item{urls}{Posting URLs (several forms of one posting check one page).}
 
-\item{checked_on}{See the description.}
+\item{checked_on}{Date of the check.}
 
-\item{session_factory}{See the description.}
+\item{session_factory}{Function of no arguments returning a chromote session; called once, only when a browser platform is in the list.}
 
-\item{pause}{See the description.}
+\item{pause}{Seconds between page requests.}
 
-\item{fetch}{See the description.}
+\item{fetch}{Function \verb{(check_url, platform, session)} returning page text; \code{fetch_posting_page_text()} in production.}
+}
+\value{
+Data frame with one row per page checked: \code{Check_URL}, \code{Platform}, \code{Status} ("open", "closed" or "unknown"), \code{Signal} (what on the page decided it) and \code{Stated_Close_Date}.
 }
 \description{
 Checks each distinct page once. urls: any posting links (several forms of

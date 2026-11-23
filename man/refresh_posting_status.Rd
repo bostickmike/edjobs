@@ -15,19 +15,22 @@ refresh_posting_status(
 )
 }
 \arguments{
-\item{k12_archive_dir}{See the description.}
+\item{k12_archive_dir}{Folder of the raw K-12 archives.}
 
-\item{he_archive_dir}{See the description.}
+\item{he_archive_dir}{Folder of the raw higher-ed archives.}
 
-\item{status_path}{See the description.}
+\item{status_path}{The status CSV to read and rewrite.}
 
-\item{extra_checks}{See the description.}
+\item{extra_checks}{Checks already made this update (WSBA's), merged in as they are; or NULL.}
 
-\item{run_date}{See the description.}
+\item{run_date}{This update's date.}
 
-\item{session_factory}{See the description.}
+\item{session_factory}{Function returning a chromote session, for browser-rendered platforms.}
 
-\item{pause}{See the description.}
+\item{pause}{Seconds between page requests.}
+}
+\value{
+The updated status table (\code{POSTING_STATUS_COLUMNS}), invisibly; written to \code{status_path}.
 }
 \description{
 The weekly refresh: checks what dropped off since the previous archive (K-12

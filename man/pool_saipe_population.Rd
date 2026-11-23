@@ -9,6 +9,9 @@ pool_saipe_population(rows)
 \arguments{
 \item{rows}{Rows of \code{\link[=saipe_rows_by_leaid]{saipe_rows_by_leaid()}} (rate, and the counts when known).}
 }
+\value{
+One population (numeric), or NA.
+}
 \description{
 The largest SAIPE total population among the districts with a rate. A
 high school district covers its paired elementary district's territory, so

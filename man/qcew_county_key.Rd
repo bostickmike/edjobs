@@ -7,7 +7,10 @@
 qcew_county_key(county)
 }
 \arguments{
-\item{county}{See the description.}
+\item{county}{County names, with or without a ", State" suffix.}
+}
+\value{
+The county names with any ", State" suffix removed.
 }
 \description{
 Joins on a county however it's written: "Yellowstone County" or

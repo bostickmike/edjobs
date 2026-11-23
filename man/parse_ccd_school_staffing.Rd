@@ -9,7 +9,10 @@ parse_ccd_school_staffing(schools, id_map)
 \arguments{
 \item{schools}{Rows from \code{\link[=fetch_ccd_school_directory]{fetch_ccd_school_directory()}}.}
 
-\item{id_map}{See the description.}
+\item{id_map}{Named list: map entity -> its NCES ids (7-digit district or 12-digit school).}
+}
+\value{
+Data frame with one row per \code{id_map} entity: \code{District}, \code{Teachers_Total_FTE}, \code{Enrollment}.
 }
 \description{
 For an entity that isn't its own district in CCD's district directory (a

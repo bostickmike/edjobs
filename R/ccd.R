@@ -42,6 +42,7 @@ FRL_MIN_REPORTED_SHARE <- 0.8
 #' A failed request stops the search (the caller's safe_scrape() logs it).
 #' @param fips Two-digit state FIPS code; defaults to the current state config's.
 #' @param start_year,years_back Years searched: `start_year` down to `start_year - years_back`.
+#' @return `list(year, data)` for the first year with rows, or `list(year = NA, data = data.frame())`.
 #' @export
 find_latest_ccd_directory_year <- function(fips = state_fips(), start_year = as.integer(format(Sys.Date(), "%Y")),
                                            years_back = 5) {
@@ -59,6 +60,7 @@ find_latest_ccd_directory_year <- function(fips = state_fips(), start_year = as.
 #' `df`, or none reports the figure).
 #' @param df Rows from the CCD district directory.
 #' @param district_ids Named list, district -> LEAIDs.
+#' @return Data frame with one row per `district_ids` entry: `District`, `Teachers_Total_FTE`, `Enrollment`.
 #' @export
 parse_ccd_teacher_fte <- function(df, district_ids) {
   empty <- data.frame(District = character(0), Teachers_Total_FTE = numeric(0), Enrollment = numeric(0),
@@ -82,6 +84,7 @@ parse_ccd_teacher_fte <- function(df, district_ids) {
 #' [parse_ccd_teacher_fte()] plus CCD_Year.
 #' @inheritParams parse_ccd_teacher_fte
 #' @inheritParams find_latest_ccd_directory_year
+#' @return As `parse_ccd_teacher_fte()`, plus `CCD_Year`.
 #' @export
 fetch_ccd_teacher_fte <- function(district_ids, fips = state_fips()) {
   latest <- find_latest_ccd_directory_year(fips)
@@ -93,6 +96,7 @@ fetch_ccd_teacher_fte <- function(district_ids, fips = state_fips()) {
 #' Fetch the CCD school directory for a state and year
 #' @param fips State FIPS code.
 #' @param year Directory year.
+#' @return Data frame of the CCD school directory records for that state and year.
 #' @export
 fetch_ccd_school_directory <- function(fips, year) {
   fetch_json_paginated(paste0(CCD_SCHOOL_DIRECTORY_ENDPOINT, "/", year, "/?fips=", fips))
@@ -106,7 +110,7 @@ fetch_ccd_school_directory <- function(fips, year) {
 #' schools reporting counts, NA when those hold under [FRL_MIN_REPORTED_SHARE]
 #' of the entity's enrollment.
 #' @param schools Rows from [fetch_ccd_school_directory()].
-#' @param id_map See the description.
+#' @param id_map Named list: map entity -> its NCES ids (7-digit district or 12-digit school).
 #' @keywords internal
 parse_ccd_frl_share <- function(schools, id_map) {
   empty <- data.frame(District = character(0), Free_Reduced_Lunch_Share = numeric(0),
@@ -142,6 +146,7 @@ parse_ccd_frl_share <- function(schools, id_map) {
 #' @param fips State FIPS code.
 #' @param id_map See [parse_ccd_frl_share()].
 #' @param start_year,years_back Years searched.
+#' @return Data frame with one row per `id_map` entity: `District`, `Free_Reduced_Lunch_Share`, `FRL_Schools_Reporting`, `FRL_Year`.
 #' @export
 fetch_ccd_frl_share <- function(fips, id_map, start_year = as.integer(format(Sys.Date(), "%Y")), years_back = 4) {
   out <- NULL
@@ -174,6 +179,7 @@ fetch_ccd_frl_share <- function(fips, id_map, start_year = as.integer(format(Sys
 #' charter inside a host district): teachers and students summed over its
 #' schools in the school directory. Same `id_map` as [parse_ccd_frl_share()].
 #' @inheritParams parse_ccd_frl_share
+#' @return Data frame with one row per `id_map` entity: `District`, `Teachers_Total_FTE`, `Enrollment`.
 #' @export
 parse_ccd_school_staffing <- function(schools, id_map) {
   if (nrow(schools) == 0 || length(id_map) == 0) {
@@ -197,6 +203,7 @@ parse_ccd_school_staffing <- function(schools, id_map) {
 #' district, or an elementary and a secondary district where a town is split
 #' (Butte Elem + Butte H S). NA when the geocoder finds none.
 #' @param lat,lon Coordinates.
+#' @return Character vector of NCES district ids (LEAIDs) at the point, or NA.
 #' @export
 geocode_school_district <- function(lat, lon) {
   if (is.na(lat) || is.na(lon)) return(NA_character_)

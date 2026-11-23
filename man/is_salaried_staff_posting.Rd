@@ -7,7 +7,10 @@
 is_salaried_staff_posting(title)
 }
 \arguments{
-\item{title}{See the description.}
+\item{title}{College posting titles.}
+}
+\value{
+Logical vector: TRUE for a staff posting that isn't faculty, hourly or a student job.
 }
 \description{
 A higher-ed posting for salaried staff: not faculty, not hourly or student.

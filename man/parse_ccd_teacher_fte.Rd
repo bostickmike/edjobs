@@ -11,6 +11,9 @@ parse_ccd_teacher_fte(df, district_ids)
 
 \item{district_ids}{Named list, district -> LEAIDs.}
 }
+\value{
+Data frame with one row per \code{district_ids} entry: \code{District}, \code{Teachers_Total_FTE}, \code{Enrollment}.
+}
 \description{
 One row per \code{district_ids} entry: District, Teachers_Total_FTE and
 Enrollment summed over the district's LEAIDs (NA when none of them is in

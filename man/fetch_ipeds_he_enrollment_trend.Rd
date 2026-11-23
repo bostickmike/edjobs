@@ -15,7 +15,10 @@ fetch_ipeds_he_enrollment_trend(
 
 \item{fips}{Two-digit state FIPS code; defaults to the current state config's.}
 
-\item{trend_years_back}{See the description.}
+\item{trend_years_back}{How many years before the latest the change is measured from.}
+}
+\value{
+Data frame: \code{Name}, \code{Enrollment_Change_Pct} (a proportion; NA without both years).
 }
 \description{
 Change from \code{trend_years_back} years before the latest year (5, the same

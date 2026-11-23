@@ -15,6 +15,9 @@ find_latest_ipeds_directory_year(
 
 \item{start_year, years_back}{Years searched: \code{start_year} down to \code{start_year - years_back}.}
 }
+\value{
+\code{list(year, data)} for the latest directory year with rows, or \code{list(year = NA, data = data.frame())}.
+}
 \description{
 For checks on the unitid map itself, such as whether two institutions that
 share a unitid have started reporting separately.

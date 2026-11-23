@@ -7,9 +7,12 @@
 drop_closed_wsba_rows(wsba_rows, checks)
 }
 \arguments{
-\item{wsba_rows}{See the description.}
+\item{wsba_rows}{WSBA statewide-list rows with a \code{url} column.}
 
-\item{checks}{See the description.}
+\item{checks}{\code{check_posting_pages()} output for those rows' URLs.}
+}
+\value{
+\code{wsba_rows} less the rows whose linked posting's page says it is closed.
 }
 \description{
 WSBA rows minus those whose linked posting the platform says is closed.

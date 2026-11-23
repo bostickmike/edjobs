@@ -7,7 +7,7 @@
 coverage_entity_name(source)
 }
 \arguments{
-\item{source}{See the description.}
+\item{source}{Logged source names.}
 }
 \description{
 Coverage entity name

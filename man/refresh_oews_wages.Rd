@@ -12,13 +12,16 @@ refresh_oews_wages(
 )
 }
 \arguments{
-\item{state}{See the description.}
+\item{state}{A state's postal abbreviation or FIPS code.}
 
-\item{path}{See the description.}
+\item{path}{The state's \code{oews_role_wages.csv}.}
 
-\item{api_key}{See the description.}
+\item{api_key}{BLS API registration key; empty for the keyless limits.}
 
 \item{retrieved_source}{Optional source key, recorded only when a new year is downloaded and kept.}
+}
+\value{
+The wage table in use (the new download, or the existing file when it is current or the download was rejected), invisibly.
 }
 \description{
 Keeps the committed file unless BLS has published a newer year; a failed

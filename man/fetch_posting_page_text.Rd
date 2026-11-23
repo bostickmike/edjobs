@@ -7,11 +7,11 @@
 fetch_posting_page_text(check_url, platform, session = NULL)
 }
 \arguments{
-\item{check_url}{See the description.}
+\item{check_url}{Canonical page URL from \code{posting_status_check_url()}.}
 
-\item{platform}{See the description.}
+\item{platform}{Platform name.}
 
-\item{session}{See the description.}
+\item{session}{A chromote session, for platforms that render in the browser.}
 }
 \description{
 The page's visible text: a plain request (html_text2) or, for platforms that

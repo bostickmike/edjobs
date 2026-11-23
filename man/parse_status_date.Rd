@@ -7,7 +7,7 @@
 parse_status_date(x)
 }
 \arguments{
-\item{x}{See the description.}
+\item{x}{Date text.}
 }
 \description{
 Month-name or numeric dates ("November 6, 2026", "11/4/2026") as Date.

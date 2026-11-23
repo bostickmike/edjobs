@@ -15,6 +15,9 @@ find_latest_ccd_directory_year(
 
 \item{start_year, years_back}{Years searched: \code{start_year} down to \code{start_year - years_back}.}
 }
+\value{
+\code{list(year, data)} for the first year with rows, or \code{list(year = NA, data = data.frame())}.
+}
 \description{
 \code{list(year, data)} for the first year back from \code{start_year} with rows.
 A failed request stops the search (the caller's safe_scrape() logs it).

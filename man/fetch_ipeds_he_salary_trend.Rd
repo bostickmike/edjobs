@@ -13,6 +13,9 @@ fetch_ipeds_he_salary_trend(unitid_map, fips = state_fips(), n_years = 3)
 
 \item{n_years}{Number of years, counting the latest.}
 }
+\value{
+Data frame with one row per institution and year: \code{Name}, \code{Year}, \code{Faculty_Avg_Salary}.
+}
 \description{
 The latest year and the \code{n_years - 1} before it, stacked; a failed prior
 year contributes no rows.

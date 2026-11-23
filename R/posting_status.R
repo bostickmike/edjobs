@@ -53,7 +53,7 @@ POSTING_STATUS_BROWSER_PLATFORMS <- c("redrover", "oracle", "paycom")
 POSTING_STATUS_UA <- "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
 #' Posting status platform
-#' @param url See the description.
+#' @param url Posting URLs.
 #' @keywords internal
 posting_status_platform <- function(url) {
   u <- tolower(ifelse(is.na(url), "", url))
@@ -72,7 +72,8 @@ posting_status_platform <- function(url) {
 #'
 #' One page per posting: the same posting can be linked several ways (WSBA
 #' links AppliTrack's JobPostings/View.asp, the board links default.aspx).
-#' @param url See the description.
+#' @param url Posting URLs, in any of the forms a board or WSBA links.
+#' @return Character vector: the one canonical page to check for each posting; NA where the platform has no checkable per-posting page.
 #' @export
 posting_status_check_url <- function(url) {
   p <- posting_status_platform(url)
@@ -100,7 +101,7 @@ posting_status_check_url <- function(url) {
 #' Parse status date
 #'
 #' Month-name or numeric dates ("November 6, 2026", "11/4/2026") as Date.
-#' @param x See the description.
+#' @param x Date text.
 #' @keywords internal
 parse_status_date <- function(x) {
   x <- trimws(x)
@@ -113,9 +114,9 @@ parse_status_date <- function(x) {
 #'
 #' What a posting's page says. text: the page's visible text. Returns a
 #' one-row data frame: Status, Signal, Stated_Close_Date (character or NA).
-#' @param platform See the description.
-#' @param text See the description.
-#' @param checked_on See the description.
+#' @param platform Platform name from `posting_status_platform()`.
+#' @param text The page's visible text.
+#' @param checked_on Date of the check; a stated closing date before it means closed.
 #' @keywords internal
 parse_posting_status <- function(platform, text, checked_on = Sys.Date()) {
   res <- function(status, signal, close = NA_character_)
@@ -177,9 +178,9 @@ parse_posting_status <- function(platform, text, checked_on = Sys.Date()) {
 #'
 #' The page's visible text: a plain request (html_text2) or, for platforms that
 #' render in the browser, the rendered body text.
-#' @param check_url See the description.
-#' @param platform See the description.
-#' @param session See the description.
+#' @param check_url Canonical page URL from `posting_status_check_url()`.
+#' @param platform Platform name.
+#' @param session A chromote session, for platforms that render in the browser.
 #' @keywords internal
 fetch_posting_page_text <- function(check_url, platform, session = NULL) {
   if (platform %in% POSTING_STATUS_BROWSER_PLATFORMS) {
@@ -204,11 +205,12 @@ fetch_posting_page_text <- function(check_url, platform, session = NULL) {
 #' Checks each distinct page once. urls: any posting links (several forms of
 #' the same posting check one page). session_factory: called once, only if a
 #' browser platform is in the list. Returns one row per check URL.
-#' @param urls See the description.
-#' @param checked_on See the description.
-#' @param session_factory See the description.
-#' @param pause See the description.
-#' @param fetch See the description.
+#' @param urls Posting URLs (several forms of one posting check one page).
+#' @param checked_on Date of the check.
+#' @param session_factory Function of no arguments returning a chromote session; called once, only when a browser platform is in the list.
+#' @param pause Seconds between page requests.
+#' @param fetch Function `(check_url, platform, session)` returning page text; `fetch_posting_page_text()` in production.
+#' @return Data frame with one row per page checked: `Check_URL`, `Platform`, `Status` ("open", "closed" or "unknown"), `Signal` (what on the page decided it) and `Stated_Close_Date`.
 #' @export
 check_posting_pages <- function(urls, checked_on = Sys.Date(), session_factory = NULL, pause = 1,
                                 fetch = fetch_posting_page_text) {
@@ -240,8 +242,9 @@ check_posting_pages <- function(urls, checked_on = Sys.Date(), session_factory =
 #'
 #' WSBA rows minus those whose linked posting the platform says is closed.
 #' checks: check_posting_pages() of these rows' urls.
-#' @param wsba_rows See the description.
-#' @param checks See the description.
+#' @param wsba_rows WSBA statewide-list rows with a `url` column.
+#' @param checks `check_posting_pages()` output for those rows' URLs.
+#' @return `wsba_rows` less the rows whose linked posting's page says it is closed.
 #' @export
 drop_closed_wsba_rows <- function(wsba_rows, checks) {
   if (nrow(wsba_rows) == 0 || is.null(checks) || nrow(checks) == 0) return(wsba_rows)
@@ -254,8 +257,8 @@ drop_closed_wsba_rows <- function(wsba_rows, checks) {
 #'
 #' Postings with a checkable page that were on their board in the previous
 #' run and not in this one. prev / cur: data frames with url, title, District.
-#' @param prev See the description.
-#' @param cur See the description.
+#' @param prev Previous archive's postings (`url`, `title`, `District`).
+#' @param cur This archive's postings, same columns.
 #' @keywords internal
 dropped_postings <- function(prev, cur) {
   pk <- posting_status_check_url(prev$url)
@@ -269,9 +272,9 @@ dropped_postings <- function(prev, cur) {
 #'
 #' Merges this run's checks into the status table. checks: check_posting_pages()
 #' output plus Segment, District, Title, Last_Listed.
-#' @param previous See the description.
-#' @param checks See the description.
-#' @param run_date See the description.
+#' @param previous The status table so far (`POSTING_STATUS_COLUMNS`), or NULL.
+#' @param checks This update's checks plus `Segment`, `District`, `Title`, `Last_Listed`.
+#' @param run_date This update's date.
 #' @keywords internal
 merge_posting_status <- function(previous, checks, run_date) {
   run_date <- format(as.Date(run_date))
@@ -310,8 +313,8 @@ merge_posting_status <- function(previous, checks, run_date) {
 #' Postings already in the table that are still open or unknown, first checked
 #' fewer than POSTING_STATUS_RECHECK_DAYS days before `run_date`, and not back on
 #' their board this run.
-#' @param previous See the description.
-#' @param listed_check_urls See the description.
+#' @param previous The status table so far.
+#' @param listed_check_urls Check URLs of postings listed again in this update.
 #' @param run_date This run's date.
 #' @keywords internal
 posting_status_rechecks <- function(previous, listed_check_urls, run_date = Sys.Date()) {
@@ -326,13 +329,14 @@ posting_status_rechecks <- function(previous, listed_check_urls, run_date = Sys.
 #' The weekly refresh: checks what dropped off since the previous archive (K-12
 #' and HE), re-checks open/unknown postings, adds `extra_checks` (this run's WSBA
 #' checks, already done), and writes status_path. Returns the table.
-#' @param k12_archive_dir See the description.
-#' @param he_archive_dir See the description.
-#' @param status_path See the description.
-#' @param extra_checks See the description.
-#' @param run_date See the description.
-#' @param session_factory See the description.
-#' @param pause See the description.
+#' @param k12_archive_dir Folder of the raw K-12 archives.
+#' @param he_archive_dir Folder of the raw higher-ed archives.
+#' @param status_path The status CSV to read and rewrite.
+#' @param extra_checks Checks already made this update (WSBA's), merged in as they are; or NULL.
+#' @param run_date This update's date.
+#' @param session_factory Function returning a chromote session, for browser-rendered platforms.
+#' @param pause Seconds between page requests.
+#' @return The updated status table (`POSTING_STATUS_COLUMNS`), invisibly; written to `status_path`.
 #' @export
 refresh_posting_status <- function(k12_archive_dir = "Archivek12_Data", he_archive_dir = "Archived_HE_Data",
                                    status_path = "posting_status.csv", extra_checks = NULL,

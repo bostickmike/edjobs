@@ -7,11 +7,14 @@
 check_file_schema(file_name, actual_cols, required_cols)
 }
 \arguments{
-\item{file_name}{See the description.}
+\item{file_name}{File name, for the report.}
 
-\item{actual_cols}{See the description.}
+\item{actual_cols}{The file's column names.}
 
-\item{required_cols}{See the description.}
+\item{required_cols}{Columns it must have.}
+}
+\value{
+\code{NULL} when no required column is missing; otherwise a data frame with one row per missing column (\code{file}, \code{missing_column}).
 }
 \description{
 Pure function: given one file's actual column names, which of the

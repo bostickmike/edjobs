@@ -6,6 +6,9 @@
 \usage{
 census_api_key()
 }
+\value{
+The \code{CENSUS_API_KEY} environment variable; an error saying where to get a key when it is empty.
+}
 \description{
 \code{CENSUS_API_KEY}, or an error saying where to get one.
 }

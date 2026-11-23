@@ -7,11 +7,11 @@
 merge_posting_status(previous, checks, run_date)
 }
 \arguments{
-\item{previous}{See the description.}
+\item{previous}{The status table so far (\code{POSTING_STATUS_COLUMNS}), or NULL.}
 
-\item{checks}{See the description.}
+\item{checks}{This update's checks plus \code{Segment}, \code{District}, \code{Title}, \code{Last_Listed}.}
 
-\item{run_date}{See the description.}
+\item{run_date}{This update's date.}
 }
 \description{
 Merges this run's checks into the status table. checks: check_posting_pages()
