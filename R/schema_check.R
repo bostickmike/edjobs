@@ -8,9 +8,10 @@
 #' required ones (if any) are missing? NULL if the schema is fine, so
 #' callers can filter with Filter(Negate(is.null), ...) the same way other
 #' check_*() functions in this repo do.
-#' @param file_name See the description.
-#' @param actual_cols See the description.
-#' @param required_cols See the description.
+#' @param file_name File name, for the report.
+#' @param actual_cols The file's column names.
+#' @param required_cols Columns it must have.
+#' @return `NULL` when no required column is missing; otherwise a data frame with one row per missing column (`file`, `missing_column`).
 #' @export
 check_file_schema <- function(file_name, actual_cols, required_cols) {
   missing <- setdiff(required_cols, actual_cols)

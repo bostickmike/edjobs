@@ -17,6 +17,9 @@ fetch_saipe_by_leaid(
 
 \item{fips}{Two-digit state FIPS code; defaults to the current state config's.}
 }
+\value{
+Data frame with one row per SAIPE district (unified, elementary and secondary) keyed by NCES id, with the poverty counts, the rate, \code{SAIPE_Population} and \code{SAIPE_Year}.
+}
 \description{
 \code{\link[=saipe_rows_by_leaid]{saipe_rows_by_leaid()}} over all three geographies, plus SAIPE_Year.
 }

@@ -20,6 +20,7 @@ not_marked_note <- function(level = c("k12", "he")) switch(match.arg(level),
 #' @param last_refreshed_date The data's refreshed date, shown in the footer.
 #' @param credit The footer's credit after the date (e.g. "Created by ...").
 #' @param extra `NULL`, or a card of the state's own shown under the four tables.
+#' @return A bslib `nav_panel()`.
 #' @export
 home_tab_panel <- function(state_name, k12_source, last_refreshed_date, credit, extra = NULL) {
   need_shiny_ui("home_tab_panel")

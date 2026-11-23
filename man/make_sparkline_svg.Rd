@@ -11,6 +11,9 @@ make_sparkline_svg(series, accent = "#2a78d6")
 
 \item{accent}{Line colour (hex).}
 }
+\value{
+One string of inline SVG, or "" for fewer than two values.
+}
 \description{
 Tiny inline trend chart (no axes or legend, just the shape of a trend) for the Top Hiring tables and KPI tiles.
 The end dot is green when the series ends above where it started, red below, grey level. "" for fewer than two

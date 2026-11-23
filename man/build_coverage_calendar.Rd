@@ -18,26 +18,26 @@ build_coverage_calendar(
 )
 }
 \arguments{
-\item{scrape_log}{See the description.}
+\item{scrape_log}{The scrape log (data frame).}
 
-\item{run_date}{See the description.}
+\item{run_date}{The update's date.}
 
-\item{k12_entities}{See the description.}
+\item{k12_entities}{K-12 sources expected every update (registry districts).}
 
-\item{he_entities}{See the description.}
+\item{he_entities}{College sources expected every update.}
 
-\item{data_k12}{See the description.}
+\item{data_k12}{K-12 entity names present in this update's data, added when they logged.}
 
-\item{data_he}{See the description.}
+\item{data_he}{College entity names present in this update's data.}
 
-\item{feeds}{See the description.}
+\item{feeds}{Named character vector: statewide feed label -> regex on the logged source name.}
 
-\item{shared_boards}{See the description.}
+\item{shared_boards}{Named character vector: entity -> the entity whose board it shares.}
 
 \item{extra_sources}{Named list (or named character vector): entity -> the
 other source names it logs under.}
 
-\item{previous}{See the description.}
+\item{previous}{The calendar so far; entities it already tracks stay tracked.}
 }
 \description{
 Build coverage calendar

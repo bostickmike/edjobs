@@ -7,7 +7,10 @@
 classify_he_faculty_category(title)
 }
 \arguments{
-\item{title}{See the description.}
+\item{title}{Character vector of faculty posting titles.}
+}
+\value{
+Character vector of disciplines (Science, Humanities, Health, Criminal Justice, ...), "Uncategorized" where none matches.
 }
 \description{
 Subject category, computed only for Job_Type == "Instructor/Teacher/Faculty" rows.

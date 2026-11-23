@@ -11,6 +11,9 @@ rows_phrase(n, unit = "records")
 
 \item{unit}{The word after the number.}
 }
+\value{
+A string such as " (8,400+ records)", or "" when \code{n} is missing.
+}
 \description{
 Rounded down to the hundred (thousand from 10,000), as the hand-written counts were.
 }

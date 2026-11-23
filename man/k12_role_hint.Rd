@@ -7,7 +7,10 @@
 k12_role_hint(description)
 }
 \arguments{
-\item{description}{See the description.}
+\item{description}{Character vector of posting descriptions (OPI's detail-page text).}
+}
+\value{
+Character vector, one per description: Substitute, Paraprofessional, Part-Time, Teacher, Counselor or Administration (the role the opening names first), or NA when the description gives no clear signal.
 }
 \description{
 K12 role hint

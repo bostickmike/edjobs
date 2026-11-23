@@ -5,6 +5,7 @@
 #' K-12 Listing Duration tab
 #'
 #' The `nav_panel()` for K-12 > Listing Duration (value `"k12_spells"`).
+#' @return A bslib `nav_panel()`.
 #' @export
 k12_spells_panel <- function() {
   need_shiny_ui("k12_spells_panel")
@@ -68,6 +69,7 @@ k12_spells_panel <- function() {
 #' Higher Ed Listing Duration tab
 #'
 #' The `nav_panel()` for Higher Ed > Listing Duration (value `"he_spells"`).
+#' @return A bslib `nav_panel()`.
 #' @export
 he_spells_panel <- function() {
   need_shiny_ui("he_spells_panel")

@@ -7,7 +7,10 @@
 is_transient_gateway_error(resp)
 }
 \arguments{
-\item{resp}{See the description.}
+\item{resp}{An httr2 response.}
+}
+\value{
+TRUE for a 429, 502, 503, 504 or 520-524 status.
 }
 \description{
 httr2's default retries only 429/503, so a 502/504 or a Cloudflare

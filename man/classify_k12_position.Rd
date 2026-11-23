@@ -7,9 +7,12 @@
 classify_k12_position(title, role_hint = NULL)
 }
 \arguments{
-\item{title}{See the description.}
+\item{title}{Character vector of K-12 posting titles.}
 
-\item{role_hint}{See the description.}
+\item{role_hint}{Optional character vector, one per title, from \code{k12_role_hint()} (OPI postings' descriptions); \code{NULL} or NA leaves the title's bucket.}
+}
+\value{
+Character vector of position buckets (Teacher, Substitute, Paraprofessional, Athletics, Support Services, Transportation, Custodial/Maintenance, Administration, Food Services, Part-Time Teacher, Activities/Extracurricular, Staff, Other).
 }
 \description{
 Coarse position bucket from the raw job title. role_hint (k12_role_hint(),

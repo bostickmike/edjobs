@@ -11,6 +11,9 @@ relabel_spell_status(df, labels = c(`Closed / Filled` = "No longer listed"))
 
 \item{labels}{Named character vector: names are file statuses, values the labels shown.}
 }
+\value{
+\code{df} with its \code{Status} values relabeled.
+}
 \description{
 The posting-spell files say "Closed / Filled" for a spell whose posting stopped appearing. The dashboard shows
 "No longer listed": a listing ends when it stops appearing, whether it was filled, cancelled, moved to another

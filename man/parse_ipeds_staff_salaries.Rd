@@ -7,11 +7,11 @@
 parse_ipeds_staff_salaries(results, unitids, year)
 }
 \arguments{
-\item{results}{See the description.}
+\item{results}{Urban Institute IPEDS non-instructional staff salary records (data frame or list).}
 
-\item{unitids}{See the description.}
+\item{unitids}{IPEDS unit IDs of the state's tracked institutions.}
 
-\item{year}{See the description.}
+\item{year}{The IPEDS year of the records.}
 }
 \description{
 One row per institution x category: IPEDS_UNITID, Staff_Category,

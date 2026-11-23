@@ -7,11 +7,14 @@
 rebuild_parity_row(file, committed, rebuilt)
 }
 \arguments{
-\item{file}{See the description.}
+\item{file}{File name, for the report.}
 
-\item{committed}{See the description.}
+\item{committed}{The committed file's contents (data frame).}
 
-\item{rebuilt}{See the description.}
+\item{rebuilt}{The same file rebuilt from the raw archives.}
+}
+\value{
+One-row data frame describing the difference: row counts, columns only on one side, rows only on each side, and an example.
 }
 \description{
 Rebuild parity (classification safeguards, item 12): how one rebuilt file

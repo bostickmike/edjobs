@@ -13,6 +13,9 @@ write_csv_keep_quoting(df, path, like = path)
 
 \item{like}{The file whose quoting to copy; by default \code{path} itself, read before it is overwritten.}
 }
+\value{
+\code{path}, invisibly; called for writing the file.
+}
 \description{
 \code{write.csv()} quotes every character column, so a data frame read with \code{colClasses = "character"} and written
 back quotes dates and numbers its file had left bare, and every line of the file shows as changed. This writes

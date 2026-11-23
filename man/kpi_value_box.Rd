@@ -15,6 +15,9 @@ kpi_value_box(value, subtitle, icon = NULL, color = "blue", ...)
 
 \item{...}{Passed to \code{\link[bslib:value_box]{bslib::value_box()}}.}
 }
+\value{
+A bslib value box.
+}
 \description{
 bslib value box with shinydashboard::valueBox()'s argument order. Colors map onto Bootstrap theme names.
 }

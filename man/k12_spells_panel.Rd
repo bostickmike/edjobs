@@ -6,6 +6,9 @@
 \usage{
 k12_spells_panel()
 }
+\value{
+A bslib \code{nav_panel()}.
+}
 \description{
 The \code{nav_panel()} for K-12 > Listing Duration (value \code{"k12_spells"}).
 }

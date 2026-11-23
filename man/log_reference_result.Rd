@@ -12,13 +12,16 @@ log_reference_result(
 )
 }
 \arguments{
-\item{path}{See the description.}
+\item{path}{CSV path of the reference table.}
 
-\item{status}{See the description.}
+\item{status}{Outcome to log, e.g. "current" or "error".}
 
-\item{error_message}{See the description.}
+\item{error_message}{Why the refresh didn't run, or NA.}
 
-\item{log_path}{See the description.}
+\item{log_path}{CSV log to append to.}
+}
+\value{
+Called for its side effect (a row in \code{log_path}).
 }
 \description{
 For a refresh that found the file already current, or failed outright.

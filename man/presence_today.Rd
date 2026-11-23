@@ -9,6 +9,9 @@ presence_today(tz = state_timezone())
 \arguments{
 \item{tz}{Time zone; defaults to \code{state_timezone()}.}
 }
+\value{
+A \code{Date}: today in \code{tz}.
+}
 \description{
 GitHub starts a scheduled job hours late; the day a check counts for is the
 day in the boards' own time zone, not UTC.

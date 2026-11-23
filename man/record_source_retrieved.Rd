@@ -13,6 +13,9 @@ record_source_retrieved(source, app_dir, date = Sys.Date())
 
 \item{date}{Retrieval date (default today).}
 }
+\value{
+The updated retrieval-dates table (data frame), invisibly; written to the app folder.
+}
 \description{
 Sets \code{source}'s retrieval date to \code{date} in \code{source_retrieved_dates.csv} (one row per source, sorted by name).
 Call it only after the source's data was fetched and kept.

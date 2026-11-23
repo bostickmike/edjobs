@@ -17,6 +17,9 @@ he_trends_panel(
 
 \item{timeline_value}{The timeline slider's opening range: two dates within \code{range(hesum$Archive_Date)}.}
 }
+\value{
+A bslib \code{nav_panel()}.
+}
 \description{
 The \code{nav_panel()} with value \code{"he_trends"} and its \code{he_trends_tabs} card (\code{he_trends_current},
 \code{he_trends_historical}).

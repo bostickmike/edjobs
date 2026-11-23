@@ -7,9 +7,9 @@
 fetch_ipeds_staff_year(year, fips)
 }
 \arguments{
-\item{year}{See the description.}
+\item{year}{IPEDS year.}
 
-\item{fips}{See the description.}
+\item{fips}{State FIPS code.}
 }
 \description{
 Fetch ipeds staff year

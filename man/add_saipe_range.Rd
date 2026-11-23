@@ -9,6 +9,9 @@ add_saipe_range(df)
 \arguments{
 \item{df}{A data frame with Child_Poverty_Rate and SAIPE_Population.}
 }
+\value{
+\code{df} with \code{Child_Poverty_Low} and \code{Child_Poverty_High} added.
+}
 \description{
 Census's rule for its relative error table: "For an approximate 90\%
 confidence interval (under the assumption that the poverty estimate itself

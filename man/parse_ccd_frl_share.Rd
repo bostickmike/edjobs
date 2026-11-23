@@ -9,7 +9,7 @@ parse_ccd_frl_share(schools, id_map)
 \arguments{
 \item{schools}{Rows from \code{\link[=fetch_ccd_school_directory]{fetch_ccd_school_directory()}}.}
 
-\item{id_map}{See the description.}
+\item{id_map}{Named list: map entity -> its NCES ids (7-digit district or 12-digit school).}
 }
 \description{
 \code{id_map}: one entry per map entity (district or school) -> NCES ids. A

@@ -6,6 +6,9 @@
 \usage{
 spells_footnote()
 }
+\value{
+An HTML paragraph (htmltools tag).
+}
 \description{
 What "days listed" means and why it isn't time to fill (Mike, 11-14: one footnote, no "paused" banner).
 }

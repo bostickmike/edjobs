@@ -7,9 +7,12 @@
 other_share_counts(names, is_other)
 }
 \arguments{
-\item{names}{See the description.}
+\item{names}{Each posting's source name.}
 
-\item{is_other}{See the description.}
+\item{is_other}{Logical, one per posting: classified as Other?}
+}
+\value{
+Data frame with one row per source: \code{name}, \code{n}, \code{other}.
 }
 \description{
 One row per source: postings (n) and how many the classifier puts in Other

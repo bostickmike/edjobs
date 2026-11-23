@@ -7,7 +7,7 @@
 format_pay_amount(x)
 }
 \arguments{
-\item{x}{See the description.}
+\item{x}{One amount.}
 }
 \description{
 Format pay amount

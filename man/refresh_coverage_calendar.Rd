@@ -12,13 +12,16 @@ refresh_coverage_calendar(
 )
 }
 \arguments{
-\item{path}{See the description.}
+\item{path}{The coverage calendar CSV to read and rewrite.}
 
-\item{log_path}{See the description.}
+\item{log_path}{This update's \code{scrape_log.csv}.}
 
-\item{run_date}{See the description.}
+\item{run_date}{The update's date.}
 
-\item{...}{See the description.}
+\item{...}{Passed to \code{build_coverage_calendar()} (entities, feeds, shared boards).}
+}
+\value{
+This update's calendar rows (data frame), invisibly; the whole calendar is written to \code{path}.
 }
 \description{
 Weekly step (run once every source has been scraped, i.e. after the HE

@@ -9,6 +9,9 @@ pool_child_poverty(rows)
 \arguments{
 \item{rows}{Rows of \code{\link[=saipe_rows_by_leaid]{saipe_rows_by_leaid()}} (rate, and the counts when known).}
 }
+\value{
+One rate (numeric), or NA.
+}
 \description{
 One district: its published rate. Several: children in poverty over
 relevant children, summed over the districts with both counts; when no

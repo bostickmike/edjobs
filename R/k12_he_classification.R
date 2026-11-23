@@ -11,7 +11,8 @@
 #' some boards emit) to the characters they name. The title normalizer below
 #' handles the named entities one by one; this covers every numeric one. A reference to an
 #' invalid code point is left as written.
-#' @param x See the description.
+#' @param x Character vector.
+#' @return `x` with each valid numeric character reference replaced by its character.
 #' @export
 decode_numeric_entities <- function(x) {
   has <- !is.na(x) & grepl("&#(x[0-9a-fA-F]+|[0-9]+);", x, perl = TRUE)
@@ -45,7 +46,8 @@ decode_numeric_entities <- function(x) {
 #' actually fail a UTF-8 round-trip are repaired as CP1252; everything else
 #' passes through unchanged. Stray CRs (some sources embed raw \\r) are also
 #' stripped here so they don't survive into archived/displayed titles.
-#' @param title See the description.
+#' @param title Character vector of scraped titles.
+#' @return A UTF-8 character vector of the same length: Windows-1252 bytes repaired, HTML entities decoded, line breaks folded, ends trimmed; NA stays NA.
 #' @export
 fix_title_encoding <- function(title) {
   title <- as.character(title)
@@ -84,8 +86,9 @@ fix_title_encoding <- function(title) {
 #' Coarse position bucket from the raw job title. role_hint (k12_role_hint(),
 #' OPI postings' descriptions) refines a few title-only misfilings; NULL or NA
 #' leaves the title's bucket.
-#' @param title See the description.
-#' @param role_hint See the description.
+#' @param title Character vector of K-12 posting titles.
+#' @param role_hint Optional character vector, one per title, from `k12_role_hint()` (OPI postings' descriptions); `NULL` or NA leaves the title's bucket.
+#' @return Character vector of position buckets (Teacher, Substitute, Paraprofessional, Athletics, Support Services, Transportation, Custodial/Maintenance, Administration, Food Services, Part-Time Teacher, Activities/Extracurricular, Staff, Other).
 #' @export
 classify_k12_position <- function(title, role_hint = NULL) {
   title <- fix_title_encoding(title)
@@ -259,7 +262,8 @@ K12_ROLE_NOUNS <- c(
   "Counselor" = "counselor",
   "Teacher" = "teacher|instructor|librarian|educator")
 #' K12 role hint
-#' @param description See the description.
+#' @param description Character vector of posting descriptions (OPI's detail-page text).
+#' @return Character vector, one per description: Substitute, Paraprofessional, Part-Time, Teacher, Counselor or Administration (the role the opening names first), or NA when the description gives no clear signal.
 #' @export
 k12_role_hint <- function(description) {
   lead <- substr(gsub("\\s+", " ", fix_title_encoding(as.character(description))), 1, 250)
@@ -286,8 +290,8 @@ k12_role_hint <- function(description) {
     TRUE ~ NA_character_)
 }
 #' Apply k12 role hint
-#' @param position See the description.
-#' @param role_hint See the description.
+#' @param position Character vector of title-based position buckets.
+#' @param role_hint Character vector from `k12_role_hint()`, or `NULL`.
 #' @keywords internal
 apply_k12_role_hint <- function(position, role_hint) {
   h <- if (is.null(role_hint)) rep(NA_character_, length(position)) else as.character(role_hint)
@@ -416,7 +420,8 @@ k12_category_keywords <- list(
 )
 
 #' Classify k12 subject
-#' @param title See the description.
+#' @param title Character vector of K-12 posting titles.
+#' @return Character vector of teaching subject categories (the names of `k12_category_keywords`), "Uncategorized" where none matches.
 #' @export
 classify_k12_subject <- function(title) {
   title <- fix_title_encoding(title)
@@ -463,7 +468,8 @@ classify_k12_subject <- function(title) {
 #' and a business/family-and-health-sciences group. Special Education's own
 #' split happens earlier, at the subject-category level (see
 #' k12_category_keywords above), and passes through unchanged here.
-#' @param category See the description.
+#' @param category Character vector of subject categories from `classify_k12_subject()`.
+#' @return Character vector of broad subject groups (Elementary, Math, Science, Special Education - General, ...); "Other" for anything unmapped.
 #' @export
 classify_k12_broad_category <- function(category) {
   dplyr::case_when(
@@ -506,7 +512,8 @@ classify_k12_broad_category <- function(category) {
 #' weekly pipeline and the rebuild-from-archive scripts. Standing applicant
 #' pools (e.g. "Applicant Pool - Substitute Teacher") are real, ongoing
 #' postings and are kept.
-#' @param title See the description.
+#' @param title Character vector of board entry titles.
+#' @return Logical vector: TRUE for an entry that isn't a job opening; FALSE for NA.
 #' @export
 is_placeholder_posting <- function(title) {
   t <- trimws(as.character(title))
@@ -680,7 +687,8 @@ short_schedule <- function(title) {
 #' all-NA when the posting states no dollar amount. Amounts tied to bonuses,
 #' fees, reimbursements or benefits are ignored, and an amount preceded by a
 #' pay word ("Salary:", "Wage", "Stipend") wins over an earlier bare one.
-#' @param text See the description.
+#' @param text Character vector of posting text (a title, a pay field or a description).
+#' @return Data frame with one row per element of `text` and columns `Pay_Min`, `Pay_Max` (numeric), `Pay_Unit` and `Pay_Text`; all NA where no dollar amount is stated.
 #' @export
 extract_posted_pay <- function(text) {
   n <- length(text)
@@ -838,7 +846,8 @@ POSTED_PAY_COLUMNS <- c("Pay_Min", "Pay_Max", "Pay_Unit", "Pay_Text")
 #' Guarantees the posted-pay columns exist (NA where a source states no pay),
 #' so combinedclean.csv keeps one schema whether or not this run's sources --
 #' or a rebuild from archives written before pay was captured -- carry them.
-#' @param df See the description.
+#' @param df Data frame of postings.
+#' @return `df` with any missing `POSTED_PAY_COLUMNS` added as NA.
 #' @export
 ensure_posted_pay_columns <- function(df) {
   for (col in POSTED_PAY_COLUMNS) {
@@ -865,9 +874,10 @@ PAY_PLAUSIBLE_RANGE <- list(
 #'
 #' TRUE where a row's posted pay is out of range for its unit, has an
 #' unknown unit name, or runs low > high. Rows without pay are FALSE.
-#' @param pay_min See the description.
-#' @param pay_max See the description.
-#' @param pay_unit See the description.
+#' @param pay_min Numeric vector of lowest stated amounts.
+#' @param pay_max Numeric vector of highest stated amounts.
+#' @param pay_unit Character vector of units (names of `PAY_PLAUSIBLE_RANGE`); NA counts as "unknown".
+#' @return Logical vector: TRUE where the stated pay is out of range for its unit, the unit is unknown, or the low end exceeds the high end; FALSE for rows with no pay.
 #' @export
 is_implausible_pay <- function(pay_min, pay_max, pay_unit) {
   unit <- ifelse(is.na(pay_unit), "unknown", pay_unit)
@@ -883,7 +893,8 @@ is_implausible_pay <- function(pay_min, pay_max, pay_unit) {
 #' Blanks the Pay_* columns of rows whose posted pay is implausible, so a
 #' misread never reaches the dashboard. The raw archive keeps them as
 #' scraped; check_pay_coverage.R lists them in the weekly drift report.
-#' @param df See the description.
+#' @param df Data frame with `Pay_Min`, `Pay_Max`, `Pay_Unit` and `Pay_Text`.
+#' @return `df` with the pay columns blanked on rows `is_implausible_pay()` flags.
 #' @export
 drop_implausible_pay <- function(df) {
   bad <- is_implausible_pay(df$Pay_Min, df$Pay_Max, df$Pay_Unit)
@@ -905,7 +916,8 @@ drop_implausible_pay <- function(df) {
 #' get their own bucket, separate from "Instructor/Teacher/Faculty", so
 #' standing adjunct-pool postings don't get counted the same as full-time
 #' faculty hiring in the faculty trend charts.
-#' @param title See the description.
+#' @param title Character vector of college posting titles.
+#' @return Character vector of college job types (Instructor/Teacher/Faculty, Adjunct/Part-Time Faculty, Professional, Management, Staff, Student Positions, ...).
 #' @export
 classify_he_job_type <- function(title) {
   # UW posts every hourly job as "Hourly Pooled - <job>"; the job after the
@@ -928,7 +940,7 @@ classify_he_job_type <- function(title) {
 }
 
 #' Classify he job type rules
-#' @param title See the description.
+#' @param title Character vector of titles, with any "Hourly Pooled" prefix already removed.
 #' @keywords internal
 classify_he_job_type_rules <- function(title) {
   dplyr::case_when(
@@ -1071,7 +1083,8 @@ classify_he_job_type_rules <- function(title) {
 #' Classify he faculty category
 #'
 #' Subject category, computed only for Job_Type == "Instructor/Teacher/Faculty" rows.
-#' @param title See the description.
+#' @param title Character vector of faculty posting titles.
+#' @return Character vector of disciplines (Science, Humanities, Health, Criminal Justice, ...), "Uncategorized" where none matches.
 #' @export
 classify_he_faculty_category <- function(title) {
   dplyr::case_when(
@@ -1165,7 +1178,8 @@ TITLE_DETAIL_OPENING <- paste0(
   "\\$\\s?\\d)")
 
 #' Split title detail
-#' @param title See the description.
+#' @param title Character vector of posting titles.
+#' @return Data frame with columns `title` (the cleaned title) and `detail` (the cut-off detail, or NA).
 #' @export
 split_title_detail <- function(title) {
   t <- as.character(title)
@@ -1202,7 +1216,8 @@ split_title_detail <- function(title) {
 #' from the detail where the row carries none ("$14 per hour" in Turner's
 #' title). Run at ingestion, before the raw archive is written, so archives
 #' keep the cleaned title and a rebuild of older archives is unchanged.
-#' @param df See the description.
+#' @param df K-12 data frame with a `title` column (and optionally the pay columns).
+#' @return `df` with cleaned titles, and posted pay filled from the cut-off detail where the row had none.
 #' @export
 move_title_detail <- function(df) {
   if (nrow(df) == 0) return(df)

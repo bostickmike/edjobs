@@ -9,6 +9,9 @@ scraper_titles(result)
 \arguments{
 \item{result}{A scraper's data frame.}
 }
+\value{
+Character vector of the result's titles (from \code{Title} or \code{title}); empty when it has neither.
+}
 \description{
 Scrapers don't agree on case: some return \code{title}, most \code{Title}.
 }

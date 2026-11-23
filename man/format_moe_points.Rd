@@ -9,6 +9,9 @@ format_moe_points(moe)
 \arguments{
 \item{moe}{Margins of error as shares (0-1).}
 }
+\value{
+Character vector such as " +/-0.4 pts"; "" where the margin is missing.
+}
 \description{
 " +/-0.4 pts"; "" where the MOE is missing.
 }

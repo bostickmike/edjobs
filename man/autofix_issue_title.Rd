@@ -7,7 +7,10 @@
 autofix_issue_title(name)
 }
 \arguments{
-\item{name}{See the description.}
+\item{name}{Source name.}
+}
+\value{
+The auto-fix issue's title.
 }
 \description{
 Autofix issue title

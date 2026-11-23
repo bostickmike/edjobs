@@ -16,6 +16,9 @@ fill_first_seen(posted, district, title, url, segment, lookup)
 \item{lookup}{The posting_first_seen.csv table (\code{Segment}, \code{Key}, \code{First_Seen}, \code{Left_Censored}); NULL (no file
 yet) or a table without those columns returns \code{posted} unchanged.}
 }
+\value{
+Character vector: \code{posted}, with blanks filled as "First seen \if{html}{\out{<date>}}" or "On the board since at least \if{html}{\out{<date>}}" where the lookup has the posting.
+}
 \description{
 "Posted / listed" for a board that gives no posted date: the first weekly run that found the posting
 (posting_first_seen.csv, from \code{\link[=first_seen_lookup]{first_seen_lookup()}}, keyed by \code{\link[=first_seen_key]{first_seen_key()}}). "On the board since at least"

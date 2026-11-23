@@ -7,7 +7,10 @@
 ensure_posted_pay_columns(df)
 }
 \arguments{
-\item{df}{See the description.}
+\item{df}{Data frame of postings.}
+}
+\value{
+\code{df} with any missing \code{POSTED_PAY_COLUMNS} added as NA.
 }
 \description{
 Guarantees the posted-pay columns exist (NA where a source states no pay),

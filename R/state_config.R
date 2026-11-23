@@ -127,6 +127,7 @@ set_state_config <- function(config) {
 }
 
 #' @rdname set_state_config
+#' @return The session's `state_config()`, or `NULL` when none is set.
 #' @export
 current_state_config <- function() get0("config", envir = .edjobs_state, inherits = FALSE, ifnotfound = NULL)
 
@@ -134,6 +135,7 @@ current_state_config <- function() get0("config", envir = .edjobs_state, inherit
 #'   state: the shared `REFERENCE_TABLE_RULES` plus the state's own
 #'   (`state_config(reference_tables = )`).
 #' @param config A `state_config()`; defaults to the session's.
+#' @return Named list of reference-table rules, the shared ones and the state's own.
 #' @export
 reference_table_rules <- function(config = current_state_config()) {
   c(REFERENCE_TABLE_RULES, if (!is.null(config)) config$reference_tables)
@@ -143,6 +145,7 @@ reference_table_rules <- function(config = current_state_config()) {
 #'
 #' `current_state_config()$timezone`, with a clear error when no state config (or no time zone) is set. The default
 #' `tz` of `presence_today()` and of the JSON-LD date reader.
+#' @return The state's time zone name (e.g. "America/Denver"); an error when none is set.
 #' @export
 state_timezone <- function() {
   tz <- current_state_config()$timezone

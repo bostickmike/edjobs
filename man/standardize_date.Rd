@@ -9,6 +9,9 @@ standardize_date(x)
 \arguments{
 \item{x}{Posted dates (character, factor or Date).}
 }
+\value{
+A \code{Date} vector; NA where the text can't be parsed.
+}
 \description{
 Parses the posted-date text the scrapers return into a \code{Date}: drops a trailing note in parentheses (a time zone
 such as "(UTC)"), then tries "Oct 23 2025 6:00 AM", "October 23 2025 6:00 AM", year-month-day, month-day-year,

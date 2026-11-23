@@ -7,7 +7,7 @@
 llm_extract_looks_boilerplate(titles)
 }
 \arguments{
-\item{titles}{See the description.}
+\item{titles}{Titles the model returned.}
 }
 \description{
 Is the title just a form/policy name rather than a job? Anchored so a real

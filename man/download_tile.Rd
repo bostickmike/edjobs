@@ -15,6 +15,9 @@ download_tile(icon_name, heading, text, output_id, label, info = NULL)
 
 \item{info}{Optional popover beside the heading.}
 }
+\value{
+An HTML div (htmltools tag) holding the tile.
+}
 \description{
 Download tile on the Data page
 }

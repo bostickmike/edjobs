@@ -15,10 +15,11 @@
 #' growing accumulated history, not just caught after the fact. A mismatch
 #' means a bug in this week's summary computation -- stop() rather than
 #' silently appending a corrupted week onto years of otherwise-good history.
-#' @param total_rows See the description.
-#' @param part_rows See the description.
-#' @param group_cols See the description.
-#' @param value_col See the description.
+#' @param total_rows The "Total" rows computed this update.
+#' @param part_rows The per-district or per-college rows they should sum.
+#' @param group_cols Columns that identify a total (category, date).
+#' @param value_col The count column.
+#' @return TRUE invisibly when every total equals the sum of its parts; otherwise an error listing the mismatches.
 #' @export
 check_total_matches_parts <- function(total_rows, part_rows, group_cols, value_col = "sum") {
   parts_agg <- part_rows %>%
@@ -51,9 +52,10 @@ check_total_matches_parts <- function(total_rows, part_rows, group_cols, value_c
 #' File, Committed_Rows, Rebuilt_Rows, Missing_Cols (in committed, not rebuilt),
 #' Extra_Cols, Only_Committed / Only_Rebuilt (row counts on the shared columns)
 #' and Example (one differing row from each side).
-#' @param file See the description.
-#' @param committed See the description.
-#' @param rebuilt See the description.
+#' @param file File name, for the report.
+#' @param committed The committed file's contents (data frame).
+#' @param rebuilt The same file rebuilt from the raw archives.
+#' @return One-row data frame describing the difference: row counts, columns only on one side, rows only on each side, and an example.
 #' @export
 rebuild_parity_row <- function(file, committed, rebuilt) {
   as_text <- function(d) {

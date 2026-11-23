@@ -11,6 +11,9 @@ fetch_ipeds_he_salaries(unitid_map, fips = state_fips())
 
 \item{fips}{Two-digit state FIPS code; defaults to the current state config's.}
 }
+\value{
+As \code{parse_ipeds_he_salaries()}, for the latest IPEDS year with data.
+}
 \description{
 Fetch IPEDS instructional staff salaries for the latest year
 }

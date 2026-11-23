@@ -7,11 +7,11 @@
 parse_posting_status(platform, text, checked_on = Sys.Date())
 }
 \arguments{
-\item{platform}{See the description.}
+\item{platform}{Platform name from \code{posting_status_platform()}.}
 
-\item{text}{See the description.}
+\item{text}{The page's visible text.}
 
-\item{checked_on}{See the description.}
+\item{checked_on}{Date of the check; a stated closing date before it means closed.}
 }
 \description{
 What a posting's page says. text: the page's visible text. Returns a

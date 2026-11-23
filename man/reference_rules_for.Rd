@@ -7,7 +7,7 @@
 reference_rules_for(path, rules = reference_table_rules())
 }
 \arguments{
-\item{path}{See the description.}
+\item{path}{Path to a reference table CSV; its file name (without \code{.csv}) is the key.}
 
 \item{rules}{All rules to look in.}
 }

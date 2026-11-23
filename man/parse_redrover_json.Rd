@@ -11,6 +11,9 @@ parse_redrover_json(json_text, org_slug)
 
 \item{org_slug}{The board's slug.}
 }
+\value{
+Data frame with one row per posting: \code{Title}, \code{Location}, \code{Posted_Date}, \code{Posting_ID}, \code{Link} and the posted pay columns; standing application forms dropped.
+}
 \description{
 One row per posting: Title, Location, Posted_Date, Posting_ID
 (\verb{redrover:<slug>:<id>}), Link (the posting's own page) and posted pay.

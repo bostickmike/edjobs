@@ -7,7 +7,10 @@
 parse_applitrack_output(js_text)
 }
 \arguments{
-\item{js_text}{See the description.}
+\item{js_text}{Body of an AppliTrack \code{Output.asp} response (a series of \code{document.write()} calls).}
+}
+\value{
+Data frame with one row per posting: \code{title}, \code{position}, \code{position2}, \code{date_posted}, \code{location}, \code{closing_date}, \code{job_id} and the posted pay columns; zero rows when the board lists nothing.
 }
 \description{
 Parse applitrack output

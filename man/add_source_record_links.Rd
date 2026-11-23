@@ -9,6 +9,9 @@ add_source_record_links(df)
 \arguments{
 \item{df}{A data frame, e.g. salarymap2.csv (districts) or salarymap.csv (colleges).}
 }
+\value{
+\code{df} with \code{CCD_Link} and/or \code{IPEDS_Link} placed after their id columns.
+}
 \description{
 Adds \code{CCD_Link} (from \code{NCES_LEAID}, \code{\link[=nces_district_url]{nces_district_url()}}) and \code{IPEDS_Link} (from \code{IPEDS_UNITID},
 \code{\link[=college_navigator_url]{college_navigator_url()}}), each right after its id column, to a frame that has that id. Rebuilt from the id on

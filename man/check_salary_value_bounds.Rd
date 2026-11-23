@@ -7,13 +7,16 @@
 check_salary_value_bounds(name, actual, min_ok, max_ok)
 }
 \arguments{
-\item{name}{See the description.}
+\item{name}{Source name, for the report.}
 
-\item{actual}{See the description.}
+\item{actual}{Named numeric vector: entity -> value.}
 
-\item{min_ok}{See the description.}
+\item{min_ok}{Lowest plausible value.}
 
-\item{max_ok}{See the description.}
+\item{max_ok}{Highest plausible value.}
+}
+\value{
+\code{NULL} when all values are in bounds; otherwise a data frame of the out-of-bounds entities.
 }
 \description{
 actual: named numeric vector (name = district/institution, value = salary).

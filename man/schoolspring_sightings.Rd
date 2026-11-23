@@ -12,11 +12,11 @@ schoolspring_sightings(
 )
 }
 \arguments{
-\item{archive_dir}{See the description.}
+\item{archive_dir}{Folder of the raw K-12 archives (\verb{combined_<date>.csv}).}
 
-\item{since}{See the description.}
+\item{since}{Earliest archive date to read.}
 
-\item{canonicalize}{See the description.}
+\item{canonicalize}{Function applied to district names (the state's \code{canonicalize_k12_district()} when loaded).}
 }
 \description{
 One row per SchoolSpring job ID seen in the archives since \code{since}, with

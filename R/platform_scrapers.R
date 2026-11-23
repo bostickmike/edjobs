@@ -22,7 +22,8 @@ PEOPLEADMIN_OPEN_LABELS <- c("Open Date", "Posting Date", "Job Posting Date")
 PEOPLEADMIN_CLOSE_LABELS <- c("Close Date", "Closing Date", "Initial Review Date")
 
 #' Parse peopleadmin posting dates
-#' @param html_text See the description.
+#' @param html_text HTML of one PeopleAdmin posting page, or NA.
+#' @return One-row data frame with `Open_Date` and `Close_Date` (YYYY-MM-DD; `Close_Date` is "Open Until Filled" when the page says so and gives no date); NA where the page gives none.
 #' @export
 parse_peopleadmin_posting_dates <- function(html_text) {
   none <- data.frame(Open_Date = NA_character_, Close_Date = NA_character_, stringsAsFactors = FALSE)
@@ -61,7 +62,8 @@ PEOPLEADMIN_PAY_LABELS <- c("Salary", "Estimated Salary", "Hiring Range", "Start
                             "Hourly Rate (if applicable)", "Full Salary Range")
 
 #' Parse peopleadmin posting pay
-#' @param html_text See the description.
+#' @param html_text HTML of one PeopleAdmin posting page, or NA.
+#' @return One-row data frame of posted pay (`Pay_Min`, `Pay_Max`, `Pay_Unit`, `Pay_Text`, as from `extract_posted_pay()`); all NA when the page states none.
 #' @export
 parse_peopleadmin_posting_pay <- function(html_text) {
   none <- extract_posted_pay(NA_character_)
@@ -106,7 +108,8 @@ parse_peopleadmin_posting_pay <- function(html_text) {
 #' none is stated, and then the card's description preview is read instead
 #' ("Current adjunct pay is $775 per credit hour"). Shared verbatim with the
 #' Montana dashboard's direct_api_scrapers.R.
-#' @param html_text See the description.
+#' @param html_text HTML of a NEOGOV job-list fragment.
+#' @return Data frame with one row per job card: `Job_ID` and the posted pay columns (`POSTED_PAY_COLUMNS`).
 #' @export
 parse_neogov_card_pay <- function(html_text) {
   container <- rvest::html_elements(rvest::read_html(html_text), "ul.job-listing-container")
@@ -167,7 +170,8 @@ parse_neogov_card_pay <- function(html_text) {
 SCHOOLSPRING_STATUS <- c(`30` = "posted", `40` = "review", `50` = "filled", `60` = "canceled")
 
 #' Parse schoolspring job json
-#' @param json_text See the description.
+#' @param json_text JSON text of one SchoolSpring `api/Jobs/<id>` response.
+#' @return One-row data frame: `job_id`, `Close_Date` (YYYY-MM-DD or NA), `Job_Status` (e.g. "posted", "filled", "canceled") and the posted pay columns.
 #' @export
 parse_schoolspring_job_json <- function(json_text) {
   v <- jsonlite::fromJSON(json_text, simplifyVector = TRUE)$value
@@ -205,7 +209,7 @@ parse_schoolspring_job_json <- function(json_text) {
 }
 
 #' Format pay amount
-#' @param x See the description.
+#' @param x One amount.
 #' @keywords internal
 format_pay_amount <- function(x) paste0("$", formatC(x, format = "f", digits = if (x %% 1 == 0) 0 else 2, big.mark = ","))
 
@@ -221,9 +225,10 @@ SCHOOLSPRING_DETAIL_EMPTY <- data.frame(job_id = character(0), Close_Date = char
 #' leaves only that posting's fields NA (it is skipped here and NA after the
 #' join), and fetching stops once budget_secs is spent, so a slow API can't
 #' hold up the weekly run.
-#' @param job_ids See the description.
-#' @param delay See the description.
-#' @param budget_secs See the description.
+#' @param job_ids SchoolSpring job IDs (character); NA and repeats are dropped.
+#' @param delay Seconds to wait before each request.
+#' @param budget_secs Seconds after which no more requests are made.
+#' @return Data frame with one row per job fetched (columns as `parse_schoolspring_job_json()`); IDs not fetched are absent.
 #' @export
 fetch_schoolspring_details <- function(job_ids, delay = 0.2, budget_secs = 300) {
   deadline <- Sys.time() + budget_secs
@@ -245,8 +250,9 @@ fetch_schoolspring_details <- function(job_ids, delay = 0.2, budget_secs = 300) 
 #' The listing plus each posting's detail fields (Close_Date, Job_Status,
 #' Pay_*), joined on the job ID in Link. Run before
 #' normalize_id_backed_k12_postings(), which passes Pay_* through.
-#' @param postings See the description.
-#' @param ... See the description.
+#' @param postings SchoolSpring listing rows with a per-posting `Link` (".../jobs/<id>").
+#' @param ... Passed to `fetch_schoolspring_details()` (`delay`, `budget_secs`).
+#' @return `postings` with `Close_Date`, `Job_Status` and the posted pay columns added (NA where a detail wasn't fetched).
 #' @export
 add_schoolspring_details <- function(postings, ...) {
   if (nrow(postings) == 0) return(cbind(postings, SCHOOLSPRING_DETAIL_EMPTY[0, -1]))
@@ -279,7 +285,7 @@ add_schoolspring_details <- function(postings, ...) {
 SCHOOLSPRING_FINAL_STATUS <- c("filled", "canceled")
 
 #' Schoolspring job id
-#' @param url See the description.
+#' @param url Posting URLs.
 #' @keywords internal
 schoolspring_job_id <- function(url) {
   url <- as.character(url)
@@ -292,9 +298,9 @@ schoolspring_job_id <- function(url) {
 #' the dates it was first and last listed. District names go through
 #' canonicalize_k12_district() when it is loaded (old WY archives spell
 #' "Campbell County Scholl District 1").
-#' @param archive_dir See the description.
-#' @param since See the description.
-#' @param canonicalize See the description.
+#' @param archive_dir Folder of the raw K-12 archives (`combined_<date>.csv`).
+#' @param since Earliest archive date to read.
+#' @param canonicalize Function applied to district names (the state's `canonicalize_k12_district()` when loaded).
 #' @keywords internal
 schoolspring_sightings <- function(archive_dir = "Archivek12_Data", since = Sys.Date() - 365,
                                    canonicalize = get0("canonicalize_k12_district", envir = globalenv(), mode = "function",
@@ -337,11 +343,11 @@ SCHOOLSPRING_ENDINGS_EMPTY <- data.frame(
 #' has a final status or was last listed more than recheck_days ago) and
 #' returns the updated endings table. `fetch` is fetch_schoolspring_details()
 #' in production.
-#' @param sightings See the description.
-#' @param endings See the description.
-#' @param today See the description.
-#' @param fetch See the description.
-#' @param recheck_days See the description.
+#' @param sightings Output of `schoolspring_sightings()`.
+#' @param endings The current endings table.
+#' @param today The run's date; a posting last listed before it is looked up.
+#' @param fetch Function taking job IDs and returning detail rows (`fetch_schoolspring_details()`).
+#' @param recheck_days Postings last listed longer ago than this aren't looked up again.
 #' @keywords internal
 update_schoolspring_endings <- function(sightings, endings = SCHOOLSPRING_ENDINGS_EMPTY, today = Sys.Date(),
                                         fetch = fetch_schoolspring_details, recheck_days = 365) {
@@ -373,10 +379,11 @@ update_schoolspring_endings <- function(sightings, endings = SCHOOLSPRING_ENDING
 #' Weekly step: reads the archives and the endings file, looks up postings
 #' that left the board, rewrites the file. Run after today's raw archive is
 #' written. Returns the table (invisibly).
-#' @param archive_dir See the description.
-#' @param path See the description.
-#' @param today See the description.
-#' @param ... See the description.
+#' @param archive_dir Folder of the raw K-12 archives.
+#' @param path The endings CSV to read and rewrite.
+#' @param today The run's date.
+#' @param ... Passed to `update_schoolspring_endings()`.
+#' @return The updated endings table (data frame), invisibly; written to `path`.
 #' @export
 refresh_schoolspring_endings <- function(archive_dir = "Archivek12_Data", path = "schoolspring_endings.csv",
                                          today = Sys.Date(), ...) {
@@ -393,8 +400,9 @@ refresh_schoolspring_endings <- function(archive_dir = "Archivek12_Data", path =
 #'
 #' The posting's own page on the district's AppliTrack board (the link the
 #' board's "Email To A Friend" button shares). NA without a job ID.
-#' @param tenant_path See the description.
-#' @param job_id See the description.
+#' @param tenant_path The district's AppliTrack tenant path (the registry's `Platform_Key`).
+#' @param job_id AppliTrack job IDs.
+#' @return Character vector of posting URLs; NA where `job_id` is missing or empty.
 #' @export
 applitrack_posting_url <- function(tenant_path, job_id) {
   ifelse(is.na(job_id) | !nzchar(job_id), NA_character_,
@@ -403,7 +411,8 @@ applitrack_posting_url <- function(tenant_path, job_id) {
 }
 
 #' Fetch applitrack postings
-#' @param tenant_path See the description.
+#' @param tenant_path The district's AppliTrack tenant path.
+#' @return Data frame of the board's postings, as from `parse_applitrack_output()`.
 #' @export
 fetch_applitrack_postings <- function(tenant_path) {
   resp <- request(paste0("https://www.applitrack.com/", tenant_path, "/onlineapp/jobpostings/Output.asp")) %>%
@@ -420,7 +429,8 @@ fetch_applitrack_postings <- function(tenant_path) {
 }
 
 #' Parse applitrack output
-#' @param js_text See the description.
+#' @param js_text Body of an AppliTrack `Output.asp` response (a series of `document.write()` calls).
+#' @return Data frame with one row per posting: `title`, `position`, `position2`, `date_posted`, `location`, `closing_date`, `job_id` and the posted pay columns; zero rows when the board lists nothing.
 #' @export
 parse_applitrack_output <- function(js_text) {
   # Response body is a series of document.write('<html fragment>') calls

@@ -7,13 +7,16 @@
 reference_table_problem(new, rules, old = NULL, min_share = 0.9)
 }
 \arguments{
-\item{new}{See the description.}
+\item{new}{The refreshed table (data frame), or NULL.}
 
-\item{rules}{See the description.}
+\item{rules}{That table's rules (one element of \code{reference_table_rules()}).}
 
-\item{old}{See the description.}
+\item{old}{The table it would replace, or \code{NULL} to check \code{new} on its own.}
 
-\item{min_share}{See the description.}
+\item{min_share}{Smallest share of \code{old}'s rows \code{new} may have.}
+}
+\value{
+A one-line reason the table shouldn't be used, or \code{NULL} when it passes.
 }
 \description{
 Why \code{new} shouldn't replace \code{old} (NULL when it's fine): fewer than

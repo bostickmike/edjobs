@@ -7,9 +7,12 @@
 drop_standing_pool_titles(llm_titles, history_titles = NULL)
 }
 \arguments{
-\item{llm_titles}{See the description.}
+\item{llm_titles}{Titles an LLM read off the live page.}
 
-\item{history_titles}{See the description.}
+\item{history_titles}{The source's own recent titles, or \code{NULL}.}
+}
+\value{
+\code{llm_titles}, less substitute-pool lines when the source never posts substitute jobs.
 }
 \description{
 llm_titles minus substitute lines when history_titles (the source's own

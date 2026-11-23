@@ -7,7 +7,10 @@
 classify_k12_subject(title)
 }
 \arguments{
-\item{title}{See the description.}
+\item{title}{Character vector of K-12 posting titles.}
+}
+\value{
+Character vector of teaching subject categories (the names of \code{k12_category_keywords}), "Uncategorized" where none matches.
 }
 \description{
 Classify k12 subject

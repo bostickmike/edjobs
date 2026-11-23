@@ -7,7 +7,10 @@
 classify_he_job_type(title)
 }
 \arguments{
-\item{title}{See the description.}
+\item{title}{Character vector of college posting titles.}
+}
+\value{
+Character vector of college job types (Instructor/Teacher/Faculty, Adjunct/Part-Time Faculty, Professional, Management, Staff, Student Positions, ...).
 }
 \description{
 Coarse job-type bucket from the raw posting title. Adjunct/pooled titles

@@ -12,13 +12,16 @@ refresh_schoolspring_endings(
 )
 }
 \arguments{
-\item{archive_dir}{See the description.}
+\item{archive_dir}{Folder of the raw K-12 archives.}
 
-\item{path}{See the description.}
+\item{path}{The endings CSV to read and rewrite.}
 
-\item{today}{See the description.}
+\item{today}{The run's date.}
 
-\item{...}{See the description.}
+\item{...}{Passed to \code{update_schoolspring_endings()}.}
+}
+\value{
+The updated endings table (data frame), invisibly; written to \code{path}.
 }
 \description{
 Weekly step: reads the archives and the endings file, looks up postings

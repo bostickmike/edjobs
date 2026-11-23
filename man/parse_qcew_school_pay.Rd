@@ -7,11 +7,11 @@
 parse_qcew_school_pay(industry, titles, state_fips)
 }
 \arguments{
-\item{industry}{See the description.}
+\item{industry}{QCEW's annual NAICS 6111 file (data frame, all text).}
 
-\item{titles}{See the description.}
+\item{titles}{QCEW's area titles table.}
 
-\item{state_fips}{See the description.}
+\item{state_fips}{Two-digit state FIPS code.}
 }
 \description{
 County rows for one state from QCEW's annual NAICS 6111 file:

@@ -9,6 +9,9 @@ presence_norm(x)
 \arguments{
 \item{x}{Character vector.}
 }
+\value{
+Character vector in normal form.
+}
 \description{
 Lower case, runs of whitespace as one space, trimmed, NA as \code{""}.
 }

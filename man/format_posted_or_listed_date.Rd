@@ -11,6 +11,9 @@ format_posted_or_listed_date(dates, stale_after_days = 180)
 
 \item{stale_after_days}{A date older than this many days reads "Listed since \if{html}{\out{<date>}}".}
 }
+\value{
+Character vector: the date as given, prefixed "Listed since" when older than \code{stale_after_days}.
+}
 \description{
 Sources that keep evergreen pools active may retain an original posting date for years. Makes that distinction
 visible without discarding a still-open opportunity or inventing a newer date the source does not provide.

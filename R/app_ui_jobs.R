@@ -9,6 +9,7 @@
 #' @param level `"k12"` or `"he"`.
 #' @param pay_note The "About the pay columns" popover's text: strings or tags, pasted into one paragraph (each
 #'   state passes its `POSTED_LISTED_NOTE` first).
+#' @return A bslib `nav_panel()`.
 #' @export
 jobs_tab_panel <- function(level = c("k12", "he"), pay_note) {
   need_shiny_ui("jobs_tab_panel")

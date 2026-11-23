@@ -7,7 +7,10 @@
 autofix_engine(value)
 }
 \arguments{
-\item{value}{See the description.}
+\item{value}{The \code{AUTOFIX_ENGINE} repository variable (may be empty).}
+}
+\value{
+One of \code{AUTOFIX_ENGINES}; "claude" when empty; an error for anything else.
 }
 \description{
 Autofix engine

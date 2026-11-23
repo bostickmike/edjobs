@@ -34,6 +34,7 @@ ACS_SUBJECT_ENDPOINT <- "https://api.census.gov/data/%d/acs/acs5/subject"
 #' Census API key
 #'
 #' `CENSUS_API_KEY`, or an error saying where to get one.
+#' @return The `CENSUS_API_KEY` environment variable; an error saying where to get a key when it is empty.
 #' @export
 census_api_key <- function() {
   key <- Sys.getenv("CENSUS_API_KEY")
@@ -228,7 +229,8 @@ latest_acs5_year <- function(start_year = as.integer(format(Sys.Date(), "%Y")), 
 #' The latest vintage's income, rent and population, joined with the mining
 #' share and the population change from `trend_years_back` vintages earlier.
 #' @inheritParams fetch_census_income_rent_population
-#' @param trend_years_back See the description.
+#' @param trend_years_back How many ACS vintages back the population change is measured from.
+#' @return Data frame with one row per county: median household income, median gross rent and population (with margins of error), the mining and energy employment share, and the population change.
 #' @export
 fetch_census_county_context <- function(api_key = census_api_key(), trend_years_back = 5, fips = state_fips(),
                                         county_suffix = NULL) {

@@ -13,6 +13,9 @@ info_popover(label, ..., placement = "auto")
 
 \item{placement}{Popover placement.}
 }
+\value{
+A bslib popover.
+}
 \description{
 An "(i) label" link that opens explanatory text in a popover.
 }

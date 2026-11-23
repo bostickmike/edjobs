@@ -9,6 +9,9 @@ college_navigator_url(unitid)
 \arguments{
 \item{unitid}{IPEDS_UNITID values (character or numeric).}
 }
+\value{
+Character vector of URLs; NA for a missing or malformed id.
+}
 \description{
 The NCES College Navigator page for each 6-digit IPEDS unit id; NA for a missing or malformed id.
 }

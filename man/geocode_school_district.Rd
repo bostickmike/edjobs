@@ -9,6 +9,9 @@ geocode_school_district(lat, lon)
 \arguments{
 \item{lat, lon}{Coordinates.}
 }
+\value{
+Character vector of NCES district ids (LEAIDs) at the point, or NA.
+}
 \description{
 LEAIDs from the Census Bureau's public geocoder (no key): one unified
 district, or an elementary and a secondary district where a town is split

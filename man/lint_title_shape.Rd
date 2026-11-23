@@ -7,9 +7,12 @@
 lint_title_shape(title, max_chars = 200)
 }
 \arguments{
-\item{title}{See the description.}
+\item{title}{Posting titles.}
 
-\item{max_chars}{See the description.}
+\item{max_chars}{Longest a title may be before it is flagged as page text.}
+}
+\value{
+Character vector: the reasons each title doesn't look like a job title, joined by "; ", or NA for a normal title.
 }
 \description{
 Lint title shape

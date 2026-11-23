@@ -7,7 +7,10 @@
 oews_state_areas(state)
 }
 \arguments{
-\item{state}{See the description.}
+\item{state}{A state's postal abbreviation or FIPS code.}
+}
+\value{
+Data frame with one row per OEWS area, statewide first: \code{code}, \code{name}, \code{type} ("state" or "area").
 }
 \description{
 Every area of one state, statewide first: data.frame(code, name, type).

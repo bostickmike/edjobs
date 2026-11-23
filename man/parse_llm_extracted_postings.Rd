@@ -14,17 +14,20 @@ parse_llm_extracted_postings(
 )
 }
 \arguments{
-\item{page_text}{See the description.}
+\item{page_text}{The page's visible text.}
 
-\item{llm_postings}{See the description.}
+\item{llm_postings}{The list \code{llm_extract_call()} returned, or NULL.}
 
-\item{url}{See the description.}
+\item{url}{The page URL (each row's \code{Link}).}
 
-\item{location_fallback}{See the description.}
+\item{location_fallback}{Location for rows the model gave none.}
 
-\item{max_plausible}{See the description.}
+\item{max_plausible}{Most postings accepted; a longer answer is rejected whole.}
 
-\item{stale_after_days}{See the description.}
+\item{stale_after_days}{Postings dated longer ago than this are dropped.}
+}
+\value{
+Data frame with \code{Title}, \code{Location}, \code{Posted_Date}, \code{Link}; zero rows on any failure, never an invented row.
 }
 \description{
 llm_postings: the list returned by llm_extract_call() (or NULL).

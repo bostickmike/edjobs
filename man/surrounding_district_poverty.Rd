@@ -15,11 +15,14 @@ surrounding_district_poverty(
 \arguments{
 \item{lat, lon}{The school's coordinates.}
 
-\item{saipe}{See the description.}
+\item{saipe}{Output of \code{fetch_saipe_by_leaid()}.}
 
-\item{district_names}{See the description.}
+\item{district_names}{Optional SAIPE district names to use instead of geocoding the point.}
 
 \item{geocode}{The lookup; \code{\link[=geocode_school_district]{geocode_school_district()}}.}
+}
+\value{
+A list: \code{status}, \code{rate}, \code{year}, \code{basis} ("Surrounding district: ...") and \code{population}; \code{status} "none" and NA values when no district is found.
 }
 \description{
 For a charter, private, tribal or early-childhood school with no SAIPE

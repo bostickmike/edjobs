@@ -24,6 +24,9 @@ then define it).}
 
 \item{counting_note}{\code{NULL}, or tags/strings for a note under the plot on how postings are counted.}
 }
+\value{
+A bslib \code{nav_panel()}.
+}
 \description{
 The \code{nav_panel()} with value \code{"k12_trends"} and its \code{k12_trends_tabs} card (\code{k12_trends_current},
 \code{k12_trends_historical}).

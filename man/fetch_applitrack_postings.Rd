@@ -7,7 +7,10 @@
 fetch_applitrack_postings(tenant_path)
 }
 \arguments{
-\item{tenant_path}{See the description.}
+\item{tenant_path}{The district's AppliTrack tenant path.}
+}
+\value{
+Data frame of the board's postings, as from \code{parse_applitrack_output()}.
 }
 \description{
 Fetch applitrack postings

@@ -7,11 +7,14 @@
 build_implausible_pay_report_markdown(bad, date = Sys.Date(), max_rows = 25)
 }
 \arguments{
-\item{bad}{See the description.}
+\item{bad}{Rows whose posted pay was blanked (source, type, title and the pay columns).}
 
-\item{date}{See the description.}
+\item{date}{Date in the section heading.}
 
-\item{max_rows}{See the description.}
+\item{max_rows}{Most rows listed.}
+}
+\value{
+Character vector of markdown lines; empty when \code{bad} has no rows.
 }
 \description{
 Report section for this week's posted amounts that drop_implausible_pay()

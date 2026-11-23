@@ -126,6 +126,7 @@ match_pattern <- function(pattern, x) {
 #' posting in two) and squishes spaces. `spell_key()` is its lower case, with
 #' `NA` as "".
 #' @param x Character vector.
+#' @return `spell_text()`: the cleaned titles. `spell_key()`: their lower-case keys ("" for NA).
 #' @export
 spell_text <- function(x) {
   x <- fix_title_encoding(as.character(x))
@@ -147,6 +148,7 @@ spell_key <- function(x) { x <- tolower(spell_text(x)); x[is.na(x)] <- ""; x }
 #' neither linked to the new posting nor counted as an ending: its outcome is
 #' unknown, unless the platform itself says it was filled.
 #' @param district,source,title,first_seen,next_run Spell columns.
+#' @return Logical vector, one per spell: TRUE when a same-title posting at the same district and source starts in the source's next update.
 #' @export
 relisted_next_run <- function(district, source, title, first_seen, next_run) {
   key <- paste(district, source, trimws(gsub("[^[:alnum:]]+", " ", tolower(title))), sep = "\u001f")
@@ -216,6 +218,7 @@ parse_stated_close_date <- function(x) {
 #' date moves forward when a posting is re-published (one Great Falls pool by
 #' two years). Apply after bridging, per posting.
 #' @param panel A spells panel.
+#' @return `panel` with `date_posted` set to each posting's earliest plausible posted date and `Posted_Approx` marking dates worked out from relative text.
 #' @export
 use_earliest_posted_date <- function(panel) {
   posted <- suppressWarnings(as.Date(substr(panel$date_posted, 1, 10), format = "%Y-%m-%d"))  # text ("Posted 3 weeks ago") -> NA, never an error
@@ -247,6 +250,7 @@ use_earliest_posted_date <- function(panel) {
 #' change ID: a new requisition number is a new posting.
 #' @param panel A spells panel.
 #' @param rules `spell_rules()` (reserved: bridging has no state-specific rules yet).
+#' @return `panel` with earlier fallback IDs replaced by the stable ID they bridge to, and `Bridged_From` recording the old ID.
 #' @export
 bridge_posting_ids <- function(panel, rules = spell_rules()) {
   posted <- ifelse(posted_approx(panel), NA_character_, panel$date_posted)
@@ -496,6 +500,7 @@ POSTING_SPELL_COLUMNS <- c(
 #' @param rules `spell_rules()`.
 #' @param frozen_min_weeks ISO weeks inside a frozen stretch that make a
 #'   posting `Frozen_Board`: the `min_weeks` `frozen` was built with.
+#' @return Data frame with one row per posting spell (`POSTING_SPELL_COLUMNS`).
 #' @export
 build_posting_spells <- function(panel, calendar = NULL, endings = NULL, frozen = NULL, statuses = NULL,
                                  rules = spell_rules(), frozen_min_weeks = FROZEN_MIN_WEEKS) {
@@ -676,6 +681,7 @@ build_posting_spells <- function(panel, calendar = NULL, endings = NULL, frozen 
 #' @param spells `build_posting_spells()` output.
 #' @param group A column to group by, or NULL for all.
 #' @param min_events Fewest endings for a median.
+#' @return Data frame with one row per group: `Group`, `Postings`, `Endings`, `Median_Days` with `Lower_95` and `Upper_95` (NA with fewer than `min_events` endings), and a `Note`.
 #' @export
 summarize_posting_durations <- function(spells, group = NULL, min_events = 20) {
   s <- spells[spells$In_Durations & !is.na(spells$Days_Listed) & spells$Days_Listed >= 0, , drop = FALSE]
@@ -709,6 +715,7 @@ summarize_posting_durations <- function(spells, group = NULL, min_events = 20) {
 #' @param district,title,url Columns the app shows.
 #' @param panel,spells A segment's panel and its spells.
 #' @param segment "K-12" or "HE".
+#' @return `first_seen_key()`: character vector of keys ("district | title | url", lower case). `first_seen_lookup()`: data frame with `Segment`, `Key`, `First_Seen`, `Left_Censored`, one row per posting listed in the latest update.
 #' @export
 first_seen_key <- function(district, title, url) {
   sq <- function(x) tolower(gsub("\\s+", " ", trimws(as.character(x))))

@@ -7,9 +7,12 @@
 oews_area_for_county(county, state)
 }
 \arguments{
-\item{county}{See the description.}
+\item{county}{County names, with or without " County" and a ", State" suffix.}
 
-\item{state}{See the description.}
+\item{state}{A state's postal abbreviation or FIPS code.}
+}
+\value{
+Character vector of OEWS area codes; NA for a county not in the definitions.
 }
 \description{
 County -> OEWS area code for one state. Accepts "Yellowstone",

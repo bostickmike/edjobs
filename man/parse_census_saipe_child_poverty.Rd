@@ -11,6 +11,9 @@ parse_census_saipe_child_poverty(saipe, district_ids)
 
 \item{district_ids}{Named list, district -> LEAIDs.}
 }
+\value{
+Data frame with one row per dashboard district: \code{District}, \code{Child_Poverty_Rate}, \code{SAIPE_Year}, \code{SAIPE_Population}.
+}
 \description{
 District, Child_Poverty_Rate (\code{\link[=pool_child_poverty]{pool_child_poverty()}} over the district's
 LEAIDs; NA when none is in \code{saipe}), SAIPE_Year (NA where the rate is),

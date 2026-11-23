@@ -15,6 +15,9 @@ fetch_schoolspring_postings(domain_name, page_size = 50, max_pages = 40)
 \item{max_pages}{Stop after this many pages (with a warning): a board that
 repeats its last page would otherwise loop until the job's time limit.}
 }
+\value{
+Data frame of the district's postings: \code{Title}, \code{Location}, \code{Posted_Date}, \code{Posting_ID}, \code{Link}; zero rows when it lists none.
+}
 \description{
 The interactive site at a district's schoolspring.com domain sits behind
 bot protection (Incapsula), but api.schoolspring.com, the host the site's

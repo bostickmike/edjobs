@@ -9,6 +9,9 @@ make_sparkline_svg_light(series)
 \arguments{
 \item{series}{Numeric series, oldest first.}
 }
+\value{
+One string of inline SVG, or "" for fewer than two values.
+}
 \description{
 Larger, monochrome-white variant of \code{\link[=make_sparkline_svg]{make_sparkline_svg()}} for the KPI tiles' icon slot.
 }

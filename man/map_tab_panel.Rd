@@ -30,6 +30,9 @@ vacancy rates.}
 
 \item{he_place_note}{The note on how colleges are placed ("" for none).}
 }
+\value{
+A bslib \code{nav_panel()}.
+}
 \description{
 The \code{nav_panel()} for the Map tab (value \code{"map_tab"}).
 }

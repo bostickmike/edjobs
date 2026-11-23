@@ -9,6 +9,9 @@ parse_jobposting_jsonld(html_text)
 \arguments{
 \item{html_text}{The page, or NA.}
 }
+\value{
+One-row data frame of the posting's fields (dates, location, pay) in the dashboards' terms; all NA when the page has no JobPosting block.
+}
 \description{
 Many job boards (NEOGOV among them) embed a JSON-LD \verb{<script type="application/ld+json">} block of \verb{@type} JobPosting, the structured
 data search engines read. This returns its fields in the dashboards' terms:

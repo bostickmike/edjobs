@@ -14,6 +14,8 @@ current_state_config()
 }
 \value{
 \code{set_state_config()}: the config, invisibly.
+
+The session's \code{state_config()}, or \code{NULL} when none is set.
 }
 \description{
 \code{set_state_config()} makes \code{config} the session's state; package code that

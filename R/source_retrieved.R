@@ -28,6 +28,7 @@ read_source_retrieved <- function(app_dir) {
 #' @param source Stable source key, e.g. "BLS OEWS", "Census ACS", "Urban IPEDS".
 #' @param app_dir The dashboard's app folder.
 #' @param date Retrieval date (default today).
+#' @return The updated retrieval-dates table (data frame), invisibly; written to the app folder.
 #' @export
 record_source_retrieved <- function(source, app_dir, date = Sys.Date()) {
   stopifnot(length(source) == 1, nzchar(source))

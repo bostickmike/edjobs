@@ -9,6 +9,7 @@
 #'
 #' The NCES Common Core of Data district page for each 7-digit NCES LEA id; NA for a missing or malformed id.
 #' @param leaid NCES_LEAID values (character or numeric).
+#' @return Character vector of URLs; NA for a missing or malformed id.
 #' @export
 nces_district_url <- function(leaid) {
   id <- sub("\\.0+$", "", trimws(as.character(leaid)))
@@ -24,6 +25,7 @@ nces_district_url <- function(leaid) {
 #'
 #' The NCES College Navigator page for each 6-digit IPEDS unit id; NA for a missing or malformed id.
 #' @param unitid IPEDS_UNITID values (character or numeric).
+#' @return Character vector of URLs; NA for a missing or malformed id.
 #' @export
 college_navigator_url <- function(unitid) {
   id <- sub("\\.0+$", "", trimws(as.character(unitid)))
@@ -36,6 +38,7 @@ college_navigator_url <- function(unitid) {
 #' [college_navigator_url()]), each right after its id column, to a frame that has that id. Rebuilt from the id on
 #' every call, so running it on last week's file gives the same columns in the same place.
 #' @param df A data frame, e.g. salarymap2.csv (districts) or salarymap.csv (colleges).
+#' @return `df` with `CCD_Link` and/or `IPEDS_Link` placed after their id columns.
 #' @export
 add_source_record_links <- function(df) {
   links <- list(c(id = "NCES_LEAID", link = "CCD_Link", fn = "nces_district_url"),

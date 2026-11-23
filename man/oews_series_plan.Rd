@@ -7,9 +7,9 @@
 oews_series_plan(state, occupations = OEWS_OCCUPATIONS)
 }
 \arguments{
-\item{state}{See the description.}
+\item{state}{A state's postal abbreviation or FIPS code.}
 
-\item{occupations}{See the description.}
+\item{occupations}{Occupations to fetch (columns as \code{OEWS_OCCUPATIONS}).}
 }
 \description{
 All series one state needs: annual medians for every occupation, hourly

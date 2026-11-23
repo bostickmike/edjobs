@@ -9,6 +9,9 @@ latest_snapshot_per_week(weekly_totals)
 \arguments{
 \item{weekly_totals}{Rows with \code{Archive_Date}.}
 }
+\value{
+The rows of \code{weekly_totals} from each ISO week's latest snapshot.
+}
 \description{
 The weekly-totals downloads keep one snapshot per week (decided 2026-11-02): a week with an extra run (the
 August catch-up runs) would otherwise list every district twice. The latest snapshot in each ISO week wins.

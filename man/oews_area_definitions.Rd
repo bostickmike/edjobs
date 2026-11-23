@@ -12,6 +12,9 @@ NULL for every state.}
 
 \item{extra}{Rows to add (defaults to the session's \code{state_config(oews_areas = )}).}
 }
+\value{
+Data frame with one row per county (plus the statewide row): \code{state_fips}, \code{state_abbr}, \code{area_code}, \code{area_name}, \code{area_type}, \code{county}.
+}
 \description{
 Every OEWS area of the states the package knows, one row per county
 (\code{state_fips}, \code{state_abbr}, \code{area_code}, \code{area_name}, \code{area_type} =

@@ -35,6 +35,9 @@ data_tab_panel(
 \item{provenance_table_class, provenance_table_style}{The table's class and style attributes (NULL: Montana's
 \code{"table table-striped table-bordered table-hover"} and none).}
 }
+\value{
+A bslib \code{nav_panel()}.
+}
 \description{
 The \code{nav_panel()} for the Data tab (value \code{"data_tab"}): download tiles, the searchable data dictionary
 (\code{output$data_dictionary_table}), the provenance table and the citation.

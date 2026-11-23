@@ -11,6 +11,9 @@ fetch_ccd_teacher_fte(district_ids, fips = state_fips())
 
 \item{fips}{Two-digit state FIPS code; defaults to the current state config's.}
 }
+\value{
+As \code{parse_ccd_teacher_fte()}, plus \code{CCD_Year}.
+}
 \description{
 \code{\link[=parse_ccd_teacher_fte]{parse_ccd_teacher_fte()}} plus CCD_Year.
 }

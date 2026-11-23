@@ -9,6 +9,9 @@ use_earliest_posted_date(panel)
 \arguments{
 \item{panel}{A spells panel.}
 }
+\value{
+\code{panel} with \code{date_posted} set to each posting's earliest plausible posted date and \code{Posted_Approx} marking dates worked out from relative text.
+}
 \description{
 Exact dates win over relative ones (\code{Posted_Approx}). PeopleAdmin's feed
 date moves forward when a posting is re-published (one Great Falls pool by

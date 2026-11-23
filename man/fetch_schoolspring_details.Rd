@@ -7,11 +7,14 @@
 fetch_schoolspring_details(job_ids, delay = 0.2, budget_secs = 300)
 }
 \arguments{
-\item{job_ids}{See the description.}
+\item{job_ids}{SchoolSpring job IDs (character); NA and repeats are dropped.}
 
-\item{delay}{See the description.}
+\item{delay}{Seconds to wait before each request.}
 
-\item{budget_secs}{See the description.}
+\item{budget_secs}{Seconds after which no more requests are made.}
+}
+\value{
+Data frame with one row per job fetched (columns as \code{parse_schoolspring_job_json()}); IDs not fetched are absent.
 }
 \description{
 Detail records for a set of job IDs, one request each. A failed request

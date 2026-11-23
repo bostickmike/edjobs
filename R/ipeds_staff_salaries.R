@@ -41,9 +41,9 @@ IPEDS_STAFF_MIN_COUNT <- 3
 #' One row per institution x category: IPEDS_UNITID, Staff_Category,
 #' Category_Label, Staff_Count, Avg_Salary, Year. unitids limits the result to
 #' this dashboard's institutions.
-#' @param results See the description.
-#' @param unitids See the description.
-#' @param year See the description.
+#' @param results Urban Institute IPEDS non-instructional staff salary records (data frame or list).
+#' @param unitids IPEDS unit IDs of the state's tracked institutions.
+#' @param year The IPEDS year of the records.
 #' @keywords internal
 parse_ipeds_staff_salaries <- function(results, unitids, year) {
   df <- as.data.frame(results, stringsAsFactors = FALSE)
@@ -63,8 +63,8 @@ parse_ipeds_staff_salaries <- function(results, unitids, year) {
 }
 
 #' Fetch ipeds staff year
-#' @param year See the description.
-#' @param fips See the description.
+#' @param year IPEDS year.
+#' @param fips State FIPS code.
 #' @keywords internal
 fetch_ipeds_staff_year <- function(year, fips) {
   url <- paste0(IPEDS_STAFF_ENDPOINT, "/", year, "/?fips=", fips)
@@ -81,10 +81,11 @@ fetch_ipeds_staff_year <- function(year, fips) {
 #'
 #' The most recent year with data for this state, searched back from this
 #' calendar year.
-#' @param fips See the description.
-#' @param unitids See the description.
-#' @param start_year See the description.
-#' @param lookback See the description.
+#' @param fips State FIPS code.
+#' @param unitids IPEDS unit IDs of the state's tracked institutions.
+#' @param start_year First year to try.
+#' @param lookback How many earlier years to try.
+#' @return Data frame with one row per institution and staff category (at least 3 staff): `IPEDS_UNITID`, `Staff_Category`, `Category_Label`, `Staff_Count`, `Avg_Salary`, `Year`; an error when no year has data.
 #' @export
 fetch_ipeds_staff_salaries <- function(fips, unitids, start_year = as.integer(format(Sys.Date(), "%Y")), lookback = 4) {
   for (year in seq(start_year, start_year - lookback)) {
@@ -109,7 +110,8 @@ HOURLY_OR_STUDENT_TITLE <- paste0("pooled|work[- ]?study|\\bintern(ship)?s?\\b|s
 #' Is salaried staff posting
 #'
 #' A higher-ed posting for salaried staff: not faculty, not hourly or student.
-#' @param title See the description.
+#' @param title College posting titles.
+#' @return Logical vector: TRUE for a staff posting that isn't faculty, hourly or a student job.
 #' @export
 is_salaried_staff_posting <- function(title) {
   !classify_he_job_type(title) %in% c("Instructor/Teacher/Faculty", "Adjunct/Part-Time Faculty") &
@@ -140,7 +142,7 @@ NOT_SENIOR_TITLE <- "(assistant|associate|deputy) chief|assistant to\\b"
 #' function's category ("IT Manager" -> computer, "Business Manager" ->
 #' business, "Facilities Manager" -> maintenance) when one fits; "Project
 #' Manager" and other titles naming no function get none.
-#' @param title See the description.
+#' @param title College posting titles.
 #' @keywords internal
 ipeds_staff_category_for_title <- function(title) {
   t <- tolower(as.character(title))
@@ -176,9 +178,10 @@ ipeds_staff_category_for_title <- function(title) {
 #' posting's staff category (Est_Pay, per year), Est_Occupation (category),
 #' Est_Area (institution), Est_Year. unitid_of_institution maps each
 #' posting's Institution to its IPEDS_UNITID.
-#' @param postings See the description.
-#' @param staff See the description.
-#' @param unitid_of_institution See the description.
+#' @param postings College postings with `Title` and `Institution`.
+#' @param staff Output of `fetch_ipeds_staff_salaries()`.
+#' @param unitid_of_institution Each posting's IPEDS unit ID (one per row of `postings`).
+#' @return `postings` with `Est_Pay` (per year), `Est_Pay_Unit`, `Est_Occupation` (the category), `Est_Area` (the institution) and `Est_Year`; NA where no category or figure fits.
 #' @export
 attach_ipeds_staff_estimates <- function(postings, staff, unitid_of_institution) {
   category <- ipeds_staff_category_for_title(postings$Title)

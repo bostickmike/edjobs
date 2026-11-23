@@ -17,6 +17,7 @@
 #' `domain_name` [fetch_schoolspring_postings()] takes. Shared by the pipeline
 #' and the drift check's live check, so both call the scraper the same way.
 #' @param job_link The registry's Job_Link.
+#' @return Character vector of SchoolSpring hostnames.
 #' @export
 schoolspring_domain <- function(job_link) sub("/$", "", sub("^https?://", "", job_link))
 
@@ -36,6 +37,7 @@ schoolspring_domain <- function(job_link) sub("/$", "", sub("^https?://", "", jo
 #' @param page_size Postings per request.
 #' @param max_pages Stop after this many pages (with a warning): a board that
 #'   repeats its last page would otherwise loop until the job's time limit.
+#' @return Data frame of the district's postings: `Title`, `Location`, `Posted_Date`, `Posting_ID`, `Link`; zero rows when it lists none.
 #' @export
 fetch_schoolspring_postings <- function(domain_name, page_size = 50, max_pages = 40) {
   all_pages <- list()
@@ -114,6 +116,7 @@ parse_schoolspring_json <- function(json_text, domain_name) {
 #' rows. That explained the flaky ok/empty alternation the scrape log showed
 #' for one URL across runs on the same day.
 #' @param url The board URL, e.g. "https://goshen.tedk12.com/hire/index.aspx".
+#' @return Data frame of the board's postings, as from `parse_tedk12_postings()`.
 #' @export
 fetch_tedk12_postings <- function(url) {
   resp <- request(url) %>%
@@ -189,6 +192,7 @@ parse_tedk12_postings <- function(html_text, url) {
 #'   `location_fallback` only where it is absent. MT's choice (its PeopleAdmin
 #'   institutions are multi-department universities). FALSE gives every row
 #'   `location_fallback`, WY's choice for its single-campus colleges.
+#' @return Data frame of the feed's postings (`Title`, `Location`, `Posted_Date`, `Link`), with `Close_Date`, `Page_Places` and the posted pay columns when `fetch_pay` reads each posting's page.
 #' @export
 fetch_peopleadmin_atom <- function(feed_url, location_fallback = NA_character_, fetch_pay = TRUE, detail_delay = 0.3,
                                    location_from_author = TRUE) {
@@ -370,6 +374,7 @@ neogov_empty <- function() {
 #' pay cannot be read the postings still come through with NA pay.
 #' @param html_text The fragment.
 #' @param base_domain The domain the links are built on.
+#' @return Data frame with one row per job card: `Title`, `Location`, `Posted_Date`, `Link` and the posted pay columns.
 #' @export
 parse_neogov_html <- function(html_text, base_domain) {
   soup <- rvest::read_html(html_text)
@@ -483,6 +488,7 @@ parse_neogov_posting_page <- function(html_text) {
 #' cannot be parsed, gives a row of NA. The first JobPosting block is read if
 #' a page has several (or a block that is an array of them).
 #' @param html_text The page, or NA.
+#' @return One-row data frame of the posting's fields (dates, location, pay) in the dashboards' terms; all NA when the page has no JobPosting block.
 #' @export
 parse_jobposting_jsonld <- function(html_text) {
   none <- jobposting_none()
@@ -618,6 +624,7 @@ jobposting_row <- function(j) {
 #' @param board The board's slug (the value `board_col` holds).
 #' @param registry The HE registry.
 #' @param board_col,pattern_col,platform,location_col Registry and posting columns.
+#' @return `postings` with `Institution` set from the registry's location patterns for the institutions sharing the board.
 #' @export
 assign_shared_board_institutions <- function(postings, board, registry, board_col = "Feed_URL",
                                              pattern_col = "Location_Pattern", platform = "SharesBoard",
@@ -648,6 +655,7 @@ assign_shared_board_institutions <- function(postings, board, registry, board_co
 #' derivable from the slug (the board page carries it: `"orgId":"4161"` for
 #' `sd659912`; some boards use the ID as their slug).
 #' @param job_link The board URL.
+#' @return Character vector of org slugs.
 #' @export
 redrover_org_slug <- function(job_link) sub(".*/org/([^/?]+).*", "\\1", job_link, ignore.case = TRUE)
 
@@ -685,6 +693,7 @@ redrover_pay_columns <- function(n, pay_type, min_pay, max_pay) {
 #'
 #' @param org_id The board's numeric organization ID (see [redrover_org_slug()]).
 #' @param org_slug The slug its links carry, for each posting's link and ID.
+#' @return Data frame of the board's postings, as from `parse_redrover_json()`.
 #' @export
 fetch_redrover_postings <- function(org_id, org_slug) {
   query <- 'query GetJobPostings($search: JobPostingSearchInput!) {
@@ -722,6 +731,7 @@ fetch_redrover_postings <- function(org_id, org_slug) {
 #' Standing application forms ([REDROVER_PLACEHOLDER_TITLES]) are dropped.
 #' @param json_text The response body.
 #' @param org_slug The board's slug.
+#' @return Data frame with one row per posting: `Title`, `Location`, `Posted_Date`, `Posting_ID`, `Link` and the posted pay columns; standing application forms dropped.
 #' @export
 parse_redrover_json <- function(json_text, org_slug) {
   empty <- data.frame(Title = character(0), Location = character(0), Posted_Date = character(0),

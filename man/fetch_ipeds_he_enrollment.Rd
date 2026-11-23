@@ -11,6 +11,9 @@ fetch_ipeds_he_enrollment(unitid_map, fips = state_fips())
 
 \item{fips}{Two-digit state FIPS code; defaults to the current state config's.}
 }
+\value{
+Data frame with one row per \code{unitid_map} row: \code{Name}, \code{Enrollment}, \code{Enrollment_Year}, for the latest IPEDS year with data.
+}
 \description{
 Fetch IPEDS fall enrollment for the latest year
 }

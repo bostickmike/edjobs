@@ -9,6 +9,9 @@ classify_he_appointment(titles)
 \arguments{
 \item{titles}{Posting titles.}
 }
+\value{
+Character vector: "Adjunct/part-time faculty", "Faculty/instructor (non-adjunct)" or "Other / not faculty".
+}
 \description{
 "Adjunct/part-time faculty", "Faculty/instructor (non-adjunct)" or "Other / not faculty", from the title alone.
 The pipeline's own classifier (\code{\link[=classify_he_job_type]{classify_he_job_type()}}) uses the same title patterns; this one keeps the

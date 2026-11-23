@@ -232,6 +232,7 @@ resolve_scraper_call <- function(name, sources = state_scraper_sources()) {
 #'
 #' Human-readable pointer to the code a resolved call runs.
 #' @param call A `resolve_scraper_call()` result.
+#' @return One string naming the function (and registry entry) the call runs.
 #' @export
 describe_scraper_call <- function(call) {
   if (isTRUE(call$map)) {
@@ -251,6 +252,7 @@ describe_scraper_call <- function(call) {
 #' @param map For a `map = TRUE` call, the map itself (so tests can pass a
 #'   stub); by default looked up by name in `envir`.
 #' @param envir Where to find the state's scraper functions.
+#' @return Whatever the scraper returns (a data frame of postings).
 #' @export
 run_scraper_call <- function(call, session_factory = NULL, map = NULL, envir = parent.frame()) {
   if (isTRUE(call$map)) {

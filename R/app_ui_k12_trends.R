@@ -14,6 +14,7 @@
 #' @param slider_label `TRUE` to show the `k12_slider_label` text output above the slider (the state's server must
 #'   then define it).
 #' @param counting_note `NULL`, or tags/strings for a note under the plot on how postings are counted.
+#' @return A bslib `nav_panel()`.
 #' @export
 k12_trends_panel <- function(k12nowsum, k12sum,
                              timeline_value = c(max(k12sum$Archive_Date) - 365, max(k12sum$Archive_Date)),

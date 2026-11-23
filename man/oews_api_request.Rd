@@ -7,9 +7,9 @@
 oews_api_request(series_ids, api_key = Sys.getenv("BLS_API_KEY"))
 }
 \arguments{
-\item{series_ids}{See the description.}
+\item{series_ids}{Up to 50 BLS series IDs (25 without a key).}
 
-\item{api_key}{See the description.}
+\item{api_key}{BLS API registration key; empty for the keyless limits.}
 }
 \description{
 Oews api request

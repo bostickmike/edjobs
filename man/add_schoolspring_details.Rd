@@ -7,9 +7,12 @@
 add_schoolspring_details(postings, ...)
 }
 \arguments{
-\item{postings}{See the description.}
+\item{postings}{SchoolSpring listing rows with a per-posting \code{Link} (".../jobs/\if{html}{\out{<id>}}").}
 
-\item{...}{See the description.}
+\item{...}{Passed to \code{fetch_schoolspring_details()} (\code{delay}, \code{budget_secs}).}
+}
+\value{
+\code{postings} with \code{Close_Date}, \code{Job_Status} and the posted pay columns added (NA where a detail wasn't fetched).
 }
 \description{
 The listing plus each posting's detail fields (Close_Date, Job_Status,

@@ -21,9 +21,9 @@ QCEW_API <- "https://data.bls.gov/cew/data/api"
 #' County rows for one state from QCEW's annual NAICS 6111 file:
 #' County ("Yellowstone County"), County_FIPS, School_Employment,
 #' Avg_Annual_Pay, Year. titles is QCEW's area_titles table.
-#' @param industry See the description.
-#' @param titles See the description.
-#' @param state_fips See the description.
+#' @param industry QCEW's annual NAICS 6111 file (data frame, all text).
+#' @param titles QCEW's area titles table.
+#' @param state_fips Two-digit state FIPS code.
 #' @keywords internal
 parse_qcew_school_pay <- function(industry, titles, state_fips) {
   industry$area_fips <- sprintf("%05s", as.character(industry$area_fips))
@@ -44,7 +44,7 @@ parse_qcew_school_pay <- function(industry, titles, state_fips) {
 }
 
 #' Read qcew csv
-#' @param url See the description.
+#' @param url URL of a QCEW CSV file.
 #' @keywords internal
 read_qcew_csv <- function(url) {
   resp <- httr2::request(url) %>% perform_with_retry()
@@ -57,9 +57,10 @@ read_qcew_csv <- function(url) {
 #'
 #' Latest year QCEW has published annual averages for, searched back from
 #' this calendar year.
-#' @param state_fips See the description.
-#' @param start_year See the description.
-#' @param lookback See the description.
+#' @param state_fips Two-digit state FIPS code.
+#' @param start_year First year to try.
+#' @param lookback How many earlier years to try.
+#' @return Data frame with one row per county with a published figure: `County`, `County_FIPS`, `School_Employment`, `Avg_Annual_Pay`, `Year`; an error when no year has data.
 #' @export
 fetch_qcew_school_pay <- function(state_fips, start_year = as.integer(format(Sys.Date(), "%Y")), lookback = 3) {
   titles <- read_qcew_csv("https://data.bls.gov/cew/doc/titles/area/area_titles.csv")
@@ -76,6 +77,7 @@ fetch_qcew_school_pay <- function(state_fips, start_year = as.integer(format(Sys
 #'
 #' Joins on a county however it's written: "Yellowstone County" or
 #' "Albany County, Wyoming".
-#' @param county See the description.
+#' @param county County names, with or without a ", State" suffix.
+#' @return The county names with any ", State" suffix removed.
 #' @export
 qcew_county_key <- function(county) sub(",.*$", "", trimws(as.character(county)))

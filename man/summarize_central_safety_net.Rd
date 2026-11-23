@@ -29,6 +29,9 @@ summarize_central_safety_net(
 
 \item{discrepancy_path}{The discrepancy report file.}
 }
+\value{
+A list with the feed's totals, the districts it filled in for, the unmatched discrepancies and \code{markdown} (the report section).
+}
 \description{
 How many vacancies the statewide feed listed, how many it supplied at districts we scrape directly
 (openings their own board doesn't list), and the discrepancy report's unmatched rows. The feed's labels

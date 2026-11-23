@@ -7,11 +7,11 @@
 fetch_oews_wages(state, api_key = Sys.getenv("BLS_API_KEY"), pause = 1)
 }
 \arguments{
-\item{state}{See the description.}
+\item{state}{A state's postal abbreviation or FIPS code.}
 
-\item{api_key}{See the description.}
+\item{api_key}{BLS API registration key.}
 
-\item{pause}{See the description.}
+\item{pause}{Seconds between API batches.}
 }
 \description{
 One row per area x occupation: Area_Code, Area_Name, SOC, Occupation,

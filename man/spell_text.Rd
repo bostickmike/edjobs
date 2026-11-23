@@ -12,6 +12,9 @@ spell_key(x)
 \arguments{
 \item{x}{Character vector.}
 }
+\value{
+\code{spell_text()}: the cleaned titles. \code{spell_key()}: their lower-case keys ("" for NA).
+}
 \description{
 \code{spell_text()} repairs encoding (\code{fix_title_encoding()}), drops zero-width
 characters (Aaniiih Nakoda's "Facilities Manager\\u200b" would split one

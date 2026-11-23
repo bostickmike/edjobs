@@ -17,7 +17,7 @@ general-purpose scraping tool.
 |---|---|
 | Understand how the package and the state repos fit together | `vignette("edjobs")` ([source](vignettes/edjobs.Rmd)) |
 | Understand posting spells and listing durations | `vignette("posting-spells")` ([source](vignettes/posting-spells.Rmd)) |
-| Look up a function | `?function_name`, or `help(package = "edjobs")`. Exported: what a state calls (312 names in `NAMESPACE`); helpers no state calls are internal (`edjobs:::name`, documented with `@keywords internal`) |
+| Look up a function | `?function_name`, or `help(package = "edjobs")`. Exported: what a state calls (see `NAMESPACE`); helpers no state calls are internal (`edjobs:::name`, documented with `@keywords internal`) |
 | See what changed in each version | [NEWS.md](NEWS.md) |
 | See how code moved here, phase by phase | `vignette("edjobs")`, "How code moves here" |
 
@@ -37,12 +37,13 @@ general-purpose scraping tool.
 | `scraper_dispatch.R` | Which function scrapes each source, as data (`scraper_registry()`, `scraper_spec()`, `resolve_scraper_call()`), and the auto-fix issue body built from it |
 | `k12_history.R` | The accumulated K-12 files: one output schema (`K12_POSTING_COLUMNS`), `build_k12_combinedclean()`, `append_weekly_rows()` |
 | `drift_check.R` | Per-source drift, data-quality and auto-fix helpers shared by both states' monitoring steps |
+| `drift_repeats.R` | The top of each drift report: what is new since the last run and what has been flagged run after run, less what a state has acknowledged (`drift_acknowledged.csv`) |
 | `schema_check.R`, `history_checks.R` | File schema checks, totals-match-parts, rebuild parity |
 | `run_expectations.R` | Checks a run's files against a state's `run_expectations.csv` |
 | `bls_oews_scraper.R`, `qcew_school_pay.R`, `ipeds_staff_salaries.R` | Federal pay benchmarks (BLS OEWS, BLS QCEW, IPEDS) |
 | `app_helpers.R` | The dashboards' shared app helpers: pay, date and margin-of-error text, sparklines, trend and mover summaries, job search matching |
 | `apptegy.R`, `cyberschool.R`, `edlio.R`, `finalsite.R`, `googledoc.R`, `googlesites.R`, `joomla.R`, `wordpress.R` | CMS-family routines: one reader per site family (district employment pages), with per-district list rules in the registry (`List_Start` / `List_Stop` / `List_Skip`) |
-| `presence_check.R` | The daily presence check: each board with stable posting IDs and each statewide feed read once a day, for day-precision endings |
+| `presence_check.R` | The daily presence check: each board with stable posting IDs and each statewide feed read once a day, recorded on each state's `presence` branch (not yet used by the posting spells; the plan is day-precision endings) |
 | `he_campus.R` | Which town a college posting is in (branch campuses, outreach sites), from its location text, title, a department table or its own page |
 | `ccd.R`, `saipe.R`, `census_acs.R`, `ipeds_he.R` | Federal context: NCES CCD staffing and enrollment, Census SAIPE child poverty, Census ACS county context, IPEDS faculty salaries, enrollment and Pell share |
 | `k12_salary_archive.R` | Yearly snapshots of a state's current-year K-12 salary source, so a multi-year trend exists |
@@ -51,7 +52,8 @@ general-purpose scraping tool.
 | `pipeline_stages.R` | Pipeline chunks both states' Rmd wrote the same way, as one call each: `refresh_county_context()`, `refresh_file_columns()` (fetch, then swap a file's columns), `refresh_source_record_links()` |
 | `run_checks.R`, `run_checks_canary.R`, `run_checks_drift.R`, `run_checks_salary.R`, `run_checks_census.R`, `run_checks_autofix.R` | The weekly run's own steps as functions (`*_step()`): the pre-flight canary, schema and row-count checks, drift, posted-pay coverage, title quality, salary and Census coverage, run expectations, filing auto-fix issues and the auto-fix PR's live check. Each state's `.github/scripts/*.R` is a short call to one of these |
 | `app_server_shared.R` | `dashboard_server_shared()`: the dashboard server code both states share; each state's `server` calls it and keeps its own blocks |
-| `app_server_configured.R` | The shared server blocks that take a state setting (map view, Institution Summary, HE slider); `bounded_timeline_value()`, `timeline_history_note()` |
+| `app_server_configured.R` | The shared server blocks that take a state setting (map view, the Colleges tab's directory, HE slider); `bounded_timeline_value()`, `timeline_history_note()` |
+| `app_server_districts.R` | The Districts tab's state-specific blocks and the map markers, driven by a `district_spec()` that names the state's pay and budget columns |
 | `app_ui_helpers.R` | UI helpers the tabs share (`dash_card()`, `help_popover()`, ...) |
 | `app_ui_home.R`, `app_ui_map.R`, `app_ui_jobs.R`, `app_ui_k12_trends.R`, `app_ui_k12_districts.R`, `app_ui_he_trends.R`, `app_ui_he_colleges.R`, `app_ui_spells.R`, `app_ui_data.R` | One function per dashboard tab (`home_tab_panel()`, `map_tab_panel()`, ...): the package builds the tab, the state passes its own text and any one-state piece |
 | `app_feedback.R` | The public feedback form: checks a report and opens a GitHub issue in the state's repo |

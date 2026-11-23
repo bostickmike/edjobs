@@ -7,7 +7,7 @@
 ipeds_staff_category_for_title(title)
 }
 \arguments{
-\item{title}{See the description.}
+\item{title}{College posting titles.}
 }
 \description{
 The IPEDS staff category for a higher-ed posting title. NA for faculty,

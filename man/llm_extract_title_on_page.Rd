@@ -7,11 +7,11 @@
 llm_extract_title_on_page(titles, page_text, probe_len = 20L)
 }
 \arguments{
-\item{titles}{See the description.}
+\item{titles}{Titles the model returned.}
 
-\item{page_text}{See the description.}
+\item{page_text}{The page's visible text.}
 
-\item{probe_len}{See the description.}
+\item{probe_len}{How many leading characters of each title must appear on the page.}
 }
 \description{
 Does (a leading chunk of) each title literally appear in the page text?

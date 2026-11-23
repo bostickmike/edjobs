@@ -13,6 +13,9 @@ help_popover(title, ..., source = NULL)
 
 \item{source}{Plain-language source line, or NULL.}
 }
+\value{
+A bslib popover around a (?) icon.
+}
 \description{
 A (?) beside a chart, table or download that says what it shows and where the numbers come from (Mike,
 2026-11-16).

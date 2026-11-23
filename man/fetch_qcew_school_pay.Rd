@@ -11,11 +11,14 @@ fetch_qcew_school_pay(
 )
 }
 \arguments{
-\item{state_fips}{See the description.}
+\item{state_fips}{Two-digit state FIPS code.}
 
-\item{start_year}{See the description.}
+\item{start_year}{First year to try.}
 
-\item{lookback}{See the description.}
+\item{lookback}{How many earlier years to try.}
+}
+\value{
+Data frame with one row per county with a published figure: \code{County}, \code{County_FIPS}, \code{School_Employment}, \code{Avg_Annual_Pay}, \code{Year}; an error when no year has data.
 }
 \description{
 Latest year QCEW has published annual averages for, searched back from

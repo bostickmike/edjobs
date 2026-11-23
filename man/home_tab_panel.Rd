@@ -23,6 +23,9 @@ home_tab_panel(
 
 \item{extra}{\code{NULL}, or a card of the state's own shown under the four tables.}
 }
+\value{
+A bslib \code{nav_panel()}.
+}
 \description{
 The \code{nav_panel()} with value \code{"intro"}.
 }

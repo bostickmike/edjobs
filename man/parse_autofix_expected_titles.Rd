@@ -7,7 +7,10 @@
 parse_autofix_expected_titles(body)
 }
 \arguments{
-\item{body}{See the description.}
+\item{body}{An auto-fix issue body.}
+}
+\value{
+Character vector of the LLM-read titles the issue lists; empty when it lists none.
 }
 \description{
 The LLM-read titles build_autofix_issue_body() listed -- the live check's

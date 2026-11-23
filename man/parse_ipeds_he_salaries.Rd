@@ -13,6 +13,9 @@ parse_ipeds_he_salaries(df, year, unitid_map)
 
 \item{unitid_map}{See the file header.}
 }
+\value{
+Data frame with one row per \code{unitid_map} row: \code{Name}, \code{Faculty_Avg_Salary}, \code{Faculty_Avg_Salary_Professor}, \code{Faculty_Count}, \code{Salary_Year} (and \code{Salary_Note} when the map has it).
+}
 \description{
 One row per \code{unitid_map} row: Name, Faculty_Avg_Salary (all ranks, full-time staff on 9-12-month contracts),
 Faculty_Avg_Salary_Professor, Faculty_Count, Salary_Year, and Salary_Note

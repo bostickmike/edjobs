@@ -13,15 +13,18 @@ fetch_json_paginated(
 )
 }
 \arguments{
-\item{url}{See the description.}
+\item{url}{URL of the first page.}
 
-\item{results_field}{See the description.}
+\item{results_field}{Name of the field holding each page's records.}
 
-\item{next_field}{See the description.}
+\item{next_field}{Name of the field holding the next page's URL (empty or NULL on the last page).}
 
-\item{max_pages}{See the description.}
+\item{max_pages}{Optional cap on pages fetched; \code{NULL} for no cap.}
 
-\item{req_modifier}{See the description.}
+\item{req_modifier}{Function applied to each \code{httr2::request()} before it's sent (headers, a user agent).}
+}
+\value{
+Data frame of every page's records bound together; an empty data frame when there are none.
 }
 \description{
 Follows a JSON API's pagination link (defaulting to \code{resp[["next"]]}) until

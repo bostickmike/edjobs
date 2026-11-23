@@ -10,6 +10,7 @@
 #' @param institutions The comparator's choices (the state passes `sort(unique(mapdata2_he$Name))`).
 #' @param compare_selected The institutions compared when the tab opens (up to four).
 #' @param salaries_note,county_note What the directory's Salaries and County columns hold (text after the bold label).
+#' @return A bslib `nav_panel()`.
 #' @export
 he_colleges_panel <- function(institutions, compare_selected, salaries_note, county_note) {
   need_shiny_ui("he_colleges_panel")

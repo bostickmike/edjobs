@@ -12,13 +12,16 @@ reference_table_status(
 )
 }
 \arguments{
-\item{app_dir}{See the description.}
+\item{app_dir}{The dashboard's app folder, where the reference tables live.}
 
-\item{scrape_log}{See the description.}
+\item{scrape_log}{This run's scrape log (data frame read from \code{scrape_log.csv}).}
 
-\item{today}{See the description.}
+\item{today}{The run's date; only log rows from that day count.}
 
-\item{this_year}{See the description.}
+\item{this_year}{The calendar year a table's newest figure is compared with.}
+}
+\value{
+Data frame with one row per table that needs a look: \code{name}, \code{file}, \code{problem}; zero rows when all are fine.
 }
 \description{
 One row per reference table in \code{app_dir} that needs a human look: its

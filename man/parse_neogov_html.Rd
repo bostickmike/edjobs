@@ -11,6 +11,9 @@ parse_neogov_html(html_text, base_domain)
 
 \item{base_domain}{The domain the links are built on.}
 }
+\value{
+Data frame with one row per job card: \code{Title}, \code{Location}, \code{Posted_Date}, \code{Link} and the posted pay columns.
+}
 \description{
 The fragment renders each job twice: in a card \verb{<ul>} (with location and
 date) and again in a plain \verb{<table>} (title only), both present regardless

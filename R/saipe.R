@@ -136,6 +136,7 @@ saipe_rows_by_leaid <- function(geos, fips) {
 #' [saipe_rows_by_leaid()] over all three geographies, plus SAIPE_Year.
 #' @param year SAIPE year; the latest when NULL.
 #' @inheritParams fetch_saipe_geography
+#' @return Data frame with one row per SAIPE district (unified, elementary and secondary) keyed by NCES id, with the poverty counts, the rate, `SAIPE_Population` and `SAIPE_Year`.
 #' @export
 fetch_saipe_by_leaid <- function(year = NULL, api_key = census_api_key(), fips = state_fips()) {
   year <- year %||% latest_saipe_year(api_key = api_key, fips = fips)
@@ -152,6 +153,7 @@ fetch_saipe_by_leaid <- function(year = NULL, api_key = census_api_key(), fips =
 #' relevant children, summed over the districts with both counts; when no
 #' district has both, the mean of their rates. NA when none has a rate.
 #' @param rows Rows of [saipe_rows_by_leaid()] (rate, and the counts when known).
+#' @return One rate (numeric), or NA.
 #' @export
 pool_child_poverty <- function(rows) {
   ok <- rows[!is.na(rows$Child_Poverty_Rate), , drop = FALSE]
@@ -174,6 +176,7 @@ pool_child_poverty <- function(rows) {
 #' error band ([saipe_relative_error()]), an approximation for a pooled rate.
 #' NA when no district with a rate has a population.
 #' @inheritParams pool_child_poverty
+#' @return One population (numeric), or NA.
 #' @export
 pool_saipe_population <- function(rows) {
   if (!"SAIPE_Population" %in% names(rows)) return(NA_real_)
@@ -188,6 +191,7 @@ pool_saipe_population <- function(rows) {
 #' SAIPE_Population ([pool_saipe_population()]).
 #' @param saipe Output of [fetch_saipe_by_leaid()].
 #' @param district_ids Named list, district -> LEAIDs.
+#' @return Data frame with one row per dashboard district: `District`, `Child_Poverty_Rate`, `SAIPE_Year`, `SAIPE_Population`.
 #' @export
 parse_census_saipe_child_poverty <- function(saipe, district_ids) {
   if (length(district_ids) == 0 || nrow(saipe) == 0) {
@@ -207,6 +211,7 @@ parse_census_saipe_child_poverty <- function(saipe, district_ids) {
 #' Fetch child poverty per dashboard district
 #' @inheritParams parse_census_saipe_child_poverty
 #' @inheritParams fetch_saipe_by_leaid
+#' @return As `parse_census_saipe_child_poverty()`, for the latest (or given) SAIPE year.
 #' @export
 fetch_census_saipe_child_poverty <- function(district_ids, year = NULL, api_key = census_api_key(), fips = state_fips()) {
   parse_census_saipe_child_poverty(fetch_saipe_by_leaid(year, api_key, fips), district_ids)
@@ -222,9 +227,10 @@ fetch_census_saipe_child_poverty <- function(district_ids, year = NULL, api_key 
 #' `population` is [pool_saipe_population()] of those districts. Returns status "ok", "none" (no district found / no rate) or "failed" (the
 #' geocoder errored: the caller keeps last run's value and logs it).
 #' @param lat,lon The school's coordinates.
-#' @param saipe See the description.
-#' @param district_names See the description.
+#' @param saipe Output of `fetch_saipe_by_leaid()`.
+#' @param district_names Optional SAIPE district names to use instead of geocoding the point.
 #' @param geocode The lookup; [geocode_school_district()].
+#' @return A list: `status`, `rate`, `year`, `basis` ("Surrounding district: ...") and `population`; `status` "none" and NA values when no district is found.
 #' @export
 surrounding_district_poverty <- function(lat, lon, saipe, district_names = NULL, geocode = geocode_school_district) {
   res <- list(status = "none", rate = NA_real_, year = NA, basis = NA_character_, population = NA_real_)
@@ -281,6 +287,7 @@ saipe_relative_error <- function(population) {
 #' end capped at 1. Adds Child_Poverty_Low and Child_Poverty_High (NA where
 #' the rate or the population is).
 #' @param df A data frame with Child_Poverty_Rate and SAIPE_Population.
+#' @return `df` with `Child_Poverty_Low` and `Child_Poverty_High` added.
 #' @export
 add_saipe_range <- function(df) {
   half <- 1.645 * saipe_relative_error(df$SAIPE_Population)

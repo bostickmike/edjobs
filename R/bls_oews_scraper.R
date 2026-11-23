@@ -34,6 +34,7 @@
 #' @param state A state's postal abbreviation ("MT") or FIPS code ("30");
 #'   NULL for every state.
 #' @param extra Rows to add (defaults to the session's `state_config(oews_areas = )`).
+#' @return Data frame with one row per county (plus the statewide row): `state_fips`, `state_abbr`, `area_code`, `area_name`, `area_type`, `county`.
 #' @export
 oews_area_definitions <- function(state = NULL, extra = current_state_config()$oews_areas) {
   d <- utils::read.csv(system.file("extdata", "oews_area_definitions.csv", package = "edjobs"),
@@ -83,7 +84,8 @@ OEWS_HOURLY_MEDIAN <- "08"
 #' Oews state areas
 #'
 #' Every area of one state, statewide first: data.frame(code, name, type).
-#' @param state See the description.
+#' @param state A state's postal abbreviation or FIPS code.
+#' @return Data frame with one row per OEWS area, statewide first: `code`, `name`, `type` ("state" or "area").
 #' @export
 oews_state_areas <- function(state) {
   d <- oews_area_definitions(state)
@@ -97,10 +99,10 @@ oews_state_areas <- function(state) {
 #'
 #' "OEUS" + area + industry (000000 = all) + SOC + datatype for a state;
 #' "OEUM" for metropolitan and nonmetropolitan areas.
-#' @param area_code See the description.
-#' @param type See the description.
-#' @param soc See the description.
-#' @param datatype See the description.
+#' @param area_code OEWS area code.
+#' @param type "state" or "area".
+#' @param soc 2018 SOC code without the dash.
+#' @param datatype OEWS data type code (`OEWS_ANNUAL_MEDIAN` or `OEWS_HOURLY_MEDIAN`).
 #' @keywords internal
 oews_series_id <- function(area_code, type, soc, datatype) {
   paste0(ifelse(type == "state", "OEUS", "OEUM"), area_code, "000000", soc, datatype)
@@ -110,8 +112,8 @@ oews_series_id <- function(area_code, type, soc, datatype) {
 #'
 #' All series one state needs: annual medians for every occupation, hourly
 #' medians for the hourly ones.
-#' @param state See the description.
-#' @param occupations See the description.
+#' @param state A state's postal abbreviation or FIPS code.
+#' @param occupations Occupations to fetch (columns as `OEWS_OCCUPATIONS`).
 #' @keywords internal
 oews_series_plan <- function(state, occupations = OEWS_OCCUPATIONS) {
   areas <- oews_state_areas(state)
@@ -127,7 +129,7 @@ oews_series_plan <- function(state, occupations = OEWS_OCCUPATIONS) {
 #'
 #' Parses one API response into series_id / year / value. "-" (suppressed or
 #' not published) and "#" (above the published ceiling) become NA.
-#' @param json_text See the description.
+#' @param json_text Body of one BLS API v2 response.
 #' @keywords internal
 parse_oews_response <- function(json_text) {
   parsed <- jsonlite::fromJSON(json_text, simplifyVector = FALSE)
@@ -147,8 +149,8 @@ parse_oews_response <- function(json_text) {
 }
 
 #' Oews api request
-#' @param series_ids See the description.
-#' @param api_key See the description.
+#' @param series_ids Up to 50 BLS series IDs (25 without a key).
+#' @param api_key BLS API registration key; empty for the keyless limits.
 #' @keywords internal
 oews_api_request <- function(series_ids, api_key = Sys.getenv("BLS_API_KEY")) {
   body <- list(seriesid = as.list(series_ids), latest = TRUE)
@@ -162,8 +164,8 @@ oews_api_request <- function(series_ids, api_key = Sys.getenv("BLS_API_KEY")) {
 #' Fetch oews latest year
 #'
 #' Latest OEWS year the API serves, from one statewide series.
-#' @param state See the description.
-#' @param api_key See the description.
+#' @param state A state's postal abbreviation or FIPS code.
+#' @param api_key BLS API registration key.
 #' @keywords internal
 fetch_oews_latest_year <- function(state, api_key = Sys.getenv("BLS_API_KEY")) {
   areas <- oews_state_areas(state)
@@ -175,9 +177,9 @@ fetch_oews_latest_year <- function(state, api_key = Sys.getenv("BLS_API_KEY")) {
 #'
 #' One row per area x occupation: Area_Code, Area_Name, SOC, Occupation,
 #' Annual_Median, Hourly_Median, Year.
-#' @param state See the description.
-#' @param api_key See the description.
-#' @param pause See the description.
+#' @param state A state's postal abbreviation or FIPS code.
+#' @param api_key BLS API registration key.
+#' @param pause Seconds between API batches.
 #' @keywords internal
 fetch_oews_wages <- function(state, api_key = Sys.getenv("BLS_API_KEY"), pause = 1) {
   plan <- oews_series_plan(state)
@@ -207,10 +209,11 @@ fetch_oews_wages <- function(state, api_key = Sys.getenv("BLS_API_KEY"), pause =
 #' Keeps the committed file unless BLS has published a newer year; a failed
 #' check or fetch, or a refreshed table write_reference_file() rejects,
 #' leaves the existing file as it is.
-#' @param state See the description.
-#' @param path See the description.
-#' @param api_key See the description.
+#' @param state A state's postal abbreviation or FIPS code.
+#' @param path The state's `oews_role_wages.csv`.
+#' @param api_key BLS API registration key; empty for the keyless limits.
 #' @param retrieved_source Optional source key, recorded only when a new year is downloaded and kept.
+#' @return The wage table in use (the new download, or the existing file when it is current or the download was rejected), invisibly.
 #' @export
 refresh_oews_wages <- function(state, path, api_key = Sys.getenv("BLS_API_KEY"), retrieved_source = NULL) {
   existing <- if (file.exists(path)) utils::read.csv(path, stringsAsFactors = FALSE,
@@ -237,8 +240,8 @@ refresh_oews_wages <- function(state, path, api_key = Sys.getenv("BLS_API_KEY"),
 #' The OEWS occupation for a K-12 posting, from its position category and
 #' title. NA where no occupation is a fair match: coaches (season stipends,
 #' not comparable to an annual coaching wage) and unclassified postings.
-#' @param position See the description.
-#' @param title See the description.
+#' @param position K-12 position buckets (`classify_k12_position()`).
+#' @param title Posting titles.
 #' @keywords internal
 oews_occupation_for_posting <- function(position, title) {
   p <- tolower(as.character(position))
@@ -269,8 +272,9 @@ oews_occupation_for_posting <- function(position, title) {
 #'
 #' County -> OEWS area code for one state. Accepts "Yellowstone",
 #' "Yellowstone County" and "Albany County, Wyoming".
-#' @param county See the description.
-#' @param state See the description.
+#' @param county County names, with or without " County" and a ", State" suffix.
+#' @param state A state's postal abbreviation or FIPS code.
+#' @return Character vector of OEWS area codes; NA for a county not in the definitions.
 #' @export
 oews_area_for_county <- function(county, state) {
   d <- oews_area_definitions(state)
@@ -287,12 +291,13 @@ oews_area_for_county <- function(county, state) {
 #' Est_Area and Est_Year. Uses the posting's own area when its county is known
 #' and BLS publishes the figure there, else the statewide figure. NA for
 #' roles with no fair OEWS match.
-#' @param postings See the description.
-#' @param wages See the description.
-#' @param county See the description.
-#' @param state See the description.
-#' @param position_col See the description.
-#' @param title_col See the description.
+#' @param postings K-12 postings data frame.
+#' @param wages The state's `oews_role_wages.csv` table.
+#' @param county Each posting's county (one per row of `postings`).
+#' @param state A state's postal abbreviation or FIPS code.
+#' @param position_col Column of `postings` holding the position bucket.
+#' @param title_col Column of `postings` holding the title.
+#' @return `postings` with `Est_Pay`, `Est_Pay_Unit`, `Est_Occupation`, `Est_Area` and `Est_Year` added; NA where no occupation fairly matches or BLS publishes no figure.
 #' @export
 attach_oews_estimates <- function(postings, wages, county, state,
                                   position_col = "position", title_col = "title") {

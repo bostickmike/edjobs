@@ -9,6 +9,9 @@ presence_occurrence_keys(base)
 \arguments{
 \item{base}{Character vector of fingerprints.}
 }
+\value{
+Character vector of keys with an occurrence suffix.
+}
 \description{
 \code{c("a", "b", "a")} -> \code{c("a#1", "b#1", "a#2")}, in list order. True double
 listings (the same posting listed twice) share a fingerprint; the suffix

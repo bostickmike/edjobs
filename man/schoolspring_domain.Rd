@@ -9,6 +9,9 @@ schoolspring_domain(job_link)
 \arguments{
 \item{job_link}{The registry's Job_Link.}
 }
+\value{
+Character vector of SchoolSpring hostnames.
+}
 \description{
 The district's own SchoolSpring hostname, e.g. "crook1.schoolspring.com",
 from its registry Job_Link ("https://crook1.schoolspring.com/"): the

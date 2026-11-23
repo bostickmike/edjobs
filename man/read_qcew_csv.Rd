@@ -7,7 +7,7 @@
 read_qcew_csv(url)
 }
 \arguments{
-\item{url}{See the description.}
+\item{url}{URL of a QCEW CSV file.}
 }
 \description{
 Read qcew csv

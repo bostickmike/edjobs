@@ -14,17 +14,20 @@ attach_oews_estimates(
 )
 }
 \arguments{
-\item{postings}{See the description.}
+\item{postings}{K-12 postings data frame.}
 
-\item{wages}{See the description.}
+\item{wages}{The state's \code{oews_role_wages.csv} table.}
 
-\item{county}{See the description.}
+\item{county}{Each posting's county (one per row of \code{postings}).}
 
-\item{state}{See the description.}
+\item{state}{A state's postal abbreviation or FIPS code.}
 
-\item{position_col}{See the description.}
+\item{position_col}{Column of \code{postings} holding the position bucket.}
 
-\item{title_col}{See the description.}
+\item{title_col}{Column of \code{postings} holding the title.}
+}
+\value{
+\code{postings} with \code{Est_Pay}, \code{Est_Pay_Unit}, \code{Est_Occupation}, \code{Est_Area} and \code{Est_Year} added; NA where no occupation fairly matches or BLS publishes no figure.
 }
 \description{
 Adds the BLS estimate to K-12 postings: Est_Pay, Est_Pay_Unit (hour for

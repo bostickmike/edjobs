@@ -20,6 +20,9 @@ fetch_census_saipe_child_poverty(
 
 \item{fips}{Two-digit state FIPS code; defaults to the current state config's.}
 }
+\value{
+As \code{parse_census_saipe_child_poverty()}, for the latest (or given) SAIPE year.
+}
 \description{
 Fetch child poverty per dashboard district
 }

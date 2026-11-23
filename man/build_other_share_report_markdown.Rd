@@ -7,9 +7,12 @@
 build_other_share_report_markdown(flagged, date = Sys.Date())
 }
 \arguments{
-\item{flagged}{See the description.}
+\item{flagged}{\code{flag_other_share_jump()} rows plus \code{type} and \code{examples}.}
 
-\item{date}{See the description.}
+\item{date}{Date in the section heading.}
+}
+\value{
+Character vector of markdown lines; empty when nothing is flagged.
 }
 \description{
 flagged: flag_other_share_jump() rows plus type and examples (a few of the

@@ -7,7 +7,10 @@
 read_scrape_log(log_path)
 }
 \arguments{
-\item{log_path}{See the description.}
+\item{log_path}{Path to \code{scrape_log.csv}.}
+}
+\value{
+Data frame of the log, all columns character.
 }
 \description{
 scrape_log.csv, including logs written before log_scrape_result() doubled

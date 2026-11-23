@@ -13,15 +13,18 @@ fetch_all_llm_extracted_postings(
 )
 }
 \arguments{
-\item{chromote_session_factory}{See the description.}
+\item{chromote_session_factory}{Function returning a chromote session (one is opened for all targets).}
 
-\item{targets}{See the description.}
+\item{targets}{Targets data frame (\code{read_llm_extract_targets()}).}
 
-\item{model}{See the description.}
+\item{model}{Model name.}
 
-\item{token}{See the description.}
+\item{token}{API key; with none, nothing is called.}
 
-\item{log_path}{See the description.}
+\item{log_path}{Scrape log the outcome of each target is written to.}
+}
+\value{
+Data frame of every target's extracted postings (\code{Title}, \code{Location}, \code{Posted_Date}, \code{Link}, \code{District}); zero rows when there are no targets or no key.
 }
 \description{
 Fetch all llm extracted postings

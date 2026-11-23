@@ -7,9 +7,9 @@
 posting_status_rechecks(previous, listed_check_urls, run_date = Sys.Date())
 }
 \arguments{
-\item{previous}{See the description.}
+\item{previous}{The status table so far.}
 
-\item{listed_check_urls}{See the description.}
+\item{listed_check_urls}{Check URLs of postings listed again in this update.}
 
 \item{run_date}{This run's date.}
 }

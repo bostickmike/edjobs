@@ -18,6 +18,7 @@
 #' @param compare_blurb The line above the comparator's picker.
 #' @param salary_card The comparator's salary chart card: a `dash_card()` holding `plotlyOutput("k12_compare_salary_plot")`.
 #' @param openings_source The Active Openings chart's source line.
+#' @return A bslib `nav_panel()`.
 #' @export
 k12_districts_panel <- function(districts, compare_selected, openings_note, directory_notes, directory_source,
                                 compare_blurb, salary_card, openings_source) {

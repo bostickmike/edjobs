@@ -11,6 +11,9 @@ indistinct_from_zero(est, moe)
 
 \item{moe}{Their margins of error.}
 }
+\value{
+Logical vector.
+}
 \description{
 TRUE where the margin of error is at least the estimate (Census's CV > 0.61 line).
 }

@@ -7,13 +7,16 @@
 autofix_escalation_decision(issue_created, today, comment_bodies, prs)
 }
 \arguments{
-\item{issue_created}{See the description.}
+\item{issue_created}{The issue's creation time.}
 
-\item{today}{See the description.}
+\item{today}{The update's date.}
 
-\item{comment_bodies}{See the description.}
+\item{comment_bodies}{The issue's comment texts (to see whether it was already handed over).}
 
-\item{prs}{See the description.}
+\item{prs}{Linked pull requests (\code{autofix_linked_prs()}).}
+}
+\value{
+One of "too_new", "already_escalated", "fix_merged", "pr_awaiting_review" or "escalate".
 }
 \description{
 Autofix escalation decision

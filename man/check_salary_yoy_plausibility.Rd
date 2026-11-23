@@ -12,13 +12,16 @@ check_salary_yoy_plausibility(
 )
 }
 \arguments{
-\item{current}{See the description.}
+\item{current}{Named numeric vector of this year's values.}
 
-\item{prior}{See the description.}
+\item{prior}{Named numeric vector of last year's values.}
 
-\item{hard_ceiling}{See the description.}
+\item{hard_ceiling}{Absolute change (a proportion) a flag must exceed.}
 
-\item{mad_multiplier}{See the description.}
+\item{mad_multiplier}{How many median absolute deviations from the median change a flag must be.}
+}
+\value{
+\code{NULL} when nothing is an outlier; otherwise a data frame of flagged entities with \code{prior}, \code{current} and \code{pct_change}.
 }
 \description{
 current/prior: named numeric vectors (name = district/institution),

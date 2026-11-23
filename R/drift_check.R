@@ -9,8 +9,9 @@
 #' Pay coverage counts
 #'
 #' One row per source: postings (n) and how many state pay (with_pay).
-#' @param names See the description.
-#' @param has_pay See the description.
+#' @param names Each posting's source name.
+#' @param has_pay Logical, one per posting: does it state pay?
+#' @return Data frame with one row per source: `name`, `n`, `with_pay`.
 #' @export
 pay_coverage_counts <- function(names, has_pay) {
   if (length(names) == 0) {
@@ -33,12 +34,13 @@ pay_coverage_counts <- function(names, has_pay) {
 #' with min_postings or more postings, so a source that lost its postings is
 #' left to flag_drift() -- has a share at or below drop_threshold times that
 #' average.
-#' @param current See the description.
-#' @param history See the description.
-#' @param min_weeks See the description.
-#' @param min_postings See the description.
-#' @param min_share See the description.
-#' @param drop_threshold See the description.
+#' @param current `pay_coverage_counts()` for this update.
+#' @param history List of the same, one per archived week with pay columns.
+#' @param min_weeks Weeks of history a source needs.
+#' @param min_postings Postings a source needs this update.
+#' @param min_share Usual share of postings stating pay a source needs to be watched.
+#' @param drop_threshold Flag when this update's share is at most this fraction of the usual share.
+#' @return Data frame of flagged sources: `name`, `mean_share`, `n_weeks`, `n`, `with_pay`.
 #' @export
 flag_pay_coverage_drop <- function(current, history, min_weeks = 2, min_postings = 3,
                                    min_share = 0.4, drop_threshold = 0.2) {
@@ -65,8 +67,9 @@ flag_pay_coverage_drop <- function(current, history, min_weeks = 2, min_postings
 }
 
 #' Build pay coverage report markdown
-#' @param flagged See the description.
-#' @param date See the description.
+#' @param flagged `flag_pay_coverage_drop()` rows plus `type`.
+#' @param date Date in the section heading.
+#' @return Character vector of markdown lines; empty when nothing is flagged.
 #' @export
 build_pay_coverage_report_markdown <- function(flagged, date = Sys.Date()) {
   if (nrow(flagged) == 0) return(character(0))
@@ -102,8 +105,9 @@ build_pay_coverage_report_markdown <- function(flagged, date = Sys.Date()) {
 #' "Helena Public Schools" inside "East Helena Public Schools" (2026-11-17
 #' review: a flagged source took another's error, became
 #' `confirmed_broken`, and its auto-fix issue was never filed).
-#' @param flagged See the description.
-#' @param scrape_log See the description.
+#' @param flagged Flagged sources (a `name` column).
+#' @param scrape_log This update's scrape log.
+#' @return `flagged` with a `scrape_error` column: the logged error, or NA.
 #' @export
 attach_scrape_log_errors <- function(flagged, scrape_log) {
   flagged$scrape_error <- rep(NA_character_, nrow(flagged))
@@ -136,9 +140,10 @@ attach_scrape_log_errors <- function(flagged, scrape_log) {
 #' Pay_Text). A misread -- a fee, a benefit's value -- usually means the
 #' extractor needs a new skip rule; a real but unusual figure means
 #' PAY_PLAUSIBLE_RANGE needs widening.
-#' @param bad See the description.
-#' @param date See the description.
-#' @param max_rows See the description.
+#' @param bad Rows whose posted pay was blanked (source, type, title and the pay columns).
+#' @param date Date in the section heading.
+#' @param max_rows Most rows listed.
+#' @return Character vector of markdown lines; empty when `bad` has no rows.
 #' @export
 build_implausible_pay_report_markdown <- function(bad, date = Sys.Date(), max_rows = 25) {
   if (nrow(bad) == 0) return(character(0))
@@ -174,10 +179,11 @@ build_implausible_pay_report_markdown <- function(bad, date = Sys.Date(), max_ro
 #' (safe_scrape logs status "ok", n_rows > 0) while quietly returning much
 #' less real data than before, because the source changed its page/PDF/API
 #' layout out from under the parser.
-#' @param name See the description.
-#' @param actual See the description.
-#' @param expected See the description.
-#' @param min_ok See the description.
+#' @param name Source name, for the report.
+#' @param actual How many districts or colleges have a value now.
+#' @param expected How many had one in the last update's files.
+#' @param min_ok Smallest acceptable `actual`.
+#' @return `NULL` when coverage is fine; otherwise a one-row data frame (`name`, `expected`, `actual`).
 #' @export
 check_salary_coverage <- function(name, actual, expected, min_ok = expected) {
   if (actual >= min_ok) return(NULL)
@@ -187,10 +193,11 @@ check_salary_coverage <- function(name, actual, expected, min_ok = expected) {
 #' Check salary value bounds
 #'
 #' actual: named numeric vector (name = district/institution, value = salary).
-#' @param name See the description.
-#' @param actual See the description.
-#' @param min_ok See the description.
-#' @param max_ok See the description.
+#' @param name Source name, for the report.
+#' @param actual Named numeric vector: entity -> value.
+#' @param min_ok Lowest plausible value.
+#' @param max_ok Highest plausible value.
+#' @return `NULL` when all values are in bounds; otherwise a data frame of the out-of-bounds entities.
 #' @export
 check_salary_value_bounds <- function(name, actual, min_ok, max_ok) {
   bad <- actual < min_ok | actual > max_ok
@@ -214,10 +221,11 @@ check_salary_value_bounds <- function(name, actual, min_ok, max_ok) {
 #' settlement while every other district also moved a lot (a real
 #' statewide event, not a parser bug), and avoids flagging a small
 #' percentage move that's just normal variation.
-#' @param current See the description.
-#' @param prior See the description.
-#' @param hard_ceiling See the description.
-#' @param mad_multiplier See the description.
+#' @param current Named numeric vector of this year's values.
+#' @param prior Named numeric vector of last year's values.
+#' @param hard_ceiling Absolute change (a proportion) a flag must exceed.
+#' @param mad_multiplier How many median absolute deviations from the median change a flag must be.
+#' @return `NULL` when nothing is an outlier; otherwise a data frame of flagged entities with `prior`, `current` and `pct_change`.
 #' @export
 check_salary_yoy_plausibility <- function(current, prior, hard_ceiling = 0.25, mad_multiplier = 5) {
   common <- intersect(names(current), names(prior))
@@ -264,7 +272,8 @@ check_salary_yoy_plausibility <- function(current, prior, hard_ceiling = 0.25, m
 #' a page that's neither clearly job-signal-positive nor clearly says "no
 #' openings" (e.g. a fetch error, a redirect to an unrelated page) shouldn't
 #' be silently folded into either bucket.
-#' @param page_text See the description.
+#' @param page_text Visible text of the live page.
+#' @return "likely_broken", "looks_genuinely_empty" or "inconclusive".
 #' @export
 score_page_text_for_job_signal <- function(page_text) {
   if (is.na(page_text) || nchar(trimws(page_text)) == 0) {
@@ -323,8 +332,9 @@ STANDING_POOL_PATTERN <- "(?i)\\bsub(stitute)?s?\\b"
 #'
 #' llm_titles minus substitute lines when history_titles (the source's own
 #' recent titles) has no substitute title; NULL history keeps everything.
-#' @param llm_titles See the description.
-#' @param history_titles See the description.
+#' @param llm_titles Titles an LLM read off the live page.
+#' @param history_titles The source's own recent titles, or `NULL`.
+#' @return `llm_titles`, less substitute-pool lines when the source never posts substitute jobs.
 #' @export
 drop_standing_pool_titles <- function(llm_titles, history_titles = NULL) {
   if (is.null(history_titles) || !length(llm_titles)) return(llm_titles)
@@ -397,11 +407,12 @@ recent_archive_files <- function(dir, pattern, days = 56, exclude_date = NULL) {
 #' newest archive's date (K-12: Archivek12_Data District/title; "Higher Ed": Archived_HE_Data
 #' Institution/Title), or NULL when there are no archives to read. Days, not a number of files
 #' (2026-11-17): with two runs a week, the last 8 files would cover only 4 weeks.
-#' @param name See the description.
-#' @param type See the description.
-#' @param days See the description. The default, 56, is the 8 weekly runs it used to read.
-#' @param k12_dir See the description.
-#' @param he_dir See the description.
+#' @param name District or college name, as archived.
+#' @param type "K-12" or "Higher Ed".
+#' @param days How many days back from the newest archive to read (56 days = 8 weeks).
+#' @param k12_dir Folder of the raw K-12 archives.
+#' @param he_dir Folder of the raw higher-ed archives.
+#' @return Character vector of the source's titles over those days, or `NULL` when there are no archives.
 #' @export
 recent_source_titles <- function(name, type = "K-12", days = 56, k12_dir = "Archivek12_Data", he_dir = "Archived_HE_Data") {
   he <- type %in% c("Higher Ed", "HE")   # check_drift.R labels HE sources "Higher Ed"
@@ -419,7 +430,7 @@ recent_source_titles <- function(name, type = "K-12", days = 56, k12_dir = "Arch
 #' A title reduced for comparing an LLM's reading of a page with what a scraper
 #' returned: lower case, a trailing file extension (".docx", ".pdf") dropped,
 #' runs of anything but letters and digits made one space.
-#' @param x See the description.
+#' @param x Titles.
 #' @keywords internal
 title_match_key <- function(x) {
   x <- tolower(as.character(x))
@@ -437,8 +448,8 @@ title_match_key <- function(x) {
 #' its one item, "Substitutes", the LLM read the same "Substitutes" off the page,
 #' and that alone made it "likely_broken" two weeks running. NULL or empty
 #' current_titles keeps everything.
-#' @param llm_titles See the description.
-#' @param current_titles See the description.
+#' @param llm_titles Titles an LLM read off the live page.
+#' @param current_titles Titles the scraper returned this update.
 #' @keywords internal
 drop_titles_already_scraped <- function(llm_titles, current_titles = NULL) {
   if (!length(llm_titles) || !length(current_titles)) return(llm_titles)
@@ -460,10 +471,11 @@ drop_titles_already_scraped <- function(llm_titles, current_titles = NULL) {
 #' `STANDING_POOL_PATTERN` for the rules). Titles the scraper already returned
 #' this run (current_titles; edjobs 0.16.0) don't count as found: only a title
 #' the scraper missed promotes to "likely_broken".
-#' @param verdict See the description.
-#' @param llm_titles See the description.
-#' @param history_titles See the description.
-#' @param current_titles See the description.
+#' @param verdict The text-signal verdict (`score_page_text_for_job_signal()`).
+#' @param llm_titles Titles an LLM read off the page, or NULL when there was no reading.
+#' @param history_titles The source's recent titles (`recent_source_titles()`).
+#' @param current_titles Titles the scraper returned this update.
+#' @return A list: `verdict` (possibly changed) and `note` (why, or NA).
 #' @export
 combine_verdict_with_llm <- function(verdict, llm_titles, history_titles = NULL, current_titles = NULL) {
   # No reading (no key, a failed or rejected call): nothing to fold in. Before 0.56.0 this was character(0), which
@@ -515,7 +527,8 @@ PAGE_CHANGED_ERROR_PATTERN <- "has no jobs list"
 AUTOFIX_MARKER_RE <- "<!--\\s*autofix-source:\\s*(.+?)\\s*-->"
 
 #' Autofix issue title
-#' @param name See the description.
+#' @param name Source name.
+#' @return The auto-fix issue's title.
 #' @export
 autofix_issue_title <- function(name) paste0("Scraper auto-fix: ", name)
 
@@ -535,7 +548,8 @@ AUTOFIX_ENGINES <- c("claude", "copilot", "none")
 AUTOFIX_CLAUDE_WORKFLOW <- "claude-autofix.yml"
 
 #' Autofix engine
-#' @param value See the description.
+#' @param value The `AUTOFIX_ENGINE` repository variable (may be empty).
+#' @return One of `AUTOFIX_ENGINES`; "claude" when empty; an error for anything else.
 #' @export
 autofix_engine <- function(value) {
   v <- tolower(trimws(if (length(value) == 0 || is.na(value)) "" else value))
@@ -566,10 +580,11 @@ AUTOFIX_ESCALATION_MARKER <- "<!-- autofix-escalated: claude -->"
 AUTOFIX_ESCALATION_MIN_DAYS <- 5
 
 #' Autofix escalation decision
-#' @param issue_created See the description.
-#' @param today See the description.
-#' @param comment_bodies See the description.
-#' @param prs See the description.
+#' @param issue_created The issue's creation time.
+#' @param today The update's date.
+#' @param comment_bodies The issue's comment texts (to see whether it was already handed over).
+#' @param prs Linked pull requests (`autofix_linked_prs()`).
+#' @return One of "too_new", "already_escalated", "fix_merged", "pr_awaiting_review" or "escalate".
 #' @export
 autofix_escalation_decision <- function(issue_created, today, comment_bodies, prs) {
   age <- as.numeric(as.Date(today) - as.Date(substr(issue_created, 1, 10)))
@@ -586,8 +601,9 @@ autofix_escalation_decision <- function(issue_created, today, comment_bodies, pr
 #'
 #' PRs (from `gh pr list --json number,state,changedFiles,body`) that say
 #' "Fixes/Closes/Resolves #<issue>", as autofix_escalation_decision() wants them.
-#' @param prs See the description.
-#' @param issue_number See the description.
+#' @param prs Pull requests from `gh pr list --json number,state,changedFiles,body`.
+#' @param issue_number The auto-fix issue's number.
+#' @return Data frame of the PRs that say they fix the issue: `number`, `state`, `changed_files`.
 #' @export
 autofix_linked_prs <- function(prs, issue_number) {
   empty <- data.frame(number = integer(0), state = character(0), changed_files = integer(0))
@@ -599,7 +615,8 @@ autofix_linked_prs <- function(prs, issue_number) {
 }
 
 #' Parse autofix marker
-#' @param body See the description.
+#' @param body An issue body.
+#' @return The source name in the issue's `autofix-source` marker, or NA.
 #' @export
 parse_autofix_marker <- function(body) {
   if (length(body) == 0 || is.na(body)) return(NA_character_)
@@ -621,8 +638,9 @@ AUTOFIX_DIFF_MAX_LINES <- 200
 #' drift check captured, so the capture can be the new fixture verbatim. A
 #' function not in `scraper_lines` is read from edjobs itself when it is
 #' one of the package's routines (`fetch_apptegy_postings`).
-#' @param fetch_fn See the description.
-#' @param scraper_lines See the description.
+#' @param fetch_fn Name of the source's fetch function.
+#' @param scraper_lines Lines of the state's scraper files.
+#' @return TRUE when that function's parser reads `document.body.innerText`.
 #' @export
 scraper_reads_inner_text <- function(fetch_fn, scraper_lines) {
   if (is.na(fetch_fn)) return(FALSE)
@@ -643,10 +661,10 @@ scraper_reads_inner_text <- function(fetch_fn, scraper_lines) {
 #' Unified diff of two texts after trimming lines and dropping blanks
 #' (innerText and html_text2() disagree on blank lines, which is noise).
 #' Uses the system `diff`; returns character(0) when identical or absent.
-#' @param old_text See the description.
-#' @param new_text See the description.
-#' @param old_label See the description.
-#' @param new_label See the description.
+#' @param old_text The earlier text.
+#' @param new_text The later text.
+#' @param old_label Label for the earlier text in the diff header.
+#' @param new_label Label for the later text.
 #' @keywords internal
 text_diff <- function(old_text, new_text, old_label = "old", new_label = "new") {
   norm <- function(x) { x <- trimws(unlist(strsplit(x, "\n", fixed = TRUE))); x[nzchar(x)] }
@@ -664,7 +682,8 @@ text_diff <- function(old_text, new_text, old_label = "old", new_label = "new") 
 #'
 #' The LLM-read titles build_autofix_issue_body() listed -- the live check's
 #' (hint-quality) expectation for what the fixed scraper should now return.
-#' @param body See the description.
+#' @param body An auto-fix issue body.
+#' @return Character vector of the LLM-read titles the issue lists; empty when it lists none.
 #' @export
 parse_autofix_expected_titles <- function(body) {
   lines <- strsplit(body, "\n", fixed = TRUE)[[1]]
@@ -702,8 +721,9 @@ TITLE_DOCUMENT_PATTERN <- paste0(
   "^\\s*(job description\\s*$|requirements:|summary:|click here|no (open|current))")
 
 #' Lint title shape
-#' @param title See the description.
-#' @param max_chars See the description.
+#' @param title Posting titles.
+#' @param max_chars Longest a title may be before it is flagged as page text.
+#' @return Character vector: the reasons each title doesn't look like a job title, joined by "; ", or NA for a normal title.
 #' @export
 lint_title_shape <- function(title, max_chars = 200) {
   t <- as.character(title)
@@ -743,8 +763,9 @@ lint_title_shape <- function(title, max_chars = 200) {
 #' the title, so the posting's own pay isn't shown. Uses extract_posted_pay()
 #' (edjobs), which ignores amounts that aren't pay ("$10,000
 #' Hiring Incentive").
-#' @param title See the description.
-#' @param pay_min See the description.
+#' @param title Posting titles.
+#' @param pay_min Each posting's `Pay_Min`.
+#' @return Logical vector: TRUE where the title states pay but the posting's posted pay is blank.
 #' @export
 title_pay_unrecorded <- function(title, pay_min) {
   t <- as.character(title)
@@ -760,9 +781,10 @@ title_pay_unrecorded <- function(title, pay_min) {
 #'
 #' hits: data.frame(source, type, title, reason). At most max_per_source
 #' titles are listed per source.
-#' @param hits See the description.
-#' @param date See the description.
-#' @param max_per_source See the description.
+#' @param hits Data frame of flagged titles: `source`, `type`, `title`, `reason`.
+#' @param date Date in the section heading.
+#' @param max_per_source Most titles listed per source.
+#' @return Character vector of markdown lines; empty when `hits` has no rows.
 #' @export
 build_title_lint_report_markdown <- function(hits, date = Sys.Date(), max_per_source = 5) {
   if (nrow(hits) == 0) return(character(0))
@@ -792,8 +814,9 @@ build_title_lint_report_markdown <- function(hits, date = Sys.Date(), max_per_so
 #'
 #' One row per source: postings (n) and how many the classifier puts in Other
 #' (other).
-#' @param names See the description.
-#' @param is_other See the description.
+#' @param names Each posting's source name.
+#' @param is_other Logical, one per posting: classified as Other?
+#' @return Data frame with one row per source: `name`, `n`, `other`.
 #' @export
 other_share_counts <- function(names, is_other) {
   out <- pay_coverage_counts(names, is_other)
@@ -813,13 +836,14 @@ other_share_counts <- function(names, is_other) {
 #' (8-week window, 2026-11-05) these defaults flag 2 MT and 2 WY source-weeks,
 #' all real scraper problems (Florence-Carlton schedule lines, Albany section
 #' headings); stricter settings flag none of them.
-#' @param current See the description.
-#' @param history See the description.
-#' @param min_weeks See the description.
-#' @param min_postings See the description.
-#' @param min_other See the description.
-#' @param jump See the description.
-#' @param ratio See the description.
+#' @param current `other_share_counts()` for this update.
+#' @param history List of the same, one per recent archived week.
+#' @param min_weeks Weeks of history a source needs.
+#' @param min_postings Postings a source needs this update.
+#' @param min_other Other postings a source needs this update.
+#' @param jump Smallest rise in the share of Other (a proportion) that is flagged.
+#' @param ratio Smallest ratio of this update's share to the usual share that is flagged.
+#' @return Data frame of flagged sources: `name`, `mean_share`, `n_weeks`, `n`, `other`.
 #' @export
 flag_other_share_jump <- function(current, history, min_weeks = 2, min_postings = 3, min_other = 2,
                                   jump = 0.15, ratio = 1.5) {
@@ -845,8 +869,9 @@ flag_other_share_jump <- function(current, history, min_weeks = 2, min_postings 
 #'
 #' flagged: flag_other_share_jump() rows plus type and examples (a few of the
 #' source's Other titles this run).
-#' @param flagged See the description.
-#' @param date See the description.
+#' @param flagged `flag_other_share_jump()` rows plus `type` and `examples`.
+#' @param date Date in the section heading.
+#' @return Character vector of markdown lines; empty when nothing is flagged.
 #' @export
 build_other_share_report_markdown <- function(flagged, date = Sys.Date()) {
   if (nrow(flagged) == 0) return(character(0))
@@ -914,9 +939,10 @@ he_keyword_conflict_rules <- list(
 #' Find keyword conflicts
 #'
 #' The first rule each title trips, or NA.
-#' @param title See the description.
-#' @param bucket See the description.
-#' @param rules See the description.
+#' @param title Posting titles.
+#' @param bucket Each title's bucket.
+#' @param rules List of rules, each with `id`, `signal` (regex), `ok` (buckets that are fine) and optional `unless` (regex).
+#' @return Character vector: the id of the first rule each title trips, or NA.
 #' @export
 find_keyword_conflicts <- function(title, bucket, rules) {
   title <- as.character(title)
@@ -932,9 +958,10 @@ find_keyword_conflicts <- function(title, bucket, rules) {
 #' Build keyword conflict report markdown
 #'
 #' hits: data.frame(source, type, title, bucket, rule).
-#' @param hits See the description.
-#' @param date See the description.
-#' @param max_rows See the description.
+#' @param hits Data frame: `source`, `type`, `title`, `bucket`, `rule`.
+#' @param date Date in the section heading.
+#' @param max_rows Most titles listed.
+#' @return Character vector of markdown lines; empty when `hits` has no rows.
 #' @export
 build_keyword_conflict_report_markdown <- function(hits, date = Sys.Date(), max_rows = 25) {
   if (nrow(hits) == 0) return(character(0))
@@ -990,6 +1017,7 @@ state_feed <- function(field, default = NULL) {
 #'   `state_config(drift_baseline_from = )`, else every snapshot.
 #' @param failed Source-weeks to leave out: a data frame with `name` and
 #'   `date` ("YYYY-MM-DD"), or NULL.
+#' @return Data frame with one row per source: `name`, `mean_count`, `n_weeks`.
 #' @export
 build_historical_counts <- function(archive_snapshots, name_col,
                                     valid_from = current_state_config()$drift_baseline_from, failed = NULL) {
@@ -1054,6 +1082,7 @@ failed_source_weeks <- function(calendar) {
 #' @param min_weeks Weeks of history needed.
 #' @param min_mean_count Smallest historical average that can be flagged.
 #' @param drop_threshold Flag at or below this share of the average.
+#' @return Data frame of flagged sources: `name`, `mean_count`, `n_weeks`, `count`.
 #' @export
 flag_drift <- function(current_counts, baseline, min_weeks = 2, min_mean_count = 3,
                        drop_threshold = 0.2) {
@@ -1078,6 +1107,7 @@ flag_drift <- function(current_counts, baseline, min_weeks = 2, min_mean_count =
 #' @param feed_label The feed's Posting_Source label.
 #' @param feed_short_name The feed's short name, e.g. "OPI".
 #' @param discrepancy_path The discrepancy report file.
+#' @return A list with the feed's totals, the districts it filled in for, the unmatched discrepancies and `markdown` (the report section).
 #' @export
 summarize_central_safety_net <- function(
   combined_df = NULL,
@@ -1230,6 +1260,7 @@ summarize_central_safety_net <- function(
 #' @param judged_empty Flagged sources whose live page looked genuinely empty (verdict `looks_genuinely_empty`),
 #'   listed last so a source that drops to zero is still named in the issue (University of Providence was judged
 #'   empty from 2026-11-10 and appeared in no drift comment). NULL or no rows: no section.
+#' @return Character vector of markdown lines for the drift issue.
 #' @export
 build_drift_report_markdown <- function(
   actionable,
@@ -1318,6 +1349,7 @@ build_drift_report_markdown <- function(
 #'
 #' Scrapers don't agree on case: some return `title`, most `Title`.
 #' @param result A scraper's data frame.
+#' @return Character vector of the result's titles (from `Title` or `title`); empty when it has neither.
 #' @export
 scraper_titles <- function(result) {
   col <- intersect(c("Title", "title"), names(result))

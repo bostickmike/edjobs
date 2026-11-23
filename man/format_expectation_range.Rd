@@ -9,6 +9,9 @@ format_expectation_range(lo, hi)
 \arguments{
 \item{lo, hi}{Bounds as text; blank is unbounded.}
 }
+\value{
+Character vector such as "3 to 10", ">= 3" or "<= 0".
+}
 \description{
 Format an expectation's bounds
 }

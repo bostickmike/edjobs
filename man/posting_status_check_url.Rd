@@ -7,7 +7,10 @@
 posting_status_check_url(url)
 }
 \arguments{
-\item{url}{See the description.}
+\item{url}{Posting URLs, in any of the forms a board or WSBA links.}
+}
+\value{
+Character vector: the one canonical page to check for each posting; NA where the platform has no checkable per-posting page.
 }
 \description{
 One page per posting: the same posting can be linked several ways (WSBA

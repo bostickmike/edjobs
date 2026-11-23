@@ -129,6 +129,7 @@ feedback_record <- function(type, district, job, details, now = Sys.time(), stat
 #' A button that opens the public data-problem form when `GITHUB_FEEDBACK_TOKEN` is set, else a link to the
 #' repo's GitHub issue form.
 #' @param repo GitHub repo ("owner/name").
+#' @return A bslib navbar item.
 #' @export
 feedback_nav_item <- function(repo) {
   need_shiny_ui("feedback_nav_item")
@@ -171,6 +172,7 @@ feedback_modal <- function(repo) {
 #' @param repo GitHub repo ("owner/name"); the `FEEDBACK_REPO` environment variable overrides it.
 #' @param state_name State name for the issue text.
 #' @param timezone The state's time zone (an `OlsonNames()` entry), for the report time in the issue.
+#' @return Called for its side effects: registers the form's observers.
 #' @export
 feedback_server <- function(input, output, session, repo, state_name, timezone) {
   need_shiny_ui("feedback_server")

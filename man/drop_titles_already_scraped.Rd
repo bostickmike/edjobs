@@ -7,9 +7,9 @@
 drop_titles_already_scraped(llm_titles, current_titles = NULL)
 }
 \arguments{
-\item{llm_titles}{See the description.}
+\item{llm_titles}{Titles an LLM read off the live page.}
 
-\item{current_titles}{See the description.}
+\item{current_titles}{Titles the scraper returned this update.}
 }
 \description{
 llm_titles minus those the scraper returned this run (current_titles): equal

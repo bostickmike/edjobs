@@ -7,11 +7,14 @@
 find_keyword_conflicts(title, bucket, rules)
 }
 \arguments{
-\item{title}{See the description.}
+\item{title}{Posting titles.}
 
-\item{bucket}{See the description.}
+\item{bucket}{Each title's bucket.}
 
-\item{rules}{See the description.}
+\item{rules}{List of rules, each with \code{id}, \code{signal} (regex), \code{ok} (buckets that are fine) and optional \code{unless} (regex).}
+}
+\value{
+Character vector: the id of the first rule each title trips, or NA.
 }
 \description{
 The first rule each title trips, or NA.

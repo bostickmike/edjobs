@@ -7,7 +7,10 @@
 extract_posted_pay(text)
 }
 \arguments{
-\item{text}{See the description.}
+\item{text}{Character vector of posting text (a title, a pay field or a description).}
+}
+\value{
+Data frame with one row per element of \code{text} and columns \code{Pay_Min}, \code{Pay_Max} (numeric), \code{Pay_Unit} and \code{Pay_Text}; all NA where no dollar amount is stated.
 }
 \description{
 Pulls the advertised pay out of a posting's free text: the amount (or

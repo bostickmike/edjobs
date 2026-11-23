@@ -14,18 +14,21 @@ safe_scrape(
 )
 }
 \arguments{
-\item{source_name}{See the description.}
+\item{source_name}{Name of the source, logged with the outcome.}
 
-\item{scrape_fn}{See the description.}
+\item{scrape_fn}{Function of no arguments that returns the scraped data frame.}
 
-\item{expected_cols}{See the description.}
+\item{expected_cols}{Column names the result must have; an empty or failed scrape returns a zero-row frame with these.}
 
-\item{log_path}{See the description.}
+\item{log_path}{CSV log passed to \code{log_scrape_result()}.}
 
 \item{retrieved_source}{Optional source key; with \code{app_dir}, a non-empty result records today as that source's
 retrieval date (record_source_retrieved()).}
 
 \item{app_dir}{The dashboard's app folder, for \code{retrieved_source}.}
+}
+\value{
+Data frame: the scraper's result, or a zero-row frame with \code{expected_cols} on an error, a non-data-frame result or no rows.
 }
 \description{
 Run scrape_fn() under tryCatch, log the outcome, and always return a data
