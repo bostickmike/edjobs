@@ -9,6 +9,9 @@ fetch_tedk12_postings(url)
 \arguments{
 \item{url}{The board URL, e.g. "https://goshen.tedk12.com/hire/index.aspx".}
 }
+\value{
+Data frame of the board's postings, as from \code{parse_tedk12_postings()}.
+}
 \description{
 TedK12 / PowerSchool Hire serves different content depending on the
 request's User-Agent, not on whether a browser runs JavaScript: httr2's

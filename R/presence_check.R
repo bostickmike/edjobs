@@ -60,6 +60,7 @@ k12_link_posting_id <- function(url) {
 #'
 #' Lower case, runs of whitespace as one space, trimmed, NA as `""`.
 #' @param x Character vector.
+#' @return Character vector in normal form.
 #' @export
 presence_norm <- function(x) {
   x <- tolower(gsub("[[:space:]]+", " ", trimws(as.character(x))))
@@ -73,6 +74,7 @@ presence_norm <- function(x) {
 #' archives, after `standardize_date()`) both give `"2026-11-12"`; anything
 #' else gives `""`.
 #' @param x Character vector.
+#' @return Character vector of YYYY-MM-DD dates, "" where the text isn't a date in either form.
 #' @export
 presence_iso_date <- function(x) {
   x <- trimws(as.character(x))
@@ -95,6 +97,7 @@ presence_hash <- function(parts) {
 #' listings (the same posting listed twice) share a fingerprint; the suffix
 #' keeps them apart without claiming which is which.
 #' @param base Character vector of fingerprints.
+#' @return Character vector of keys with an occurrence suffix.
 #' @export
 presence_occurrence_keys <- function(base) {
   if (length(base) == 0) return(character(0))
@@ -160,6 +163,7 @@ PRESENCE_SEEN_EMPTY <- data.frame(Board = character(0), Platform = character(0),
 #' GitHub starts a scheduled job hours late; the day a check counts for is the
 #' day in the boards' own time zone, not UTC.
 #' @param tz Time zone; defaults to `state_timezone()`.
+#' @return A `Date`: today in `tz`.
 #' @export
 presence_today <- function(tz = state_timezone()) as.Date(format(Sys.time(), tz = tz))
 

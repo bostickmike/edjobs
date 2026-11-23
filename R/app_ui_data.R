@@ -73,6 +73,7 @@ data_provenance_defaults <- function() list(
 #'   those left NULL, or NULL.
 #' @param layer,source,cadence,description The four cells.
 #' @param badge Bootstrap color of the cadence badge (`"info"`, `"success"`, ...).
+#' @return A list (`layer`, `source`, `cadence`, `description`, `badge`) for `data_tab_panel(provenance_rows = )`.
 #' @export
 data_provenance_row <- function(key = NULL, layer = NULL, source = NULL, cadence = NULL, description = NULL,
                                 badge = "info") {
@@ -97,6 +98,7 @@ data_provenance_row <- function(key = NULL, layer = NULL, source = NULL, cadence
 #' @param provenance_headers The table's four column headers (NULL: Montana's).
 #' @param provenance_table_class,provenance_table_style The table's class and style attributes (NULL: Montana's
 #'   `"table table-striped table-bordered table-hover"` and none).
+#' @return A bslib `nav_panel()`.
 #' @export
 data_tab_panel <- function(tiles, dictionary, provenance_rows, citation, repo_url,
                            provenance_title = NULL, provenance_intro = NULL, provenance_headers = NULL,
@@ -183,6 +185,7 @@ download_rows <- function(file, latest_week = FALSE) {
 #' Rounded down to the hundred (thousand from 10,000), as the hand-written counts were.
 #' @param n A count (NA gives "").
 #' @param unit The word after the number.
+#' @return A string such as " (8,400+ records)", or "" when `n` is missing.
 #' @export
 rows_phrase <- function(n, unit = "records") {
   if (length(n) != 1 || is.na(n)) return("")

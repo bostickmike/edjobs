@@ -1462,6 +1462,7 @@ dashboard_server_shared <- function(input, output, session, data, state_name, fe
 }
 
 #' Names of the app-level objects `dashboard_server_shared()` reads from `data`
+#' @return Character vector of object names.
 #' @export
 dashboard_server_data_names <- function() {
   c("ccdata", "combined_map_data", "combineddata", "data_dictionary", "DATA_LOAD_ISSUES",

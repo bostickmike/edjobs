@@ -6,6 +6,9 @@
 \usage{
 he_spells_panel()
 }
+\value{
+A bslib \code{nav_panel()}.
+}
 \description{
 The \code{nav_panel()} for Higher Ed > Listing Duration (value \code{"he_spells"}).
 }

@@ -9,6 +9,9 @@ nces_district_url(leaid)
 \arguments{
 \item{leaid}{NCES_LEAID values (character or numeric).}
 }
+\value{
+Character vector of URLs; NA for a missing or malformed id.
+}
 \description{
 The NCES Common Core of Data district page for each 7-digit NCES LEA id; NA for a missing or malformed id.
 }

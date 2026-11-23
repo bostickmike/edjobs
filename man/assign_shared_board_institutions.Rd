@@ -23,6 +23,9 @@ assign_shared_board_institutions(
 
 \item{board_col, pattern_col, platform, location_col}{Registry and posting columns.}
 }
+\value{
+\code{postings} with \code{Institution} set from the registry's location patterns for the institutions sharing the board.
+}
 \description{
 Some boards carry several institutions' postings: the University of
 Montana's NEOGOV agency also lists Helena College, Missoula College and UM

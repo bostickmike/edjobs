@@ -22,6 +22,9 @@ stub); by default looked up by name in \code{envir}.}
 
 \item{envir}{Where to find the state's scraper functions.}
 }
+\value{
+Whatever the scraper returns (a data frame of postings).
+}
 \description{
 Executes a \code{resolve_scraper_call()} result against the live source.
 }

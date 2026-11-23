@@ -11,6 +11,7 @@ need_shiny_ui <- function(fn) {
 #' Listing Duration tabs' footnote
 #'
 #' What "days listed" means and why it isn't time to fill (Mike, 11-14: one footnote, no "paused" banner).
+#' @return An HTML paragraph (htmltools tag).
 #' @export
 spells_footnote <- function() {
   htmltools::p(class = "text-muted small mt-3 mb-0",
@@ -27,6 +28,7 @@ spells_footnote <- function() {
 #' @param icon Optional showcase icon.
 #' @param color "blue", "green", "red" or "purple".
 #' @param ... Passed to [bslib::value_box()].
+#' @return A bslib value box.
 #' @export
 kpi_value_box <- function(value, subtitle, icon = NULL, color = "blue", ...) {
   need_shiny_ui("kpi_value_box")
@@ -42,6 +44,7 @@ kpi_value_box <- function(value, subtitle, icon = NULL, color = "blue", ...) {
 #' @param ... Card body content.
 #' @param full_screen,class Passed to [bslib::card()].
 #' @param info Optional popover shown at the header's right.
+#' @return A bslib card.
 #' @export
 dash_card <- function(title = NULL, ..., full_screen = FALSE, class = NULL, info = NULL) {
   need_shiny_ui("dash_card")
@@ -61,6 +64,7 @@ dash_card <- function(title = NULL, ..., full_screen = FALSE, class = NULL, info
 #' @param title Popover title.
 #' @param ... Popover body.
 #' @param source Plain-language source line, or NULL.
+#' @return A bslib popover around a (?) icon.
 #' @export
 help_popover <- function(title, ..., source = NULL) {
   need_shiny_ui("help_popover")
@@ -81,6 +85,7 @@ help_popover <- function(title, ..., source = NULL) {
 #' @param label Link text and popover title.
 #' @param ... Popover body.
 #' @param placement Popover placement.
+#' @return A bslib popover.
 #' @export
 info_popover <- function(label, ..., placement = "auto") {
   need_shiny_ui("info_popover")
@@ -100,6 +105,7 @@ info_popover <- function(label, ..., placement = "auto") {
 #' @param heading,text Tile heading and text.
 #' @param output_id,label The download button's output id and label.
 #' @param info Optional popover beside the heading.
+#' @return An HTML div (htmltools tag) holding the tile.
 #' @export
 download_tile <- function(icon_name, heading, text, output_id, label, info = NULL) {
   need_shiny_ui("download_tile")

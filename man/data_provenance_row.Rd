@@ -21,6 +21,9 @@ those left NULL, or NULL.}
 
 \item{badge}{Bootstrap color of the cadence badge (\code{"info"}, \code{"success"}, ...).}
 }
+\value{
+A list (\code{layer}, \code{source}, \code{cadence}, \code{description}, \code{badge}) for \code{data_tab_panel(provenance_rows = )}.
+}
 \description{
 A row of the Data tab's provenance table
 }

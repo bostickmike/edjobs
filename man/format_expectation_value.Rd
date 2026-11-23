@@ -9,6 +9,9 @@ format_expectation_value(v)
 \arguments{
 \item{v}{Numeric.}
 }
+\value{
+Character vector of formatted values; "" for NA.
+}
 \description{
 Format a measured value
 }

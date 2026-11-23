@@ -12,6 +12,9 @@ jobs_tab_panel(level = c("k12", "he"), pay_note)
 \item{pay_note}{The "About the pay columns" popover's text: strings or tags, pasted into one paragraph (each
 state passes its \code{POSTED_LISTED_NOTE} first).}
 }
+\value{
+A bslib \code{nav_panel()}.
+}
 \description{
 The \code{nav_panel()} for a Jobs table: value \code{"k12_table"} or \code{"he_table"}, inputs \verb{<level>_quick_filter} (and
 \code{he_table_appointment} for Higher Ed), outputs \verb{<level>_filter_status} and \verb{<level>_jobs}.

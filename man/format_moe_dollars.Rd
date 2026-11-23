@@ -9,6 +9,9 @@ format_moe_dollars(moe)
 \arguments{
 \item{moe}{Margins of error in dollars.}
 }
+\value{
+Character vector such as " +/-$2,190"; "" where the margin is missing.
+}
 \description{
 " +/-$2,190"; "" where the MOE is missing.
 }

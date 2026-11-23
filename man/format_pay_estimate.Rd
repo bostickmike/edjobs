@@ -13,6 +13,9 @@ format_pay_estimate(est_pay, est_unit, tooltip, has_posted_pay)
 
 \item{has_posted_pay}{TRUE where the posting states its own pay.}
 }
+\value{
+Character vector of HTML spans, or an em dash where the posting states its own pay or there is no estimate.
+}
 \description{
 An HTML span with \code{tooltip} as its title, or an em dash where the posting has its own pay or there is no estimate.
 }

@@ -11,6 +11,9 @@ map_marker_radius(current_count, min_radius = 6, max_radius = 24)
 
 \item{min_radius, max_radius}{Radius in pixels for zero postings, and the cap.}
 }
+\value{
+Numeric vector of marker radii in pixels, between \code{min_radius} and \code{max_radius}.
+}
 \description{
 Map marker radius from a posting count
 }

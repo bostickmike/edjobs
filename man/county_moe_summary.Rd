@@ -11,6 +11,9 @@ county_moe_summary(income_moe, rent_moe, share, share_moe)
 
 \item{share, share_moe}{The mining employment share and its margin of error.}
 }
+\value{
+Character vector, one line per county; NA where every margin is missing.
+}
 \description{
 "income +/-$2,190; rent +/-$85; mining +/-0.4 pts", leaving out missing parts; NA when all are missing.
 }

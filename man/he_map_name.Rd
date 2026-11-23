@@ -11,6 +11,9 @@ he_map_name(institution, town)
 
 \item{town}{Campus_Town (NA or "" for the main campus).}
 }
+\value{
+Character vector of map dot names: the institution, or "\if{html}{\out{<Institution>}} (\if{html}{\out{<Town>}})" for a posting at another town.
+}
 \description{
 Branch campuses, outreach centers and field offices (\code{\link[=place_he_postings]{place_he_postings()}}, 2026-11-16): a posting whose
 Location names another town in the state has Campus_Town set by the pipeline and gets its own map dot, keyed

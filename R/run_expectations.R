@@ -149,6 +149,7 @@ evaluate_run_expectations <- function(exp, run_date = Sys.Date(), root = ".") {
 
 #' Format an expectation's bounds
 #' @param lo,hi Bounds as text; blank is unbounded.
+#' @return Character vector such as "3 to 10", ">= 3" or "<= 0".
 #' @export
 format_expectation_range <- function(lo, hi) {
   ifelse(nzchar(lo) & nzchar(hi), ifelse(lo == hi, lo, paste0(lo, " to ", hi)),
@@ -157,6 +158,7 @@ format_expectation_range <- function(lo, hi) {
 
 #' Format a measured value
 #' @param v Numeric.
+#' @return Character vector of formatted values; "" for NA.
 #' @export
 format_expectation_value <- function(v) ifelse(is.na(v), "", format(signif(v, 6), big.mark = ",", trim = TRUE))
 

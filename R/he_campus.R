@@ -53,6 +53,7 @@ coalesce_chr <- function(x) ifelse(is.na(x), "", as.character(x))
 #' Reads `places.csv` (Town, County, Latitude, Longitude, ...): every Census place in the state, its internal point
 #' (Census Gazetteer) and its county.
 #' @param path Path to the state's places file.
+#' @return Data frame of the state's places with at least `Town`, `County`, `Latitude`, `Longitude`.
 #' @export
 read_state_places <- function(path) {
   p <- utils::read.csv(path, stringsAsFactors = FALSE, colClasses = c(Town = "character", County = "character"))

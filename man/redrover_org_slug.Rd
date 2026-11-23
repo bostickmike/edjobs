@@ -9,6 +9,9 @@ redrover_org_slug(job_link)
 \arguments{
 \item{job_link}{The board URL.}
 }
+\value{
+Character vector of org slugs.
+}
 \description{
 \verb{https://jobs.redroverk12.com/org/jcsd1} -> \code{"jcsd1"}. The slug is what the
 board's links carry; the API wants the numeric org ID instead, which is not

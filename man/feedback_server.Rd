@@ -15,6 +15,9 @@ feedback_server(input, output, session, repo, state_name, timezone)
 
 \item{timezone}{The state's time zone (an \code{OlsonNames()} entry), for the report time in the issue.}
 }
+\value{
+Called for its side effects: registers the form's observers.
+}
 \description{
 Checks a submitted report (spam and validation rules) and, if it passes, opens one GitHub issue in \code{repo}.
 }

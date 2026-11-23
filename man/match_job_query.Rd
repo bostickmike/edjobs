@@ -11,6 +11,9 @@ match_job_query(title_vec, query)
 
 \item{query}{The search text.}
 }
+\value{
+Logical vector, one per title: TRUE where the title matches (all TRUE for an empty query).
+}
 \description{
 Flexible query matching for map and job searches: keywords, abbreviations ("special ed", "sped", "math", "pe",
 "cte", "driver") and multi-word queries (every word must appear, in any order). An empty query matches all.

@@ -6,6 +6,9 @@
 \usage{
 state_timezone()
 }
+\value{
+The state's time zone name (e.g. "America/Denver"); an error when none is set.
+}
 \description{
 \code{current_state_config()$timezone}, with a clear error when no state config (or no time zone) is set. The default
 \code{tz} of \code{presence_today()} and of the JSON-LD date reader.

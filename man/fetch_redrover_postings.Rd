@@ -11,6 +11,9 @@ fetch_redrover_postings(org_id, org_slug)
 
 \item{org_slug}{The slug its links carry, for each posting's link and ID.}
 }
+\value{
+Data frame of the board's postings, as from \code{parse_redrover_json()}.
+}
 \description{
 Fetch a Red Rover board's postings
 }

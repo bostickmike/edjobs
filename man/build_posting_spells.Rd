@@ -32,6 +32,9 @@ it dropped off its board, or NULL.}
 \item{frozen_min_weeks}{ISO weeks inside a frozen stretch that make a
 posting \code{Frozen_Board}: the \code{min_weeks} \code{frozen} was built with.}
 }
+\value{
+Data frame with one row per posting spell (\code{POSTING_SPELL_COLUMNS}).
+}
 \description{
 One row per posting (\code{POSTING_SPELL_COLUMNS}): its start and how it was
 dated, its end and how it ended, and the flags that keep it out of

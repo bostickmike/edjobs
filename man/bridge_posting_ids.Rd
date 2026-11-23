@@ -14,6 +14,9 @@ bridge_adjacent_runs(panel, rules = spell_rules())
 
 \item{rules}{\code{spell_rules()} (reserved: bridging has no state-specific rules yet).}
 }
+\value{
+\code{panel} with earlier fallback IDs replaced by the stable ID they bridge to, and \code{Bridged_From} recording the old ID.
+}
 \description{
 \code{bridge_posting_ids()}: earlier fallback-identified rows of a posting that
 later carries a stable ID (same source, district, title and exact posted

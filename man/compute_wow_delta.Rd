@@ -11,6 +11,9 @@ compute_wow_delta(weekly_totals, min_days_back = 5)
 
 \item{min_days_back}{Minimum age in days of the comparison snapshot.}
 }
+\value{
+One integer: the change in the statewide total, or NA when there is no snapshot that old.
+}
 \description{
 The latest snapshot's total minus the latest one at least \code{min_days_back} days older (so an extra same-week run
 is skipped). NA with no snapshot that old.

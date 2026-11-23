@@ -28,6 +28,9 @@ department, e.g. "Facility Services") as its Location, falling back to
 institutions are multi-department universities). FALSE gives every row
 \code{location_fallback}, WY's choice for its single-campus colleges.}
 }
+\value{
+Data frame of the feed's postings (\code{Title}, \code{Location}, \code{Posted_Date}, \code{Link}), with \code{Close_Date}, \code{Page_Places} and the posted pay columns when \code{fetch_pay} reads each posting's page.
+}
 \description{
 \code{feed_url} is the institution's own published feed, e.g.
 "https://jobs.montana.edu/postings/search.atom" (every PeopleAdmin instance

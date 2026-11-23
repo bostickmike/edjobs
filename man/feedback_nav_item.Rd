@@ -9,6 +9,9 @@ feedback_nav_item(repo)
 \arguments{
 \item{repo}{GitHub repo ("owner/name").}
 }
+\value{
+A bslib navbar item.
+}
 \description{
 A button that opens the public data-problem form when \code{GITHUB_FEEDBACK_TOKEN} is set, else a link to the
 repo's GitHub issue form.

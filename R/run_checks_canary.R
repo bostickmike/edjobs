@@ -40,6 +40,7 @@ check_endpoint <- function(name, url, validator, timeout_secs = 10, cainfo = NUL
 
 #' @rdname check_endpoint
 #' @param resp An httr2 response.
+#' @return `list(ok = TRUE)`, or `list(ok = FALSE, error = <why>)`.
 #' @export
 validate_urban_ipeds <- function(resp) {
   body <- httr2::resp_body_json(resp, simplifyVector = TRUE)
@@ -54,6 +55,7 @@ validate_urban_ipeds <- function(resp) {
 }
 
 #' @rdname check_endpoint
+#' @return `list(ok = TRUE)`, or `list(ok = FALSE, error = <why>)`.
 #' @export
 validate_urban_ccd <- function(resp) {
   body <- httr2::resp_body_json(resp, simplifyVector = TRUE)
@@ -68,6 +70,7 @@ validate_urban_ccd <- function(resp) {
 }
 
 #' @rdname check_endpoint
+#' @return `list(ok = TRUE)`, or `list(ok = FALSE, error = <why>)`.
 #' @export
 validate_census <- function(resp) {
   json <- httr2::resp_body_json(resp)
@@ -80,6 +83,7 @@ validate_census <- function(resp) {
 #' @rdname check_endpoint
 #' @param signature Words the feed's page must show (any one, case ignored).
 #' @param short_name The feed's short name, for the error message.
+#' @return `list(ok = TRUE)`, or `list(ok = FALSE, error = <why>)`.
 #' @export
 validate_feed_page <- function(resp, signature, short_name) {
   html <- httr2::resp_body_string(resp)

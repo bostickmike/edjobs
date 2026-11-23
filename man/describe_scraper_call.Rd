@@ -9,6 +9,9 @@ describe_scraper_call(call)
 \arguments{
 \item{call}{A \code{resolve_scraper_call()} result.}
 }
+\value{
+One string naming the function (and registry entry) the call runs.
+}
 \description{
 Human-readable pointer to the code a resolved call runs.
 }

@@ -46,6 +46,14 @@ optionally \code{signature}, default the short name and the state's name, and \c
 \value{
 \code{check_endpoint()}: a list with \code{ok}, \code{msg}, \code{elapsed}, \code{name}.
 
+\code{list(ok = TRUE)}, or \verb{list(ok = FALSE, error = <why>)}.
+
+\code{list(ok = TRUE)}, or \verb{list(ok = FALSE, error = <why>)}.
+
+\code{list(ok = TRUE)}, or \verb{list(ok = FALSE, error = <why>)}.
+
+\code{list(ok = TRUE)}, or \verb{list(ok = FALSE, error = <why>)}.
+
 \code{run_canaries()}: the list of \code{check_endpoint()} results.
 
 \code{canary_step()}: the results, invisibly.

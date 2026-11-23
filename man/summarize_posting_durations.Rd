@@ -13,6 +13,9 @@ summarize_posting_durations(spells, group = NULL, min_events = 20)
 
 \item{min_events}{Fewest endings for a median.}
 }
+\value{
+Data frame with one row per group: \code{Group}, \code{Postings}, \code{Endings}, \code{Median_Days} with \code{Lower_95} and \code{Upper_95} (NA with fewer than \code{min_events} endings), and a \code{Note}.
+}
 \description{
 Over \code{In_Durations} spells, with delayed entry (each posting enters at its
 age when first seen). A posting seen once and still listed adds half a day

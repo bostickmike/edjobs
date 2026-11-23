@@ -14,6 +14,7 @@
 #' @param county_choices The County filter's choices.
 #' @param pay_bands The app's `PAY_BANDS`, for the Pay filter.
 #' @param he_place_note The note on how colleges are placed ("" for none).
+#' @return A bslib `nav_panel()`.
 #' @export
 map_tab_panel <- function(state_name, about, partial_note, map_note, county_choices, pay_bands, he_place_note = "") {
   need_shiny_ui("map_tab_panel")

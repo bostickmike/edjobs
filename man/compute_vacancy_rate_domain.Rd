@@ -9,6 +9,9 @@ compute_vacancy_rate_domain(vacancy_rate)
 \arguments{
 \item{vacancy_rate}{Vacancy rates.}
 }
+\value{
+Numeric vector of length 2: the lowest and highest rate.
+}
 \description{
 The range of the rates, or c(0, 1) when every rate is missing (instead of Inf/-Inf).
 }

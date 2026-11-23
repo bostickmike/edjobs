@@ -6,6 +6,9 @@
 \usage{
 dashboard_server_data_names()
 }
+\value{
+Character vector of object names.
+}
 \description{
 Names of the app-level objects \code{dashboard_server_shared()} reads from \code{data}
 }

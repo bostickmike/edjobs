@@ -13,6 +13,9 @@ format_bls_estimate(est_pay, est_unit, occupation, area, has_posted_pay)
 
 \item{has_posted_pay}{TRUE where the posting states its own pay (the estimate is then not shown).}
 }
+\value{
+Character vector of HTML spans (the estimate with its hover note), or an em dash.
+}
 \description{
 BLS OEWS regional median for the posting's role (Est_* from \code{\link[=attach_oews_estimates]{attach_oews_estimates()}}), shown only where the
 posting states no pay: "$34,750/yr", with the role and area in a hover tooltip ("BLS median for teaching

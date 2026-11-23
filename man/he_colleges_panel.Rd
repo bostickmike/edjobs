@@ -13,6 +13,9 @@ he_colleges_panel(institutions, compare_selected, salaries_note, county_note)
 
 \item{salaries_note, county_note}{What the directory's Salaries and County columns hold (text after the bold label).}
 }
+\value{
+A bslib \code{nav_panel()}.
+}
 \description{
 The \code{nav_panel()} with value \code{"he_summary"} and its \code{he_summary_tabs} card (\code{he_summary_dir}, \code{he_summary_comp}).
 }

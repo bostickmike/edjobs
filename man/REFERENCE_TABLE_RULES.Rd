@@ -12,6 +12,9 @@ reference_table_rules(config = current_state_config())
 \arguments{
 \item{config}{A \code{state_config()}; defaults to the session's.}
 }
+\value{
+Named list of reference-table rules, the shared ones and the state's own.
+}
 \description{
 Files the pipeline re-downloads and keeps between runs. A failed or
 partial download must never replace a good file, so each refresh goes

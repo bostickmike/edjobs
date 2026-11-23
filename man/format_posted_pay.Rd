@@ -11,6 +11,9 @@ format_posted_pay(pay_min, pay_max, pay_unit)
 
 \item{pay_unit}{"hour", "day", "month", "year", "credit hour" or "stipend".}
 }
+\value{
+Character vector such as "$21.46-$22.81/hr"; an em dash where no pay is stated.
+}
 \description{
 Pay as the posting itself states it (Pay_* from \code{\link[=extract_posted_pay]{extract_posted_pay()}}): "$21.46-$22.81/hr",
 "$46,500-$71,803/yr", "$3,691 stipend" (en dashes). Units are never converted: an hourly wage isn't turned into

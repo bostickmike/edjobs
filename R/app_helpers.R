@@ -10,6 +10,7 @@
 #' The pipeline's own classifier ([classify_he_job_type()]) uses the same title patterns; this one keeps the
 #' dashboard from inferring FTE where a source does not state it.
 #' @param titles Posting titles.
+#' @return Character vector: "Adjunct/part-time faculty", "Faculty/instructor (non-adjunct)" or "Other / not faculty".
 #' @export
 classify_he_appointment <- function(titles) {
   titles <- as.character(titles)
@@ -44,6 +45,7 @@ summarize_he_faculty_postings <- function(titles) {
 #' visible without discarding a still-open opportunity or inventing a newer date the source does not provide.
 #' @param dates Posted dates as the source gives them.
 #' @param stale_after_days A date older than this many days reads "Listed since <date>".
+#' @return Character vector: the date as given, prefixed "Listed since" when older than `stale_after_days`.
 #' @export
 format_posted_or_listed_date <- function(dates, stale_after_days = 180) {
   values <- as.character(dates)
@@ -68,6 +70,7 @@ format_posted_or_listed_date <- function(dates, stale_after_days = 180) {
 #' @param segment "K-12" or "HE" (the lookup's `Segment`).
 #' @param lookup The posting_first_seen.csv table (`Segment`, `Key`, `First_Seen`, `Left_Censored`); NULL (no file
 #'   yet) or a table without those columns returns `posted` unchanged.
+#' @return Character vector: `posted`, with blanks filled as "First seen <date>" or "On the board since at least <date>" where the lookup has the posting.
 #' @export
 fill_first_seen <- function(posted, district, title, url, segment, lookup) {
   posted <- as.character(posted)
@@ -85,6 +88,7 @@ fill_first_seen <- function(posted, district, title, url, segment, lookup) {
 #' Census's approximate 90% range for a SAIPE child poverty estimate (Child_Poverty_Low / _High,
 #' [add_saipe_range()]): "about 0%-32%" (an en dash). NA where either end is missing.
 #' @param low,high Range ends as shares (0-1).
+#' @return Character vector such as "about 0%-32%"; NA where either end is missing.
 #' @export
 format_poverty_range <- function(low, high) {
   ifelse(is.na(low) | is.na(high), NA_character_,
@@ -98,6 +102,7 @@ format_poverty_range <- function(low, high) {
 #'
 #' " +/-$2,190"; "" where the MOE is missing.
 #' @param moe Margins of error in dollars.
+#' @return Character vector such as " +/-$2,190"; "" where the margin is missing.
 #' @export
 format_moe_dollars <- function(moe) ifelse(is.na(moe), "", paste0(" \u00b1", scales::dollar(moe)))
 
@@ -105,6 +110,7 @@ format_moe_dollars <- function(moe) ifelse(is.na(moe), "", paste0(" \u00b1", sca
 #'
 #' " +/-0.4 pts"; "" where the MOE is missing.
 #' @param moe Margins of error as shares (0-1).
+#' @return Character vector such as " +/-0.4 pts"; "" where the margin is missing.
 #' @export
 format_moe_points <- function(moe) ifelse(is.na(moe), "", paste0(" \u00b1", formatC(100 * moe, format = "f", digits = 1), " pts"))
 
@@ -113,6 +119,7 @@ format_moe_points <- function(moe) ifelse(is.na(moe), "", paste0(" \u00b1", form
 #' TRUE where the margin of error is at least the estimate (Census's CV > 0.61 line).
 #' @param est Estimates.
 #' @param moe Their margins of error.
+#' @return Logical vector.
 #' @export
 indistinct_from_zero <- function(est, moe) !is.na(est) & !is.na(moe) & moe >= est
 
@@ -121,6 +128,7 @@ indistinct_from_zero <- function(est, moe) !is.na(est) & !is.na(moe) & moe >= es
 #' "income +/-$2,190; rent +/-$85; mining +/-0.4 pts", leaving out missing parts; NA when all are missing.
 #' @param income_moe,rent_moe Margins of error for median household income and median gross rent (dollars).
 #' @param share,share_moe The mining employment share and its margin of error.
+#' @return Character vector, one line per county; NA where every margin is missing.
 #' @export
 county_moe_summary <- function(income_moe, rent_moe, share, share_moe) {
   parts <- cbind(ifelse(is.na(income_moe), NA, paste0("income", format_moe_dollars(income_moe))),
@@ -138,6 +146,7 @@ county_moe_summary <- function(income_moe, rent_moe, share, share_moe) {
 #' an annual figure, since hours per year aren't known. An em dash where there is no pay.
 #' @param pay_min,pay_max Range ends (equal or NA max for a single figure).
 #' @param pay_unit "hour", "day", "month", "year", "credit hour" or "stipend".
+#' @return Character vector such as "$21.46-$22.81/hr"; an em dash where no pay is stated.
 #' @export
 format_posted_pay <- function(pay_min, pay_max, pay_unit) {
   fmt <- function(x) ifelse(x >= 1000, scales::dollar(x, accuracy = 1), scales::dollar(x, accuracy = 0.01))
@@ -156,6 +165,7 @@ format_posted_pay <- function(pay_min, pay_max, pay_unit) {
 #' @param est_pay,est_unit The estimate and its unit.
 #' @param occupation,area The OEWS occupation and area names.
 #' @param has_posted_pay TRUE where the posting states its own pay (the estimate is then not shown).
+#' @return Character vector of HTML spans (the estimate with its hover note), or an em dash.
 #' @export
 format_bls_estimate <- function(est_pay, est_unit, occupation, area, has_posted_pay) {
   format_pay_estimate(est_pay, est_unit, paste0("BLS median for ", tolower(occupation), ", ", area), has_posted_pay)
@@ -167,6 +177,7 @@ format_bls_estimate <- function(est_pay, est_unit, occupation, area, has_posted_
 #' @param est_pay,est_unit The estimate and its unit.
 #' @param tooltip The hover text (escaped here).
 #' @param has_posted_pay TRUE where the posting states its own pay.
+#' @return Character vector of HTML spans, or an em dash where the posting states its own pay or there is no estimate.
 #' @export
 format_pay_estimate <- function(est_pay, est_unit, tooltip, has_posted_pay) {
   show <- !has_posted_pay & !is.na(est_pay)
@@ -205,6 +216,7 @@ posting_pay_value <- function(pay_min, pay_max, pay_unit, fallback_value, fallba
 #' non-missing values.
 #' @param series Numeric series, oldest first.
 #' @param accent Line colour (hex).
+#' @return One string of inline SVG, or "" for fewer than two values.
 #' @export
 make_sparkline_svg <- function(series, accent = "#2a78d6") {
   series <- series[!is.na(series)]
@@ -235,6 +247,7 @@ make_sparkline_svg <- function(series, accent = "#2a78d6") {
 #'
 #' Larger, monochrome-white variant of [make_sparkline_svg()] for the KPI tiles' icon slot.
 #' @param series Numeric series, oldest first.
+#' @return One string of inline SVG, or "" for fewer than two values.
 #' @export
 make_sparkline_svg_light <- function(series) {
   series <- series[!is.na(series)]
@@ -333,6 +346,7 @@ build_current_trends_table <- function(history, accent) {
 #' The weekly-totals downloads keep one snapshot per week (decided 2026-11-02): a week with an extra run (the
 #' August catch-up runs) would otherwise list every district twice. The latest snapshot in each ISO week wins.
 #' @param weekly_totals Rows with `Archive_Date`.
+#' @return The rows of `weekly_totals` from each ISO week's latest snapshot.
 #' @export
 latest_snapshot_per_week <- function(weekly_totals) {
   d <- as.Date(weekly_totals$Archive_Date)
@@ -382,6 +396,7 @@ find_k12_new_postings <- function(k12_history) {
 #' is skipped). NA with no snapshot that old.
 #' @param weekly_totals Rows with `Archive_Date` (Date) and `n`.
 #' @param min_days_back Minimum age in days of the comparison snapshot.
+#' @return One integer: the change in the statewide total, or NA when there is no snapshot that old.
 #' @export
 compute_wow_delta <- function(weekly_totals, min_days_back = 5) {
   totals <- weekly_totals %>% group_by(Archive_Date) %>% summarize(n = sum(n), .groups = "drop") %>% arrange(Archive_Date)
@@ -432,6 +447,7 @@ find_biggest_mover <- function(weekly_totals, name_col, min_days_back = 21) {
 #' "<Institution> (<Town>)"; every other posting is on the institution's main dot.
 #' @param institution Institution names.
 #' @param town Campus_Town (NA or "" for the main campus).
+#' @return Character vector of map dot names: the institution, or "<Institution> (<Town>)" for a posting at another town.
 #' @export
 he_map_name <- function(institution, town) ifelse(is.na(town) | !nzchar(town), institution, paste0(institution, " (", town, ")"))
 
@@ -441,6 +457,7 @@ he_map_name <- function(institution, town) ifelse(is.na(town) | !nzchar(town), i
 #' "cte", "driver") and multi-word queries (every word must appear, in any order). An empty query matches all.
 #' @param title_vec Titles (or title plus position text).
 #' @param query The search text.
+#' @return Logical vector, one per title: TRUE where the title matches (all TRUE for an empty query).
 #' @export
 match_job_query <- function(title_vec, query) {
   if (is.null(query) || !nzchar(trimws(query))) return(rep(TRUE, length(title_vec)))
@@ -477,6 +494,7 @@ match_job_query <- function(title_vec, query) {
 #'
 #' The range of the rates, or c(0, 1) when every rate is missing (instead of Inf/-Inf).
 #' @param vacancy_rate Vacancy rates.
+#' @return Numeric vector of length 2: the lowest and highest rate.
 #' @export
 compute_vacancy_rate_domain <- function(vacancy_rate) {
   if (all(is.na(vacancy_rate))) c(0, 1) else range(vacancy_rate, na.rm = TRUE)
@@ -532,6 +550,7 @@ in_pay_band <- function(value, unit, band, bands) {
 #' board or missed by a scrape (the apps' spells footnote).
 #' @param df A posting-spells data frame with a `Status` column.
 #' @param labels Named character vector: names are file statuses, values the labels shown.
+#' @return `df` with its `Status` values relabeled.
 #' @export
 relabel_spell_status <- function(df, labels = c("Closed / Filled" = "No longer listed")) {
   if (nrow(df) > 0 && "Status" %in% names(df)) {
@@ -545,6 +564,7 @@ relabel_spell_status <- function(df, labels = c("Closed / Filled" = "No longer l
 #'
 #' @param current_count Current postings at the marker.
 #' @param min_radius,max_radius Radius in pixels for zero postings, and the cap.
+#' @return Numeric vector of marker radii in pixels, between `min_radius` and `max_radius`.
 #' @export
 map_marker_radius <- function(current_count, min_radius = 6, max_radius = 24) {
   pmin(max_radius, min_radius + 1.2 * sqrt(current_count))

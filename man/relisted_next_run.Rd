@@ -9,6 +9,9 @@ relisted_next_run(district, source, title, first_seen, next_run)
 \arguments{
 \item{district, source, title, first_seen, next_run}{Spell columns.}
 }
+\value{
+Logical vector, one per spell: TRUE when a same-title posting at the same district and source starts in the source's next update.
+}
 \description{
 A spell whose posting dropped off, and a posting with the same title (case,
 spacing and punctuation aside) at the same district and source appears in

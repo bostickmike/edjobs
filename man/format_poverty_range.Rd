@@ -9,6 +9,9 @@ format_poverty_range(low, high)
 \arguments{
 \item{low, high}{Range ends as shares (0-1).}
 }
+\value{
+Character vector such as "about 0\%-32\%"; NA where either end is missing.
+}
 \description{
 Census's approximate 90\% range for a SAIPE child poverty estimate (Child_Poverty_Low / _High,
 \code{\link[=add_saipe_range]{add_saipe_range()}}): "about 0\%-32\%" (an en dash). NA where either end is missing.

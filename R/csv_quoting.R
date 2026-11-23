@@ -32,6 +32,7 @@ csv_quoted_columns <- function(path) {
 #' @param df The data frame to write (row names are not written).
 #' @param path Where to write it.
 #' @param like The file whose quoting to copy; by default `path` itself, read before it is overwritten.
+#' @return `path`, invisibly; called for writing the file.
 #' @export
 write_csv_keep_quoting <- function(df, path, like = path) {
   q <- csv_quoted_columns(like)

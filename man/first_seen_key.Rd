@@ -16,6 +16,9 @@ first_seen_lookup(panel, spells, segment)
 
 \item{segment}{"K-12" or "HE".}
 }
+\value{
+\code{first_seen_key()}: character vector of keys ("district | title | url", lower case). \code{first_seen_lookup()}: data frame with \code{Segment}, \code{Key}, \code{First_Seen}, \code{Left_Censored}, one row per posting listed in the latest update.
+}
 \description{
 Many boards give no posted date (MT: 546 of 1,380 K-12 postings on
 2026-11-03, mostly Apptegy district sites). For those the app shows the

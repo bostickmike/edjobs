@@ -33,6 +33,9 @@ k12_districts_panel(
 
 \item{openings_source}{The Active Openings chart's source line.}
 }
+\value{
+A bslib \code{nav_panel()}.
+}
 \description{
 The \code{nav_panel()} with value \code{"k12_summary"} and its \code{k12_summary_tabs} card (\code{k12_summary_dir},
 \code{k12_summary_comp}).

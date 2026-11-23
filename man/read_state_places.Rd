@@ -9,6 +9,9 @@ read_state_places(path)
 \arguments{
 \item{path}{Path to the state's places file.}
 }
+\value{
+Data frame of the state's places with at least \code{Town}, \code{County}, \code{Latitude}, \code{Longitude}.
+}
 \description{
 Reads \code{places.csv} (Town, County, Latitude, Longitude, ...): every Census place in the state, its internal point
 (Census Gazetteer) and its county.

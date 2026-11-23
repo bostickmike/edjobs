@@ -9,6 +9,9 @@ presence_iso_date(x)
 \arguments{
 \item{x}{Character vector.}
 }
+\value{
+Character vector of YYYY-MM-DD dates, "" where the text isn't a date in either form.
+}
 \description{
 \code{"11/12/2026"} (OPI's list page, WSBA's page) and \code{"2026-11-12"} (the
 archives, after \code{standardize_date()}) both give \code{"2026-11-12"}; anything

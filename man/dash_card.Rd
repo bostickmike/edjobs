@@ -15,6 +15,9 @@ dash_card(title = NULL, ..., full_screen = FALSE, class = NULL, info = NULL)
 
 \item{info}{Optional popover shown at the header's right.}
 }
+\value{
+A bslib card.
+}
 \description{
 The bslib stand-in for shinydashboard::box().
 }

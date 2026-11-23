@@ -11,6 +11,7 @@
 #' @param henowsum This week's Higher Ed summary (its `Institution` column fills the Current Trends choices).
 #' @param hesum The weekly Higher Ed summary over the archive (`Institution`, `Category`, `Archive_Date`).
 #' @param timeline_value The timeline slider's opening range: two dates within `range(hesum$Archive_Date)`.
+#' @return A bslib `nav_panel()`.
 #' @export
 he_trends_panel <- function(henowsum, hesum,
                             timeline_value = c(max(hesum$Archive_Date) - 365, max(hesum$Archive_Date))) {
