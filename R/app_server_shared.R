@@ -110,7 +110,8 @@ dashboard_server_shared <- function(input, output, session, data, state_name, fe
       dplyr::group_by(Archive_Date) %>%
       dplyr::summarize(n = sum(n), .groups = "drop") %>%
       dplyr::arrange(Archive_Date) %>%
-      latest_run_per_week(12) %>%
+      latest_snapshot_per_week() %>%
+      utils::tail(12) %>%
       dplyr::pull(n)
   }
 
@@ -150,7 +151,7 @@ dashboard_server_shared <- function(input, output, session, data, state_name, fe
   top_entity_table <- function(df, col, totals, accent) {
     top <- df %>% dplyr::count(.data[[col]], sort = TRUE, name = "Open Postings") %>% utils::head(5)
     top$`Last 12 Weeks` <- vapply(top[[col]], function(e) {
-      series <- totals[totals[[col]] %in% e, ] %>% dplyr::arrange(Archive_Date) %>% latest_run_per_week(12)
+      series <- totals[totals[[col]] %in% e, ] %>% dplyr::arrange(Archive_Date) %>% latest_snapshot_per_week() %>% utils::tail(12)
       make_sparkline_svg(series[[home_count_col()]], accent = accent)
     }, character(1))
     top[[col]] <- paste0(
@@ -176,7 +177,7 @@ dashboard_server_shared <- function(input, output, session, data, state_name, fe
     top <- data.frame(Type = types, stringsAsFactors = FALSE) %>% dplyr::count(Type, sort = TRUE, name = "Open Postings") %>% utils::head(5)
     top$Share <- scales::percent(top$`Open Postings` / length(types), accuracy = 1)
     top$`Last 12 Weeks` <- vapply(top$Type, function(t) {
-      make_sparkline_svg(totals %>% dplyr::filter(Job_Type == t) %>% dplyr::arrange(Archive_Date) %>% latest_run_per_week(12) %>% dplyr::pull(!!home_count_col()),
+      make_sparkline_svg(totals %>% dplyr::filter(Job_Type == t) %>% dplyr::arrange(Archive_Date) %>% latest_snapshot_per_week() %>% utils::tail(12) %>% dplyr::pull(!!home_count_col()),
                          accent = accent)
     }, character(1))
     top$Type <- paste0('<a href="#" onclick="Shiny.setInputValue(\'', input_id, '\', \'',

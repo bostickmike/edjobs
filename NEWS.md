@@ -1,3 +1,9 @@
+# edjobs 0.84.0
+
+* **One week rule, not two.** 0.83.0's `latest_run_per_week()` repeated `latest_snapshot_per_week()`, which the
+  weekly-totals downloads already used (the latest snapshot in each ISO week). The sparklines now call that function
+  and take the last 12 rows; `latest_run_per_week()` is removed (no state used it). Same points as 0.83.0.
+
 # edjobs 0.83.0
 
 * **"Last 12 Weeks" sparklines plot one point per week** (`latest_run_per_week()`; Mike, 2026-11-23). The Home
