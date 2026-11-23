@@ -61,8 +61,7 @@ A state test (`test-run-expectations.R`) fails if the installed version is not t
 runs against a version it didn't choose.
 
 **Masking.** A function defined in a state file overrides the package's function of the same name. When a function
-moves here, the state's copy is deleted in the same change. The toolkit's `sibling_sync.R` fails if a state still
-defines a package export.
+moves here, the state's copy is deleted in the same change, so no state still defines a package export.
 
 ## The rule for package code: no state inside
 
@@ -90,7 +89,7 @@ already does this: every rule set writes `POSTING_SPELL_COLUMNS`.
 
 ## How code moves here
 
-The migration runs in phases (plan: the workspace's `claude-notes/2026-11-10_r-package-migration-plan.md`):
+The migration ran in phases:
 
 0. Run expectations, to prove installing, pinning and CI.
 1. Files that were already identical in both states.
@@ -103,7 +102,7 @@ The migration runs in phases (plan: the workspace's `claude-notes/2026-11-10_r-p
 5. Federal context sources by FIPS.
 6. The app's shared helpers.
 
-After the 2026-11-17 package review (`claude-notes/2026-11-17_edjobs-package-review.md`) the work went by its steps:
+After a package review on 2026-11-17 the work went by its steps:
 a hardening release, the toy state in package CI, package-held scraper specs, pipeline stages as package
 functions, the reusable weekly workflow with the run's checks as `*_step()` functions, and the app as package code
 (step 7: the shared server, then one tab function per tab, 0.60.0 to 0.68.0). Still to come: the server blocks
