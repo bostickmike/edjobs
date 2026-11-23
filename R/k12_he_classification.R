@@ -300,6 +300,64 @@ apply_k12_role_hint <- function(position, role_hint) {
     TRUE ~ position)
 }
 
+#' Feed titles that name no job
+#'
+#' OPI Jobs for Teachers' title is its category field, and these two
+#' categories name no job (MT drift triage, 2026-11-22: a cook, a district
+#' clerk, a band teacher and a culture teacher among them).
+#' @export
+FEED_GENERIC_TITLES <- c("Other", "Administrative - Other")
+
+#' A feed posting's title, from its description when the feed's title names no job
+#'
+#' For a title in `generic_titles`, the job's name from the description: a
+#' labeled title first ("Job Title: Band Teacher Department: ...", "POSITION:
+#' CULTURE TEACHER SALARY: ..."), else the role after "looking for",
+#' "seeking", "recruiting" or "accepting applications for" ("seeking a
+#' dependable, motivated, and skilled Head of Maintenance to join"), with
+#' leading lowercase words dropped ("Head of Maintenance"). A name that
+#' classifies as "Other" ("a professional to serve as ...") is not used, nor
+#' a labeled name that is only a building ("Position: HC - Davis
+#' Elementary"); the phrase is tried instead.
+#' Every other title, and a generic one with no usable name, is returned as
+#' it is. Measured 2026-11-22 on the 18 distinct generic-titled OPI postings
+#' (hand-labeled): position and subject right for 16, was 9, none made
+#' worse; on 224 OPI postings with specific titles (held out), the extracted
+#' name never disagreed with the title's bucket.
+#' @param title Feed titles.
+#' @param description The postings' descriptions.
+#' @param generic_titles Titles that name no job.
+#' @return Character vector, the same length as `title`.
+#' @export
+feed_description_title <- function(title, description, generic_titles = FEED_GENERIC_TITLES) {
+  title <- as.character(title)
+  stopifnot(length(description) %in% c(1L, length(title)))
+  description <- rep_len(as.character(description), length(title))
+  out <- title
+  use <- !is.na(title) & title %in% generic_titles & !is.na(description)
+  if (!any(use)) return(out)
+  d <- gsub("\\s+", " ", fix_title_encoding(as.character(description[use])))
+  pick <- function(rx) vapply(regmatches(d, regexec(rx, d, perl = TRUE)),
+                              function(m) if (length(m) == 2) m[2] else NA_character_, character(1))
+  labeled <- pick(paste0("(?i)\\b(?:job title|position title|position)\\s*:\\s*(.{3,80}?)\\s+(?:department|reports? to|",
+                         "salary|location|flsa|accountable|opening date|closing date|start date|[A-Z]{4,}\\s*:)"))
+  phrase <- pick(paste0("(?i)\\b(?:looking for|seeking|recruiting|accepting applications for)\\s+(?:an?\\s+)?",
+                        "(?:(?:full|part|half)[- ]?(?:time)?(?:\\s+or\\s+(?:full|part|half)[- ]time)?,?\\s+)?",
+                        "(?:year[- ]round\\s+)?(.{3,70}?)(?=\\s+(?:to join|to serve|to begin|to start|beginning|starting|",
+                        "reports? to|for the|for our|for k|for grades|position|who|that|with|in the|at )|[.;:]|",
+                        ",\\s+(?:and\\s+)?(?:who|which|that|to)\\b|$)"))
+  # A labeled building ("Position: HC - Davis Elementary", OPI 2026-11) names where, not what.
+  building <- !is.na(labeled) & grepl("(?i)\\b(school|elementary|middle|high|academy|campus|building)\\s*$", labeled, perl = TRUE) &
+    !grepl(paste0("(?i)\\b(", paste(K12_ROLE_NOUNS, collapse = "|"), ")"), labeled, perl = TRUE)
+  labeled[building] <- NA_character_
+  name <- trimws(dplyr::coalesce(labeled, phrase))
+  # Leading adjectives ("dedicated and compassionate Teacher"): lowercase words before a capitalized one.
+  name <- sub("^(?:[a-z][\\w-]*,?\\s+)+(?=[A-Z0-9])", "", name, perl = TRUE)
+  name[!is.na(name) & classify_k12_position(name) == "Other"] <- NA_character_
+  out[use] <- dplyr::coalesce(name, title[use])
+  out
+}
+
 #' K12 category keywords
 #'
 #' Fine-grained subject category, computed only for position == "Teacher" rows.
@@ -325,7 +383,7 @@ k12_category_keywords <- list(
   # or "Academic Interventionist" -- those don't name a subject and are
   # genuinely ambiguous, left as Uncategorized rather than guessed).
   "English Language Arts Education" = "(?i)\\b(English(?!\\s+as\\s+a\\s+Second\\s+Language|\\s+Second\\s+Language|\\s+Learner|\\s+Language\\s+Learner)|ELA|Language Arts(?!\\s*Coordinator)|(Literacy|Reading) Interventionist|Title\\s*(One|1|I)\\b|Reading Recovery|Literacy Teacher|Reading Teacher|Literacy Specialist|Reading and Writing|Intervention Teacher|Teacher Reading|Reading|Journalism)\\b",
-  "Family and Consumer Science" = "\\b(Family and Consumer Sciences?|FCS|Home Economics|Culinary)\\b",
+  "Family and Consumer Science" = "\\b(Family\\s*(?:and|&|[-\u2013])?\\s*Consumer Sciences?|FCS|Home Economics|Culinary)\\b",
   "Language Education" = "\\b(ESL|ELL|English as a Second Language|English Learner|Bilingual|Spanish|French|Dual Language|World Languages?|Foreign Languages?|English Language Learner|(Arapaho|Arapahoe|Shoshone|Salish|Kootenai|Cree|Crow|Blackfeet|Cheyenne|Assiniboine|Lakota|Dakota|Nakoda|Gros Ventre|Ojibwe|Chippewa)\\s+(Language|Culture|Studies|Teacher|Instructor|Enhancement|Program|Immersion)|Native Language|Second Language|Indigenous Language|Culture Teacher|\\bEL Teacher\\b|\\bELL Teacher\\b|\\bESL Teacher\\b)\\b",
   "Mathematics Education" = "\\b(Mathematics|\\bMath\\b)\\b",
   "Music Education" = "\\b(Music|Orchestra|Band|Choir|Chorus|Vocal)\\b",

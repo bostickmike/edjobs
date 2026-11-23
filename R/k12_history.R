@@ -110,7 +110,8 @@ summarize_k12_posting_counts <- function(k12jobs, id_col = "Posting_ID") {
 #' role in its district's county: the registry's county, else the county of
 #' the district a feed posting names, statewide where neither is known. A
 #' feed posting's title can be only a subject, so its description's opening
-#' refines the bucket (`k12_role_hint()`).
+#' refines the bucket (`k12_role_hint()`), and a feed title that names no job gives way to the
+#' description's (`feed_description_title()`).
 #'
 #' Callers dedupe first. `Posting_ID` must already be on the rows (under the
 #' state's own name, see `columns`); it is carried through, never rebuilt.
@@ -159,7 +160,11 @@ build_k12_combinedclean <- function(rows, oews_wages, district_county, state, co
   is_feed <- if (is.null(feed_label)) rep(FALSE, nrow(rows)) else !is.na(rows$Posting_Source) & rows$Posting_Source == feed_label
   rows$Role_Hint <- rep(NA_character_, nrow(rows))
   hinted <- is_feed & !is.na(rows$Feed_Description) & nzchar(rows$Feed_Description)
-  if (any(hinted)) rows$Role_Hint[hinted] <- k12_role_hint(rows$Feed_Description[hinted])
+  if (any(hinted)) {
+    rows$Role_Hint[hinted] <- k12_role_hint(rows$Feed_Description[hinted])
+    # A feed title that names no job ("Other") gives way to the description's (Posting_ID is already set).
+    rows$title[hinted] <- feed_description_title(rows$title[hinted], rows$Feed_Description[hinted])
+  }
 
   out <- rows %>%
     dplyr::filter(!is_placeholder_posting(title)) %>%

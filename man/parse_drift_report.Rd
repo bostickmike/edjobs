@@ -10,7 +10,8 @@ parse_drift_report(md)
 \item{md}{The report: a character vector of lines, or one string.}
 }
 \value{
-A list: \code{items} (data frame \code{section}, \code{item}, \code{key}, one row per key), \code{sections} (every section seen),
+A list: \code{items} (data frame \code{section}, \code{item}, \code{key}, \code{details}: the bullet's text after its name, one row
+per key), \code{sections} (every section seen),
 \code{truncated} (sections with a "- ... and N more" line), \code{unitemized} (sections with content but no items).
 }
 \description{

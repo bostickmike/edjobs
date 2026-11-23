@@ -10,7 +10,7 @@ drift_report_items(md)
 \item{md}{The report: a character vector of lines, or one string.}
 }
 \value{
-Data frame: \code{section}, \code{item}, \code{key}, one row per distinct key.
+Data frame: \code{section}, \code{item}, \code{key}, \code{details}, one row per distinct key.
 }
 \description{
 \code{\link[=parse_drift_report]{parse_drift_report()}}'s items.

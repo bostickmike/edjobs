@@ -174,3 +174,18 @@ test_that("build_k12_combinedclean says which mapped columns are missing, and wa
   expect_warning(build_k12_combinedclean(rows, oews_none(), data.frame(District = "Alpha Schools", County = "Alpha County"), "MT"),
                  "no state_config")
 })
+
+test_that("build_k12_combinedclean gives a generic feed title the description's job, keeping Posting_ID (2026-11-22)", {
+  with_feed_label(); stub_oews()
+  rows <- k12_rows()[1:2, ]
+  rows$title <- c("Other", "Other")
+  rows$Posting_ID <- c("id1", "id2")
+  rows$Posting_Source <- c("Statewide feed", "AppliTrack (direct district board)")
+  rows$OPI_Description <- "The Wyola School District is looking for a Head and Assistant Cook for K-8th grade students."
+  out <- build_k12_combinedclean(rows, oews_none(), data.frame(District = character(), County = character()), "MT",
+                                 columns = c(Feed_Description = "OPI_Description"))
+  # The direct board's own title is never replaced; the feed's is.
+  expect_equal(out$title, c("Head and Assistant Cook", "Other"))
+  expect_equal(out$position, c("Food Services", "Other"))
+  expect_equal(out$Posting_ID, c("id1", "id2"))
+})

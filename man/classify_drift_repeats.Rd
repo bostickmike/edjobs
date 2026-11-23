@@ -17,8 +17,14 @@ classify_drift_repeats(
 
 \item{previous}{Earlier reports on the issue, oldest first: a list of \code{list(created = "<ISO time>", body = "...")}.}
 
-\item{acknowledged}{Data frame with \code{Item} and optionally \code{Section} (empty or NA = any section): items a person has
-looked at; matched on the item name as \code{\link[=drift_report_items]{drift_report_items()}} writes it. Without an \code{Item} column it is ignored.}
+\item{acknowledged}{Data frame with \code{Item} and optionally \code{Section} (empty or NA = any section) and \code{Details}: items a
+person has looked at; matched on the item name as \code{\link[=drift_report_items]{drift_report_items()}} writes it. Without an \code{Item} column it is
+ignored. \code{Details} (empty or NA = the whole item, whatever it lists) names what was checked, as the report writes
+it, separated by "; " (the postings at a district, the figure flagged): the item is acknowledged only while every
+"; "-separated part of its details is one of them. Anything else (a new posting at an acknowledged district) makes
+it "new" again, listed in \code{unchecked}; so does a line with no details at all. A report that repeats a posting
+should say how many (MT: "Physical Ed (posted 2026-10-25, 2 postings)"), so a third copy is a new part. A row
+with empty \code{Details} for the same item covers it whole and wins.}
 
 \item{min_runs}{An item is "still unresolved" once it is in this many run days in a row, this one included.}
 
@@ -26,7 +32,8 @@ looked at; matched on the item name as \code{\link[=drift_report_items]{drift_re
 }
 \value{
 Data frame: \code{section}, \code{item}, \code{runs} (run days in a row, this one included), \code{since} (date of the earliest
-of those), \code{acknowledged}, \code{status} ("new", "unresolved" or "repeat").
+of those), \code{acknowledged}, \code{status} ("new", "unresolved" or "repeat"), \code{unchecked} (details an acknowledgement with
+\code{Details} doesn't cover, "; "-separated; "" otherwise).
 }
 \description{
 Counts run days, not reports: of the earlier reports, only the last on each date counts, and those dated \code{today}

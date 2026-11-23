@@ -1,3 +1,21 @@
+# edjobs 0.81.0
+
+* **A feed title that names no job gives way to the description's** (`feed_description_title()`, used by
+  `build_k12_combinedclean()` for feed rows; MT drift triage, 2026-11-22). OPI Jobs for Teachers' title is its
+  category field, and "Other" / "Administrative - Other" name no job: a cook, a district clerk, St. Labre's band,
+  theology and VoAg teachers. For those two titles the row's `title` becomes the job named in the description: a
+  labeled title ("Job Title: Band Teacher", "POSITION: CULTURE TEACHER"), else the role after "looking for",
+  "seeking", "recruiting" or "accepting applications for", without leading adjectives; a name that classifies as
+  "Other" is not used. `Posting_ID` is set before and doesn't change. Measured on the 18 distinct generic-titled OPI
+  postings in MT's archives (hand-labeled): position and subject right for 16, was 9, none made worse; on 224 OPI
+  postings with specific titles (held out) the extracted name never disagreed with the title's bucket, and no
+  specific title changes. WY's feed has no descriptions: no change there. A labeled name that is only a building
+  ("Position: HC - Davis Elementary") is not used (review, 2026-11-22). The archive diff and
+  `reclassify_committed_data.R`'s guard see only `R/k12_he_classification.R`; this change is in
+  `build_k12_combinedclean()`, so restate a state's history with 0.81.0 installed (rebuild, then `--skip-guard`).
+* **"Family Consumer Science", "Family & Consumer Science" and "Family – Consumer Science" are their subject** (`classify_k12_subject()`), not
+  Science Education. Archive diff, both states: 9 titles move, all to Family and Consumer Science.
+
 # edjobs 0.80.0
 
 * **An acknowledged drift item covers only what was checked** (`classify_drift_repeats()`, `parse_drift_report()`,
