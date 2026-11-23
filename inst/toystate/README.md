@@ -16,8 +16,8 @@ new state have to write" (2026-11-17 package review, step 3) and the shortest wo
 
 ## What a new state still writes (the gaps)
 
-Everything `pipeline.R` and `state_config.R` define as functions. The test lists them, so a step that moves into the
-package shows up as a shorter list. As of 0.45.0:
+Everything `pipeline.R` and `state_config.R` define as functions. `test-toy-state.R` lists them and fails when the
+list changes, so a step that moves into the package shows up as a shorter list. Four today:
 
 1. `toy_raw_rows()`: each fetcher returns its own columns (`title`/`Title`, `url`/`Link`, `job_id`/`Posting_ID`),
    and AppliTrack's per-posting link has to be built from the job id. A package function that returns one raw-row
