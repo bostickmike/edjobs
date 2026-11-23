@@ -1,3 +1,17 @@
+# edjobs 0.85.0
+
+* **Trakstar Hire boards** (`fetch_trakstar_postings()`, spec `Trakstar` on `Job_Link`; first used for St. Labre
+  Indian School, MT, 2026-11-23). Reads the list pages (`?p=2`, ... until a page has no cards) and each posting's
+  page for its posted date (the JobPosting block's `datePosted`), closing date (`validThrough`, none on St. Labre's
+  board) and pay (the description text). Titles come from the list cards. Posting_ID is `trakstar:<org>:<id>`.
+* **`parse_jobposting_jsonld()` reads blocks with raw line breaks in their strings.** Strict JSON forbids them and
+  Trakstar writes them on every posting page; a block that fails to parse is retried with them read as spaces. Only
+  NEOGOV used the function before; its blocks parse on the first try, so nothing changes there.
+* **A pay grade's low-mid-high steps read as first to last** (`extract_posted_pay()`): "Salary Grade: 13A
+  ($100,323-$125,404-$150,812)/yr" is $100,323-$150,812, not $100,323-$125,404. Only a rising chain whose top is at
+  most twice the middle counts ("$20 - $25 - $3,000 signing bonus" stays $20-$25). No archived text in either
+  state has such a chain (787 pay texts in 145 archives compared with 0.84.0: none changed).
+
 # edjobs 0.84.0
 
 * **One week rule, not two.** 0.83.0's `latest_run_per_week()` repeated `latest_snapshot_per_week()`, which the

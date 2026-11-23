@@ -106,7 +106,8 @@ default_scraper_specs <- function() {
     Edlio        = family("fetch_edlio_postings"),
     Joomla       = family("fetch_joomla_postings"),
     PeopleAdmin  = scraper_spec("fetch_peopleadmin_atom", c("Feed_URL", "Institution")),
-    Neogov       = scraper_spec("fetch_neogov_postings", "Feed_URL")
+    Neogov       = scraper_spec("fetch_neogov_postings", "Feed_URL"),
+    Trakstar     = scraper_spec("fetch_trakstar_postings", "Job_Link")
   )
 }
 
