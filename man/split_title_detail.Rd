@@ -7,7 +7,10 @@
 split_title_detail(title)
 }
 \arguments{
-\item{title}{See the description.}
+\item{title}{Character vector of posting titles.}
+}
+\value{
+Data frame with columns \code{title} (the cleaned title) and \code{detail} (the cut-off detail, or NA).
 }
 \description{
 Split title detail

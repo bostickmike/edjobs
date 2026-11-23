@@ -13,15 +13,18 @@ log_scrape_result(
 )
 }
 \arguments{
-\item{source_name}{See the description.}
+\item{source_name}{Name of the source, as it appears in the drift report.}
 
-\item{status}{See the description.}
+\item{status}{Outcome: "ok", "empty", "error", "rejected" and the like.}
 
-\item{n_rows}{See the description.}
+\item{n_rows}{Rows the source returned.}
 
-\item{error_message}{See the description.}
+\item{error_message}{The error text, or NA.}
 
-\item{log_path}{See the description.}
+\item{log_path}{CSV log to append to; created with a header if missing.}
+}
+\value{
+The logged row (a one-row data frame), invisibly; called for appending it to \code{log_path}.
 }
 \description{
 Append one row to the scrape run log, creating it with a header if it

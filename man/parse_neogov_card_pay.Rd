@@ -7,7 +7,10 @@
 parse_neogov_card_pay(html_text)
 }
 \arguments{
-\item{html_text}{See the description.}
+\item{html_text}{HTML of a NEOGOV job-list fragment.}
+}
+\value{
+Data frame with one row per job card: \code{Job_ID} and the posted pay columns (\code{POSTED_PAY_COLUMNS}).
 }
 \description{
 Posted pay from each card of a NEOGOV (schooljobs.com / governmentjobs.com)

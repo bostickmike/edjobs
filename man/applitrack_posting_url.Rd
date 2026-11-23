@@ -7,9 +7,12 @@
 applitrack_posting_url(tenant_path, job_id)
 }
 \arguments{
-\item{tenant_path}{See the description.}
+\item{tenant_path}{The district's AppliTrack tenant path (the registry's \code{Platform_Key}).}
 
-\item{job_id}{See the description.}
+\item{job_id}{AppliTrack job IDs.}
+}
+\value{
+Character vector of posting URLs; NA where \code{job_id} is missing or empty.
 }
 \description{
 The posting's own page on the district's AppliTrack board (the link the

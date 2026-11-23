@@ -7,7 +7,7 @@
 schoolspring_job_id(url)
 }
 \arguments{
-\item{url}{See the description.}
+\item{url}{Posting URLs.}
 }
 \description{
 Schoolspring job id

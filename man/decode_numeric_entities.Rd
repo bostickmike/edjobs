@@ -7,7 +7,10 @@
 decode_numeric_entities(x)
 }
 \arguments{
-\item{x}{See the description.}
+\item{x}{Character vector.}
+}
+\value{
+\code{x} with each valid numeric character reference replaced by its character.
 }
 \description{
 Numeric character references (', and the hex forms ' / ’ that

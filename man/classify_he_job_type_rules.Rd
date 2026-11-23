@@ -7,7 +7,7 @@
 classify_he_job_type_rules(title)
 }
 \arguments{
-\item{title}{See the description.}
+\item{title}{Character vector of titles, with any "Hourly Pooled" prefix already removed.}
 }
 \description{
 Classify he job type rules

@@ -7,7 +7,10 @@
 move_title_detail(df)
 }
 \arguments{
-\item{df}{See the description.}
+\item{df}{K-12 data frame with a \code{title} column (and optionally the pay columns).}
+}
+\value{
+\code{df} with cleaned titles, and posted pay filled from the cut-off detail where the row had none.
 }
 \description{
 Applies split_title_detail() to a K-12 frame's \code{title}, and fills Posted Pay

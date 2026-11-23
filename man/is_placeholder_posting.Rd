@@ -7,7 +7,10 @@
 is_placeholder_posting(title)
 }
 \arguments{
-\item{title}{See the description.}
+\item{title}{Character vector of board entry titles.}
+}
+\value{
+Logical vector: TRUE for an entry that isn't a job opening; FALSE for NA.
 }
 \description{
 Board entries that are not job openings: account-creation templates,

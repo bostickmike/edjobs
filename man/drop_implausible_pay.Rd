@@ -7,7 +7,10 @@
 drop_implausible_pay(df)
 }
 \arguments{
-\item{df}{See the description.}
+\item{df}{Data frame with \code{Pay_Min}, \code{Pay_Max}, \code{Pay_Unit} and \code{Pay_Text}.}
+}
+\value{
+\code{df} with the pay columns blanked on rows \code{is_implausible_pay()} flags.
 }
 \description{
 Blanks the Pay_* columns of rows whose posted pay is implausible, so a

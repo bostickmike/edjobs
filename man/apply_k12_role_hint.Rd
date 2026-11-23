@@ -7,9 +7,9 @@
 apply_k12_role_hint(position, role_hint)
 }
 \arguments{
-\item{position}{See the description.}
+\item{position}{Character vector of title-based position buckets.}
 
-\item{role_hint}{See the description.}
+\item{role_hint}{Character vector from \code{k12_role_hint()}, or \code{NULL}.}
 }
 \description{
 Apply k12 role hint

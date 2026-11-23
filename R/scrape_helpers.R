@@ -37,10 +37,11 @@
 #' 
 #' is_transient overrides which responses count as retryable (NULL keeps
 #' httr2's 429/503 default) -- see is_transient_gateway_error() below.
-#' @param req See the description.
-#' @param max_tries See the description.
-#' @param path See the description.
-#' @param is_transient See the description.
+#' @param req An httr2 request.
+#' @param max_tries Total attempts, including the first.
+#' @param path Optional file path to stream the response body to (as in `httr2::req_perform()`).
+#' @param is_transient Optional function of a response returning TRUE when it should be retried; `NULL` keeps httr2's 429/503 default (see `is_transient_gateway_error()`).
+#' @return The httr2 response; an error if the last attempt fails.
 #' @export
 perform_with_retry <- function(req, max_tries = 3, path = NULL, is_transient = NULL) {
   req <- httr2::req_retry(req, max_tries = max_tries, backoff = function(i) 2^i,
@@ -73,7 +74,8 @@ try_federal_year <- function(expr, empty = data.frame()) {
 #' from Montana, where Roberts Public School lost 2026-09-22 and 09-29 to a
 #' single 520/502 while its page was up. No Wyoming scraper uses it yet --
 #' pass it for a source whose scrape_log errors are gateway 5xx.
-#' @param resp See the description.
+#' @param resp An httr2 response.
+#' @return TRUE for a 429, 502, 503, 504 or 520-524 status.
 #' @export
 is_transient_gateway_error <- function(resp) {
   httr2::resp_status(resp) %in% c(429, 502, 503, 504, 520:524)
@@ -87,11 +89,12 @@ is_transient_gateway_error <- function(resp) {
 #' mixed or optional fields (e.g. Urban Institute IPEDS/CCD directory/salary
 #' endpoints) are converted into NA consistently without failing per-record
 #' as.data.frame() calls.
-#' @param url See the description.
-#' @param results_field See the description.
-#' @param next_field See the description.
-#' @param max_pages See the description.
-#' @param req_modifier See the description.
+#' @param url URL of the first page.
+#' @param results_field Name of the field holding each page's records.
+#' @param next_field Name of the field holding the next page's URL (empty or NULL on the last page).
+#' @param max_pages Optional cap on pages fetched; `NULL` for no cap.
+#' @param req_modifier Function applied to each `httr2::request()` before it's sent (headers, a user agent).
+#' @return Data frame of every page's records bound together; an empty data frame when there are none.
 #' @export
 fetch_json_paginated <- function(url,
                                  results_field = "results",
@@ -127,7 +130,8 @@ fetch_json_paginated <- function(url,
 #' Build a zero-row data frame with the given column names, so a failed or
 #' empty scrape can still be bind_rows()'d/rbind()'d with everything else
 #' without special-casing a NULL result at every call site.
-#' @param cols See the description.
+#' @param cols Character vector of column names.
+#' @return A zero-row data frame with those character columns.
 #' @export
 empty_df <- function(cols) {
   as.data.frame(
@@ -140,11 +144,12 @@ empty_df <- function(cols) {
 #'
 #' Append one row to the scrape run log, creating it with a header if it
 #' doesn't exist yet.
-#' @param source_name See the description.
-#' @param status See the description.
-#' @param n_rows See the description.
-#' @param error_message See the description.
-#' @param log_path See the description.
+#' @param source_name Name of the source, as it appears in the drift report.
+#' @param status Outcome: "ok", "empty", "error", "rejected" and the like.
+#' @param n_rows Rows the source returned.
+#' @param error_message The error text, or NA.
+#' @param log_path CSV log to append to; created with a header if missing.
+#' @return The logged row (a one-row data frame), invisibly; called for appending it to `log_path`.
 #' @export
 log_scrape_result <- function(source_name, status, n_rows,
                                error_message = NA_character_,
@@ -179,13 +184,14 @@ log_scrape_result <- function(source_name, status, n_rows,
 #' empty frame with the same shape on failure/empty result, so a caller can
 #' unconditionally rbind()/bind_rows() every source's result without checking
 #' for NULL or a missing/misnamed column first.
-#' @param source_name See the description.
-#' @param scrape_fn See the description.
-#' @param expected_cols See the description.
-#' @param log_path See the description.
+#' @param source_name Name of the source, logged with the outcome.
+#' @param scrape_fn Function of no arguments that returns the scraped data frame.
+#' @param expected_cols Column names the result must have; an empty or failed scrape returns a zero-row frame with these.
+#' @param log_path CSV log passed to `log_scrape_result()`.
 #' @param retrieved_source Optional source key; with `app_dir`, a non-empty result records today as that source's
 #'   retrieval date (record_source_retrieved()).
 #' @param app_dir The dashboard's app folder, for `retrieved_source`.
+#' @return Data frame: the scraper's result, or a zero-row frame with `expected_cols` on an error, a non-data-frame result or no rows.
 #' @export
 safe_scrape <- function(source_name, scrape_fn, expected_cols, log_path = "scrape_log.csv",
                         retrieved_source = NULL, app_dir = NULL) {
@@ -257,7 +263,7 @@ REFERENCE_TABLE_RULES <- list(
 #'
 #' The rules for the reference table at `path` (by file name, without
 #' `.csv`), from `reference_table_rules()`.
-#' @param path See the description.
+#' @param path Path to a reference table CSV; its file name (without `.csv`) is the key.
 #' @param rules All rules to look in.
 #' @keywords internal
 reference_rules_for <- function(path, rules = reference_table_rules()) {
@@ -274,10 +280,11 @@ reference_rules_for <- function(path, rules = reference_table_rules()) {
 #' blank, a value out of bounds, or a newest `year_col` older than the
 #' current file's. With `old = NULL`, it checks a file on
 #' its own.
-#' @param new See the description.
-#' @param rules See the description.
-#' @param old See the description.
-#' @param min_share See the description.
+#' @param new The refreshed table (data frame), or NULL.
+#' @param rules That table's rules (one element of `reference_table_rules()`).
+#' @param old The table it would replace, or `NULL` to check `new` on its own.
+#' @param min_share Smallest share of `old`'s rows `new` may have.
+#' @return A one-line reason the table shouldn't be used, or `NULL` when it passes.
 #' @export
 reference_table_problem <- function(new, rules, old = NULL, min_share = 0.9) {
   if (is.null(new) || nrow(new) == 0) return("no rows")
@@ -317,11 +324,12 @@ reference_table_problem <- function(new, rules, old = NULL, min_share = 0.9) {
 #' finds nothing wrong against the file it would replace; otherwise keeps
 #' that file. Logs "Reference: <name>" to scrape_log.csv either way. Returns
 #' TRUE when it wrote.
-#' @param new See the description.
-#' @param path See the description.
-#' @param log_path See the description.
+#' @param new The refreshed table (data frame).
+#' @param path CSV path to write; its file name picks the rules.
+#' @param log_path CSV log for the outcome.
 #' @param retrieved_source Optional source key: a written (accepted) table records today as its retrieval date in
 #'   the same folder's source_retrieved_dates.csv.
+#' @return TRUE (invisibly) when the file was written, FALSE when the existing file was kept.
 #' @export
 write_reference_file <- function(new, path, log_path = "scrape_log.csv", retrieved_source = NULL) {
   rules <- reference_rules_for(path)
@@ -342,10 +350,11 @@ write_reference_file <- function(new, path, log_path = "scrape_log.csv", retriev
 #' Log reference result
 #'
 #' For a refresh that found the file already current, or failed outright.
-#' @param path See the description.
-#' @param status See the description.
-#' @param error_message See the description.
-#' @param log_path See the description.
+#' @param path CSV path of the reference table.
+#' @param status Outcome to log, e.g. "current" or "error".
+#' @param error_message Why the refresh didn't run, or NA.
+#' @param log_path CSV log to append to.
+#' @return Called for its side effect (a row in `log_path`).
 #' @export
 log_reference_result <- function(path, status, error_message = NA_character_, log_path = "scrape_log.csv") {
   rules <- reference_rules_for(path)
@@ -360,10 +369,11 @@ log_reference_result <- function(path, status, error_message = NA_character_, lo
 #' refresh failed, was rejected or didn't run this run (per `scrape_log`
 #' rows dated `today`), its newest figure is older than `max_age` years, or
 #' the file itself fails its rules. check_salary_drift.R reports these.
-#' @param app_dir See the description.
-#' @param scrape_log See the description.
-#' @param today See the description.
-#' @param this_year See the description.
+#' @param app_dir The dashboard's app folder, where the reference tables live.
+#' @param scrape_log This run's scrape log (data frame read from `scrape_log.csv`).
+#' @param today The run's date; only log rows from that day count.
+#' @param this_year The calendar year a table's newest figure is compared with.
+#' @return Data frame with one row per table that needs a look: `name`, `file`, `problem`; zero rows when all are fine.
 #' @export
 reference_table_status <- function(app_dir, scrape_log, today = Sys.Date(),
                                    this_year = as.integer(format(today, "%Y"))) {
@@ -408,6 +418,7 @@ reference_table_status <- function(app_dir, scrape_log, today = Sys.Date(),
 #' day-month-year and "2025-10-23 06:00:00" in that order. Unparseable text gives `NA`. Moved from both states'
 #' pipeline Rmd (phase 5 close-out, 2026-11-16).
 #' @param x Posted dates (character, factor or Date).
+#' @return A `Date` vector; NA where the text can't be parsed.
 #' @export
 standardize_date <- function(x) {
   x <- as.character(x)

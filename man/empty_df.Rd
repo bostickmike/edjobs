@@ -7,7 +7,10 @@
 empty_df(cols)
 }
 \arguments{
-\item{cols}{See the description.}
+\item{cols}{Character vector of column names.}
+}
+\value{
+A zero-row data frame with those character columns.
 }
 \description{
 Build a zero-row data frame with the given column names, so a failed or

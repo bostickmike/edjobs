@@ -7,7 +7,10 @@
 parse_schoolspring_job_json(json_text)
 }
 \arguments{
-\item{json_text}{See the description.}
+\item{json_text}{JSON text of one SchoolSpring \verb{api/Jobs/<id>} response.}
+}
+\value{
+One-row data frame: \code{job_id}, \code{Close_Date} (YYYY-MM-DD or NA), \code{Job_Status} (e.g. "posted", "filled", "canceled") and the posted pay columns.
 }
 \description{
 Parse schoolspring job json

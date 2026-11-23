@@ -7,7 +7,10 @@
 parse_peopleadmin_posting_dates(html_text)
 }
 \arguments{
-\item{html_text}{See the description.}
+\item{html_text}{HTML of one PeopleAdmin posting page, or NA.}
+}
+\value{
+One-row data frame with \code{Open_Date} and \code{Close_Date} (YYYY-MM-DD; \code{Close_Date} is "Open Until Filled" when the page says so and gives no date); NA where the page gives none.
 }
 \description{
 Parse peopleadmin posting dates

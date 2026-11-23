@@ -7,7 +7,10 @@
 classify_k12_broad_category(category)
 }
 \arguments{
-\item{category}{See the description.}
+\item{category}{Character vector of subject categories from \code{classify_k12_subject()}.}
+}
+\value{
+Character vector of broad subject groups (Elementary, Math, Science, Special Education - General, ...); "Other" for anything unmapped.
 }
 \description{
 2026-08-04 audit: rebalanced two oversized, artificially-merged buckets --

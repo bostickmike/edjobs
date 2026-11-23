@@ -7,7 +7,10 @@
 parse_peopleadmin_posting_pay(html_text)
 }
 \arguments{
-\item{html_text}{See the description.}
+\item{html_text}{HTML of one PeopleAdmin posting page, or NA.}
+}
+\value{
+One-row data frame of posted pay (\code{Pay_Min}, \code{Pay_Max}, \code{Pay_Unit}, \code{Pay_Text}, as from \code{extract_posted_pay()}); all NA when the page states none.
 }
 \description{
 Parse peopleadmin posting pay

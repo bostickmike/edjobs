@@ -7,13 +7,16 @@
 perform_with_retry(req, max_tries = 3, path = NULL, is_transient = NULL)
 }
 \arguments{
-\item{req}{See the description.}
+\item{req}{An httr2 request.}
 
-\item{max_tries}{See the description.}
+\item{max_tries}{Total attempts, including the first.}
 
-\item{path}{See the description.}
+\item{path}{Optional file path to stream the response body to (as in \code{httr2::req_perform()}).}
 
-\item{is_transient}{See the description.}
+\item{is_transient}{Optional function of a response returning TRUE when it should be retried; \code{NULL} keeps httr2's 429/503 default (see \code{is_transient_gateway_error()}).}
+}
+\value{
+The httr2 response; an error if the last attempt fails.
 }
 \description{
 Every fetch_*() function across this project's scraper files ends its

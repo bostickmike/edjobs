@@ -7,11 +7,14 @@
 is_implausible_pay(pay_min, pay_max, pay_unit)
 }
 \arguments{
-\item{pay_min}{See the description.}
+\item{pay_min}{Numeric vector of lowest stated amounts.}
 
-\item{pay_max}{See the description.}
+\item{pay_max}{Numeric vector of highest stated amounts.}
 
-\item{pay_unit}{See the description.}
+\item{pay_unit}{Character vector of units (names of \code{PAY_PLAUSIBLE_RANGE}); NA counts as "unknown".}
+}
+\value{
+Logical vector: TRUE where the stated pay is out of range for its unit, the unit is unknown, or the low end exceeds the high end; FALSE for rows with no pay.
 }
 \description{
 TRUE where a row's posted pay is out of range for its unit, has an

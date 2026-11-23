@@ -12,14 +12,17 @@ write_reference_file(
 )
 }
 \arguments{
-\item{new}{See the description.}
+\item{new}{The refreshed table (data frame).}
 
-\item{path}{See the description.}
+\item{path}{CSV path to write; its file name picks the rules.}
 
-\item{log_path}{See the description.}
+\item{log_path}{CSV log for the outcome.}
 
 \item{retrieved_source}{Optional source key: a written (accepted) table records today as its retrieval date in
 the same folder's source_retrieved_dates.csv.}
+}
+\value{
+TRUE (invisibly) when the file was written, FALSE when the existing file was kept.
 }
 \description{
 Writes a refreshed reference table only when reference_table_problem()

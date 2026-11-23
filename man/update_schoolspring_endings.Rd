@@ -13,15 +13,15 @@ update_schoolspring_endings(
 )
 }
 \arguments{
-\item{sightings}{See the description.}
+\item{sightings}{Output of \code{schoolspring_sightings()}.}
 
-\item{endings}{See the description.}
+\item{endings}{The current endings table.}
 
-\item{today}{See the description.}
+\item{today}{The run's date; a posting last listed before it is looked up.}
 
-\item{fetch}{See the description.}
+\item{fetch}{Function taking job IDs and returning detail rows (\code{fetch_schoolspring_details()}).}
 
-\item{recheck_days}{See the description.}
+\item{recheck_days}{Postings last listed longer ago than this aren't looked up again.}
 }
 \description{
 Looks up every posting listed before but not on \code{today} (unless it already

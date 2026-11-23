@@ -7,7 +7,10 @@
 fix_title_encoding(title)
 }
 \arguments{
-\item{title}{See the description.}
+\item{title}{Character vector of scraped titles.}
+}
+\value{
+A UTF-8 character vector of the same length: Windows-1252 bytes repaired, HTML entities decoded, line breaks folded, ends trimmed; NA stays NA.
 }
 \description{
 A handful of scraped K-12 titles carry raw Windows-1252 bytes (e.g. an en
