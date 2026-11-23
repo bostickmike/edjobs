@@ -118,3 +118,68 @@ test_that("a district's LLM shadow-pilot or reference-table error is not the dis
   expect_identical(attach_scrape_log_errors(data.frame(name = "Zurich Elementary School District #17"), log)$scrape_error,
                    "no jobs list")
 })
+
+# Empty_Text (2026-11-22): an acknowledgement holds only while the board still reads as empty. Fixtures: the real
+# Fishtail (blank WordPress page) and Cottonwood (Google Sites "no job openings") boards, fetched 2026-11-22,
+# scripts and styles removed.
+fx <- function(name) paste(readLines(testthat::test_path("fixtures", name), warn = FALSE), collapse = "\n")
+
+test_that("page_visible_text reads the text a person sees, not scripts", {
+  expect_match(page_visible_text(fx("silent_ack_fishtail_2026-11-22.html")), "Home > Job Openings sample@email.com", fixed = TRUE)
+  expect_match(page_visible_text(fx("silent_ack_cottonwood_2026-11-22.html")), "There are currently no job openings", fixed = TRUE)
+  expect_identical(page_visible_text("<html><body><script>var x = 'Teacher';</script><p>Hi\n  there</p></body></html>"), "Hi there")
+})
+
+test_that("check_ack_empty_text passes an empty board and flags a posting, a failed fetch or a bad pattern", {
+  fish <- fx("silent_ack_fishtail_2026-11-22.html")
+  # The same page with one posting between the breadcrumb and the footer.
+  posted <- sub("sample@email.com", "</p><h2>4th Grade Teacher</h2><p>sample@email.com", fish, fixed = TRUE)
+  expect_false(grepl("Home > Job Openings sample@email", page_visible_text(posted), fixed = TRUE))
+  ack <- data.frame(Type = "K-12", Source = c("Fishtail", "Nye", "Cottonwood", "Bad", "NoText"),
+                    Empty_Text = c("Home > Job Openings sample@email\\.com", "x", "There are currently no job openings", "(", ""))
+  links <- c("K-12|Fishtail" = "f", "K-12|Nye" = "n", "K-12|Cottonwood" = "c", "K-12|Bad" = "f")
+  pages <- list(f = fish, c = fx("silent_ack_cottonwood_2026-11-22.html"))
+  fetch <- function(url) if (url %in% names(pages)) pages[[url]] else stop("HTTP 503")
+  res <- check_ack_empty_text(ack, links, fetch)
+  expect_identical(names(res), c("K-12|Fishtail", "K-12|Nye", "K-12|Cottonwood", "K-12|Bad"))   # NoText: no check
+  expect_true(is.na(res[["K-12|Fishtail"]])); expect_true(is.na(res[["K-12|Cottonwood"]]))
+  expect_match(res[["K-12|Nye"]], "didn't load.*HTTP 503")
+  expect_match(res[["K-12|Bad"]], "isn't a valid pattern")
+  pages$f <- posted
+  expect_match(check_ack_empty_text(ack[1, ], links, fetch)[[1]], "no longer shows its empty text")
+  expect_length(check_ack_empty_text(ack[, c("Type", "Source")], links, fetch), 0)
+})
+
+test_that("check_silent_sources_step lists an acknowledged source whose board no longer reads as empty", {
+  fish <- fx("silent_ack_fishtail_2026-11-22.html")
+  pages <- list(f = sub("sample@email.com", "</p><h2>4th Grade Teacher</h2><p>sample@email.com", fish, fixed = TRUE),
+                c = fx("silent_ack_cottonwood_2026-11-22.html"))
+  dir <- withr::local_tempdir()
+  withr::local_dir(dir)
+  dir.create("Archivek12_Data"); dir.create("Archived_HE_Data")
+  for (d in c("2026-11-02", "2026-11-09")) {
+    utils::write.csv(data.frame(title = "Teacher", District = "Busy", Posting_Source = "Busy board"),
+                     file.path("Archivek12_Data", paste0("combined_", d, ".csv")), row.names = FALSE)
+    writexl::write_xlsx(data.frame(Title = "Dean", Institution = "College A"),
+                        file.path("Archived_HE_Data", paste0("hedata_", d, ".xlsx")))
+  }
+  utils::write.csv(data.frame(District = c("Busy", "Fishtail", "Cottonwood"), Platform = "WordPress",
+                              Job_Link = c("b", "f", "c")), "k12_district_registry.csv", row.names = FALSE)
+  utils::write.csv(data.frame(Institution = "College A"), "he_institution_registry.csv", row.names = FALSE)
+  utils::write.csv(data.frame(Type = "K-12", Source = c("Fishtail", "Cottonwood"), Reason = "empty board",
+                              Acknowledged = "2026-11-22",
+                              Empty_Text = c("Home > Job Openings sample@email\\.com", "There are currently no job openings")),
+                   "silent_sources_acknowledged.csv", row.names = FALSE)
+  old <- current_state_config(); withr::defer(set_state_config(old))
+  set_state_config(state_config("Test", "99", "app"))
+  rep <- file.path(dir, "report.md")
+  out <- utils::capture.output(res <- check_silent_sources_step(today = "2026-11-09", n_runs = 2, out_csv = file.path(dir, "s.csv"),
+                                                                report_path = rep, fetch = function(u) pages[[u]]))
+  expect_identical(res$source, c("Fishtail", "Cottonwood"))
+  expect_match(res$empty_check[1], "no longer shows its empty text"); expect_true(is.na(res$empty_check[2]))
+  md <- readLines(rep)
+  expect_true(any(grepl("**Fishtail** (K-12): no rows in any archived weekly run (acknowledged as empty); needs a look: board page no longer shows",
+                        md, fixed = TRUE)))
+  expect_false(any(grepl("Cottonwood", md)))
+  expect_true(any(grepl("(1 acknowledged and not erroring)", out, fixed = TRUE)))
+})

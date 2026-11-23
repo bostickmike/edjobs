@@ -12,7 +12,8 @@ check_silent_sources_step(
   ack_file = "silent_sources_acknowledged.csv",
   out_csv = "/tmp/silent_sources.csv",
   report_path = "/tmp/drift_report.md",
-  scrape_log_path = "scrape_log.csv"
+  scrape_log_path = "scrape_log.csv",
+  fetch = fetch_board_html
 )
 }
 \arguments{
@@ -30,6 +31,8 @@ check_silent_sources_step(
 
 \item{scrape_log_path}{This run's scrape log: a silent source whose latest attempt errored is listed with the
 error, acknowledged or not.}
+
+\item{fetch}{Fetches a board page for the \code{Empty_Text} check (a function of a URL returning HTML).}
 }
 \value{
 The silent sources, invisibly.
@@ -38,7 +41,9 @@ The silent sources, invisibly.
 Non-blocking and informational: registry sources (K-12 districts, HE institutions) with no rows in any of the
 last \code{n_runs} weekly runs (\code{find_silent_sources()}) go into the drift report, apart from those listed in
 \code{ack_file} (columns \code{Type} "K-12"/"Higher Ed", \code{Source}, \code{Reason}, \code{Acknowledged}) whose latest scrape this run
-didn't error: an acknowledged source that errored is listed with its error. K-12 counts direct-board rows
+didn't error: an acknowledged source that errored is listed with its error. An acknowledgement with an
+\code{Empty_Text} (optional column) holds only while the board's page still matches it (\code{check_ack_empty_text()},
+fetched each run); otherwise the source is listed as needing a look. K-12 counts direct-board rows
 only (the statewide feed's rows are not the board's); an archive without \code{Posting_Source} counts every row under
 its district, so it can only make a source look less silent. Today's archives are included: the check is on
 what the run just collected.
