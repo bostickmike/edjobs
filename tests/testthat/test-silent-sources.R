@@ -181,5 +181,41 @@ test_that("check_silent_sources_step lists an acknowledged source whose board no
   expect_true(any(grepl("**Fishtail** (K-12): no rows in any archived weekly run (acknowledged as empty); needs a look: board page no longer shows",
                         md, fixed = TRUE)))
   expect_false(any(grepl("Cottonwood", md)))
-  expect_true(any(grepl("(1 acknowledged and not erroring)", out, fixed = TRUE)))
+  expect_true(any(grepl("(1 acknowledged, not erroring, still reading as empty)", out, fixed = TRUE)))
+})
+
+test_that("the empty-text check fetches only acknowledged, non-erroring sources with a pattern, and says when there's no link", {
+  dir <- withr::local_tempdir()
+  withr::local_dir(dir)
+  dir.create("Archivek12_Data"); dir.create("Archived_HE_Data")
+  for (d in c("2026-11-02", "2026-11-09")) {
+    utils::write.csv(data.frame(title = "Teacher", District = "Busy", Posting_Source = "Busy board"),
+                     file.path("Archivek12_Data", paste0("combined_", d, ".csv")), row.names = FALSE)
+    writexl::write_xlsx(data.frame(Title = "Dean", Institution = "College A"),
+                        file.path("Archived_HE_Data", paste0("hedata_", d, ".xlsx")))
+  }
+  utils::write.csv(data.frame(District = c("Busy", "Errs", "NoPat", "NoLink"), Platform = "X",
+                              Job_Link = c("b", "e", "p", "")), "k12_district_registry.csv", row.names = FALSE)
+  utils::write.csv(data.frame(Institution = c("College A", "College Q"), Job_Link = c("a", "q")),
+                   "he_institution_registry.csv", row.names = FALSE)
+  utils::write.csv(data.frame(Type = c("K-12", "K-12", "K-12", "Higher Ed"), Source = c("Errs", "NoPat", "NoLink", "College Q"),
+                              Reason = "empty", Acknowledged = "2026-11-22", Empty_Text = c("x", "", "x", "Nothing open")),
+                   "silent_sources_acknowledged.csv", row.names = FALSE)
+  utils::write.csv(data.frame(timestamp = "2026-11-09 10:00:00", source = "Errs", status = "error", n_rows = 0L,
+                              error_message = "HTTP 500"), "scrape_log.csv", row.names = FALSE)
+  old <- current_state_config(); withr::defer(set_state_config(old))
+  set_state_config(state_config("Test", "99", "app"))
+  calls <- character(0)
+  fetch <- function(u) { calls <<- c(calls, u); "<p>Nothing open</p>" }
+  utils::capture.output(res <- check_silent_sources_step(today = "2026-11-09", n_runs = 2, out_csv = file.path(dir, "s.csv"),
+                                                         report_path = file.path(dir, "r.md"), fetch = fetch))
+  expect_identical(calls, "q")   # not the errored source, not the one without a pattern, not the one without a link
+  r <- stats::setNames(res$empty_check, res$source)
+  expect_true(is.na(r[["Errs"]])); expect_true(is.na(r[["NoPat"]])); expect_true(is.na(r[["College Q"]]))
+  expect_match(r[["NoLink"]], "no board link")
+  expect_identical(res$scrape_error[res$source == "Errs"], "HTTP 500")
+})
+
+test_that("page_visible_text drops zero-width characters and folds thin and non-breaking spaces", {
+  expect_identical(page_visible_text("<p>Job&#8203; Openings&#8201;Home&nbsp;&gt;&#xFEFF; x</p>"), "Job Openings Home > x")
 })

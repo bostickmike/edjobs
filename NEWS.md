@@ -6,8 +6,11 @@
   is empty ("There are currently no job openings", or a heading running straight into the footer for a blank page).
   Each run fetches the board (`Job_Link` in the registry) and checks it; a page that no longer matches, fails to
   load, or has no link brings the source back in the drift report as "needs a look". Without the column, or with it
-  blank, an acknowledgement holds as before (while the scrape doesn't error). Checked on MT's five boards live
-  2026-11-22: all five match.
+  blank, an acknowledgement holds as before (while the scrape doesn't error). The fetch retries gateway errors
+  like the scrapers do and caps a server-asked wait at 60 s, and the workflow step has a 10-minute timeout. The
+  visible text drops zero-width characters and folds thin and non-breaking spaces. Write a pattern that runs from
+  the board's heading to its footer, so a posting added anywhere in between breaks it (review, 2026-11-22: a bare
+  "no openings" sentence still matched with a posting typed beside it).
 
 # edjobs 0.81.0
 

@@ -1394,7 +1394,8 @@ find_silent_sources <- function(counts, sources, n_runs = 4, acknowledged = char
 
 #' A page's visible text, as the empty-text check reads it
 #'
-#' Scripts, styles and inline graphics removed, whitespace collapsed to single spaces.
+#' Scripts, styles and inline graphics removed, zero-width characters dropped, every run of spaces (thin and
+#' non-breaking included) one plain space.
 #' @param html The page's HTML.
 #' @return One string ("" for a page that doesn't parse).
 #' @export
@@ -1402,7 +1403,9 @@ page_visible_text <- function(html) {
   d <- tryCatch(rvest::read_html(html), error = function(e) NULL)
   if (is.null(d)) return("")
   xml2::xml_remove(rvest::html_elements(d, "script, style, noscript, svg, template"))
-  trimws(gsub("\\s+", " ", rvest::html_text2(d)))
+  # Zero-width characters dropped, every kind of space (thin, non-breaking) one plain space (review 2026-11-22).
+  x <- gsub("[\u200B-\u200D\u2060\uFEFF]", "", rvest::html_text2(d), perl = TRUE)
+  trimws(gsub("[\\s\\h]+", " ", x, perl = TRUE))
 }
 
 #' Acknowledged silent sources whose board no longer reads as empty
@@ -1441,8 +1444,10 @@ check_ack_empty_text <- function(ack, links, fetch = fetch_board_html) {
 #' @return The page's HTML as one string.
 #' @keywords internal
 fetch_board_html <- function(url) {
+  # Gateway errors retried like the scrapers' (perform_with_retry()); a server-asked wait is capped at 60 s.
   httr2::request(url) %>% httr2::req_user_agent(POSTING_STATUS_UA) %>% httr2::req_timeout(30) %>%
-    httr2::req_retry(max_tries = 2) %>% httr2::req_perform() %>% httr2::resp_body_string()
+    httr2::req_retry(max_tries = 2, max_seconds = 60, backoff = function(i) 2^i, is_transient = is_transient_gateway_error) %>%
+    httr2::req_perform() %>% httr2::resp_body_string()
 }
 
 #' The drift-report section for silent sources

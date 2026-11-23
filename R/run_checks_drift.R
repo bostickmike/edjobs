@@ -377,7 +377,7 @@ check_silent_sources_step <- function(app_dir = NULL, today = format(Sys.Date(),
     silent$empty_check[check] <- unname(res[keys[check]])
   }
   stale_ack <- setdiff(paste(ack$Type, ack$Source), paste(silent$type, silent$source))
-  cat(sprintf("Silent sources: %d K-12 and %d HE registry source(s) with no rows in the last %d weekly runs (%d acknowledged and not erroring); %d K-12 and %d HE weekly runs on hand.\n",
+  cat(sprintf("Silent sources: %d K-12 and %d HE registry source(s) with no rows in the last %d weekly runs (%d acknowledged, not erroring, still reading as empty); %d K-12 and %d HE weekly runs on hand.\n",
               sum(silent$type == "K-12"), sum(silent$type == "Higher Ed"), n_runs,
               sum(silent$acknowledged & (is.na(silent$scrape_error) | !nzchar(silent$scrape_error)) &
                     (is.na(silent$empty_check) | !nzchar(silent$empty_check))),

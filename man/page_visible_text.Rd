@@ -13,5 +13,6 @@ page_visible_text(html)
 One string ("" for a page that doesn't parse).
 }
 \description{
-Scripts, styles and inline graphics removed, whitespace collapsed to single spaces.
+Scripts, styles and inline graphics removed, zero-width characters dropped, every run of spaces (thin and
+non-breaking included) one plain space.
 }
