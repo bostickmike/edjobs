@@ -313,7 +313,8 @@ build_current_trends_table <- function(history, accent) {
       group_by(Archive_Date) %>%
       summarize(n = sum(n), .groups = "drop") %>%
       arrange(Archive_Date) %>%
-      latest_run_per_week(12) %>%
+      latest_snapshot_per_week() %>%
+      utils::tail(12) %>%
       pull(n)
     make_sparkline_svg(series, accent = accent)
   }, character(1))
@@ -577,22 +578,3 @@ footer_retrieved <- function(sources, retrieved) {
   if (length(x) == 0) "" else if (length(x) == 1) paste0(" (retrieved ", x, ")") else paste0(" (retrieved ", x[1], " to ", x[length(x)], ")")
 }
 
-#' Latest run in each week
-#'
-#' Keeps, for each ISO week, the rows of that week's latest `Archive_Date`, then the last `n` weeks. The Home and
-#' Trends sparklines ("Last 12 Weeks") use it so a state that runs twice a week, or has an extra manual run, still
-#' plots one point per week over 12 weeks (Mike, 2026-11-23; before, the last 12 runs covered about 6 weeks).
-#' @param df Rows with `Archive_Date` (Date or YYYY-MM-DD text), sorted or not.
-#' @param n Number of weeks to keep.
-#' @return `df`'s kept rows, in date order.
-#' @export
-latest_run_per_week <- function(df, n = 12) {
-  if (nrow(df) == 0) return(df)
-  d <- as.Date(df$Archive_Date)
-  wk <- format(d, "%G-%V")
-  keep <- as.numeric(d) == stats::ave(as.numeric(d), wk, FUN = max)
-  weeks <- utils::tail(sort(unique(wk[keep])), n)
-  keep <- keep & wk %in% weeks
-  out <- df[keep, , drop = FALSE]
-  out[order(as.Date(out$Archive_Date)), , drop = FALSE]
-}
