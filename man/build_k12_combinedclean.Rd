@@ -48,7 +48,8 @@ Placeholder board entries out, the current classifier, posted pay guarded
 role in its district's county: the registry's county, else the county of
 the district a feed posting names, statewide where neither is known. A
 feed posting's title can be only a subject, so its description's opening
-refines the bucket (\code{k12_role_hint()}).
+refines the bucket (\code{k12_role_hint()}), and a feed title that names no job gives way to the
+description's (\code{feed_description_title()}).
 }
 \details{
 Callers dedupe first. \code{Posting_ID} must already be on the rows (under the
