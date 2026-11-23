@@ -308,7 +308,9 @@ check_title_quality_step <- function(app_dir = NULL, today = format(Sys.Date(), 
 #' Non-blocking and informational: registry sources (K-12 districts, HE institutions) with no rows in any of the
 #' last `n_runs` weekly runs (`find_silent_sources()`) go into the drift report, apart from those listed in
 #' `ack_file` (columns `Type` "K-12"/"Higher Ed", `Source`, `Reason`, `Acknowledged`) whose latest scrape this run
-#' didn't error: an acknowledged source that errored is listed with its error. K-12 counts direct-board rows
+#' didn't error: an acknowledged source that errored is listed with its error. An acknowledgement with an
+#' `Empty_Text` (optional column) holds only while the board's page still matches it (`check_ack_empty_text()`,
+#' fetched each run); otherwise the source is listed as needing a look. K-12 counts direct-board rows
 #' only (the statewide feed's rows are not the board's); an archive without `Posting_Source` counts every row under
 #' its district, so it can only make a source look less silent. Today's archives are included: the check is on
 #' what the run just collected.
@@ -320,12 +322,13 @@ check_title_quality_step <- function(app_dir = NULL, today = format(Sys.Date(), 
 #' @param out_csv,report_path Where the silent sources and the drift-report section go.
 #' @param scrape_log_path This run's scrape log: a silent source whose latest attempt errored is listed with the
 #'   error, acknowledged or not.
+#' @param fetch Fetches a board page for the `Empty_Text` check (a function of a URL returning HTML).
 #' @return The silent sources, invisibly.
 #' @export
 check_silent_sources_step <- function(app_dir = NULL, today = format(Sys.Date(), "%Y-%m-%d"), n_runs = 4,
                                       skip_platforms = character(0), ack_file = "silent_sources_acknowledged.csv",
                                       out_csv = "/tmp/silent_sources.csv", report_path = "/tmp/drift_report.md",
-                                      scrape_log_path = "scrape_log.csv") {
+                                      scrape_log_path = "scrape_log.csv", fetch = fetch_board_html) {
   config <- current_state_config()
   feed_label <- config$feed$label
   runs <- function(dir, pattern) {
@@ -362,10 +365,22 @@ check_silent_sources_step <- function(app_dir = NULL, today = format(Sys.Date(),
   scrape_log <- if (file.exists(scrape_log_path)) utils::read.csv(scrape_log_path, stringsAsFactors = FALSE) else data.frame()
   silent$scrape_error <- attach_scrape_log_errors(data.frame(name = silent$source, stringsAsFactors = FALSE),
                                                   scrape_log)$scrape_error
+  # Acknowledged silent sources with an Empty_Text: their board must still read as empty (check_ack_empty_text()).
+  silent$empty_check <- rep(NA_character_, nrow(silent))
+  check <- silent$acknowledged & (is.na(silent$scrape_error) | !nzchar(silent$scrape_error))
+  if (any(check) && "Empty_Text" %in% names(ack)) {
+    he_reg <- if (file.exists("he_institution_registry.csv")) utils::read.csv("he_institution_registry.csv", stringsAsFactors = FALSE) else NULL
+    links <- c(if (!is.null(k12_reg)) stats::setNames(k12_reg$Job_Link, paste("K-12", k12_reg$District, sep = "|")),
+               if (!is.null(he_reg) && "Job_Link" %in% names(he_reg)) stats::setNames(he_reg$Job_Link, paste("Higher Ed", he_reg$Institution, sep = "|")))
+    keys <- paste(silent$type, silent$source, sep = "|")
+    res <- check_ack_empty_text(ack[paste(ack$Type, ack$Source, sep = "|") %in% keys[check], , drop = FALSE], links, fetch = fetch)
+    silent$empty_check[check] <- unname(res[keys[check]])
+  }
   stale_ack <- setdiff(paste(ack$Type, ack$Source), paste(silent$type, silent$source))
-  cat(sprintf("Silent sources: %d K-12 and %d HE registry source(s) with no rows in the last %d weekly runs (%d acknowledged and not erroring); %d K-12 and %d HE weekly runs on hand.\n",
+  cat(sprintf("Silent sources: %d K-12 and %d HE registry source(s) with no rows in the last %d weekly runs (%d acknowledged, not erroring, still reading as empty); %d K-12 and %d HE weekly runs on hand.\n",
               sum(silent$type == "K-12"), sum(silent$type == "Higher Ed"), n_runs,
-              sum(silent$acknowledged & (is.na(silent$scrape_error) | !nzchar(silent$scrape_error))),
+              sum(silent$acknowledged & (is.na(silent$scrape_error) | !nzchar(silent$scrape_error)) &
+                    (is.na(silent$empty_check) | !nzchar(silent$empty_check))),
               length(k12_counts), length(he_counts)))
   if (length(stale_ack)) cat("Acknowledged but producing rows again (remove from ", ack_file, "): ",
                              paste(stale_ack, collapse = ", "), "\n", sep = "")

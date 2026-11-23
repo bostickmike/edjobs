@@ -306,6 +306,8 @@ jobs:
       - name: Check for sources with no rows in their last weekly runs
         id: check_silent_sources
         continue-on-error: true
+        # It fetches the boards of acknowledged sources with an Empty_Text (edjobs 0.82.0).
+        timeout-minutes: 10
         run: |
           if [ -f .github/scripts/check_silent_sources.R ]; then
             Rscript .github/scripts/check_silent_sources.R

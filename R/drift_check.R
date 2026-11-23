@@ -1392,6 +1392,64 @@ find_silent_sources <- function(counts, sources, n_runs = 4, acknowledged = char
              stringsAsFactors = FALSE)
 }
 
+#' A page's visible text, as the empty-text check reads it
+#'
+#' Scripts, styles and inline graphics removed, zero-width characters dropped, every run of spaces (thin and
+#' non-breaking included) one plain space.
+#' @param html The page's HTML.
+#' @return One string ("" for a page that doesn't parse).
+#' @export
+page_visible_text <- function(html) {
+  d <- tryCatch(rvest::read_html(html), error = function(e) NULL)
+  if (is.null(d)) return("")
+  xml2::xml_remove(rvest::html_elements(d, "script, style, noscript, svg, template"))
+  # Zero-width characters dropped, every kind of space (thin, non-breaking) one plain space (review 2026-11-22).
+  x <- gsub("[\u200B-\u200D\u2060\uFEFF]", "", rvest::html_text2(d), perl = TRUE)
+  trimws(gsub("[\\s\\h]+", " ", x, perl = TRUE))
+}
+
+#' Acknowledged silent sources whose board no longer reads as empty
+#'
+#' An acknowledgement in `silent_sources_acknowledged.csv` says a board is really empty. Its optional
+#' `Empty_Text` column holds a pattern (Perl regex, case-insensitive) that the board's visible text
+#' (`page_visible_text()`) matches while it is empty: its "no openings" sentence, or for a page with nothing on
+#' it, the heading running straight into the footer. Each run fetches the board (`Job_Link` in the state's
+#' registry) and checks it, so a first posting, or a redesign the scraper can't read, brings the source back
+#' as "needs a look" instead of staying hidden (MT step 8 finding 1, 2026-11-22).
+#' @param ack The acknowledgement rows (`Type`, `Source`, `Empty_Text`).
+#' @param links Named character vector, the board link by "<Type>|<Source>".
+#' @param fetch A function of a URL returning the page's HTML (an error counts as a miss).
+#' @return Character vector named "<Type>|<Source>", one per acknowledgement with an `Empty_Text`: NA when the
+#'   page still matches, else what's wrong.
+#' @export
+check_ack_empty_text <- function(ack, links, fetch = fetch_board_html) {
+  if (!"Empty_Text" %in% names(ack)) return(stats::setNames(character(0), character(0)))
+  ack <- ack[!is.na(ack$Empty_Text) & nzchar(trimws(ack$Empty_Text)), , drop = FALSE]
+  keys <- paste(ack$Type, ack$Source, sep = "|")
+  out <- vapply(seq_len(nrow(ack)), function(i) {
+    url <- unname(links[keys[i]])
+    if (is.null(url) || is.na(url) || !nzchar(url)) return("no board link in the registry to check its Empty_Text")
+    html <- tryCatch(fetch(url), error = function(e) structure(conditionMessage(e), class = "fetch_error"))
+    if (inherits(html, "fetch_error")) return(paste("board page didn't load to check its Empty_Text:", unclass(html)))
+    ok <- tryCatch(suppressWarnings(grepl(ack$Empty_Text[i], page_visible_text(html), perl = TRUE, ignore.case = TRUE)),
+                   error = function(e) NA)
+    if (is.na(ok)) return("Empty_Text isn't a valid pattern")
+    if (ok) NA_character_ else "board page no longer shows its empty text (a posting, or a page change the scraper may not read)"
+  }, character(1))
+  stats::setNames(out, keys)
+}
+
+#' A board page's HTML, for the empty-text check
+#' @param url The board link.
+#' @return The page's HTML as one string.
+#' @keywords internal
+fetch_board_html <- function(url) {
+  # Gateway errors retried like the scrapers' (perform_with_retry()); a server-asked wait is capped at 60 s.
+  httr2::request(url) %>% httr2::req_user_agent(POSTING_STATUS_UA) %>% httr2::req_timeout(30) %>%
+    httr2::req_retry(max_tries = 2, max_seconds = 60, backoff = function(i) 2^i, is_transient = is_transient_gateway_error) %>%
+    httr2::req_perform() %>% httr2::resp_body_string()
+}
+
 #' The drift-report section for silent sources
 #'
 #' @param silent `find_silent_sources()`'s result with a `type` column ("K-12" / "Higher Ed"), and optionally
@@ -1404,7 +1462,8 @@ find_silent_sources <- function(counts, sources, n_runs = 4, acknowledged = char
 build_silent_sources_report_markdown <- function(silent, n_runs, date = Sys.Date(),
                                                  ack_file = "silent_sources_acknowledged.csv") {
   if (!"scrape_error" %in% names(silent)) silent$scrape_error <- rep(NA_character_, nrow(silent))
-  errored <- !is.na(silent$scrape_error) & nzchar(silent$scrape_error)
+  if (!"empty_check" %in% names(silent)) silent$empty_check <- rep(NA_character_, nrow(silent))
+  errored <- (!is.na(silent$scrape_error) & nzchar(silent$scrape_error)) | (!is.na(silent$empty_check) & nzchar(silent$empty_check))
   new <- silent[!silent$acknowledged | errored, , drop = FALSE]
   if (nrow(new) == 0) return(character(0))
   new <- new[order(new$type != "K-12", new$source), , drop = FALSE]
@@ -1413,6 +1472,8 @@ build_silent_sources_report_markdown <- function(silent, n_runs, date = Sys.Date
   err <- !is.na(new$scrape_error) & nzchar(new$scrape_error)
   since[err] <- paste0(since[err], ifelse(new$acknowledged[err], " (acknowledged as empty)", ""),
                        "; this run's scrape errored: ", new$scrape_error[err])
+  chk <- !err & !is.na(new$empty_check) & nzchar(new$empty_check)
+  since[chk] <- paste0(since[chk], " (acknowledged as empty); needs a look: ", new$empty_check[chk])
   n_ack <- sum(silent$acknowledged & !errored)
   c(
     paste0("### Sources with no rows in their last ", n_runs, " weekly runs (", date, ")"),
