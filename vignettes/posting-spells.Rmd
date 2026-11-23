@@ -95,8 +95,7 @@ identical(names(build_posting_spells(bridged, rules = mt_like)), POSTING_SPELL_C
 ```
 
 Every rule set writes the same columns, `POSTING_SPELL_COLUMNS`, so the states' spells stack. Where MT's rules
-still differ from the defaults, and what changing each would do, is measured in the workspace's
-`claude-notes/2026-11-11_spells-convergence.md`.
+still differ from the defaults is set in `mt_spell_rules()`, in MT's `posting_spells.R`.
 
 ## Durations
 

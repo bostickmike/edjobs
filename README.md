@@ -19,7 +19,7 @@ general-purpose scraping tool.
 | Understand posting spells and listing durations | `vignette("posting-spells")` ([source](vignettes/posting-spells.Rmd)) |
 | Look up a function | `?function_name`, or `help(package = "edjobs")`. Exported: what a state calls (312 names in `NAMESPACE`); helpers no state calls are internal (`edjobs:::name`, documented with `@keywords internal`) |
 | See what changed in each version | [NEWS.md](NEWS.md) |
-| See the migration plan and phase status | the workspace's `claude-notes/2026-11-10_r-package-migration-plan.md` |
+| See how code moved here, phase by phase | `vignette("edjobs")`, "How code moves here" |
 
 ## What's in `R/`
 
