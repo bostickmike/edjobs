@@ -7,9 +7,12 @@
 build_pay_coverage_report_markdown(flagged, date = Sys.Date())
 }
 \arguments{
-\item{flagged}{See the description.}
+\item{flagged}{\code{flag_pay_coverage_drop()} rows plus \code{type}.}
 
-\item{date}{See the description.}
+\item{date}{Date in the section heading.}
+}
+\value{
+Character vector of markdown lines; empty when nothing is flagged.
 }
 \description{
 Build pay coverage report markdown

@@ -7,13 +7,16 @@
 check_salary_coverage(name, actual, expected, min_ok = expected)
 }
 \arguments{
-\item{name}{See the description.}
+\item{name}{Source name, for the report.}
 
-\item{actual}{See the description.}
+\item{actual}{How many districts or colleges have a value now.}
 
-\item{expected}{See the description.}
+\item{expected}{How many had one in the last update's files.}
 
-\item{min_ok}{See the description.}
+\item{min_ok}{Smallest acceptable \code{actual}.}
+}
+\value{
+\code{NULL} when coverage is fine; otherwise a one-row data frame (\code{name}, \code{expected}, \code{actual}).
 }
 \description{
 Salary data (WSBA for K-12, IPEDS for Higher Ed -- see salary_scrapers.R

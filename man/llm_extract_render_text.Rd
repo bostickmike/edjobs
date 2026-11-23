@@ -7,11 +7,11 @@
 llm_extract_render_text(chromote_session, url, settle_seconds = 4)
 }
 \arguments{
-\item{chromote_session}{See the description.}
+\item{chromote_session}{A chromote session.}
 
-\item{url}{See the description.}
+\item{url}{Page to render.}
 
-\item{settle_seconds}{See the description.}
+\item{settle_seconds}{Seconds to wait after the page loads before reading its text.}
 }
 \description{
 Llm extract render text

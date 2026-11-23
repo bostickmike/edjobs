@@ -7,7 +7,7 @@
 read_llm_extract_targets(path = LLM_EXTRACT_TARGETS_PATH)
 }
 \arguments{
-\item{path}{See the description.}
+\item{path}{Path to \code{llm_extract_targets.csv}.}
 }
 \description{
 Read llm extract targets

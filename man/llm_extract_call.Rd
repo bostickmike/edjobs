@@ -13,15 +13,18 @@ llm_extract_call(
 )
 }
 \arguments{
-\item{page_text}{See the description.}
+\item{page_text}{The page's visible text.}
 
-\item{model}{See the description.}
+\item{model}{Model name (\code{llm_extract_model()}).}
 
-\item{endpoint}{See the description.}
+\item{endpoint}{OpenAI-compatible chat completions URL (\code{llm_extract_endpoint()}).}
 
-\item{token}{See the description.}
+\item{token}{API key; with none, the call is skipped.}
 
-\item{max_tries}{See the description.}
+\item{max_tries}{Attempts, for rate limits and server errors.}
+}
+\value{
+A list of postings (each a list with \code{title}, \code{location}, \code{posted_date}), or \code{NULL} when there is no key, the text is blank or the answer can't be parsed.
 }
 \description{
 --- 2. the model call (the one swappable piece) --------------------------

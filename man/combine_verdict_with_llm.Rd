@@ -12,13 +12,16 @@ combine_verdict_with_llm(
 )
 }
 \arguments{
-\item{verdict}{See the description.}
+\item{verdict}{The text-signal verdict (\code{score_page_text_for_job_signal()}).}
 
-\item{llm_titles}{See the description.}
+\item{llm_titles}{Titles an LLM read off the page, or NULL when there was no reading.}
 
-\item{history_titles}{See the description.}
+\item{history_titles}{The source's recent titles (\code{recent_source_titles()}).}
 
-\item{current_titles}{See the description.}
+\item{current_titles}{Titles the scraper returned this update.}
+}
+\value{
+A list: \code{verdict} (possibly changed) and \code{note} (why, or NA).
 }
 \description{
 Folds the LLM's reading of a flagged page into the text-signal verdict (see

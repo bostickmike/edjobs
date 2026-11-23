@@ -15,19 +15,22 @@ flag_other_share_jump(
 )
 }
 \arguments{
-\item{current}{See the description.}
+\item{current}{\code{other_share_counts()} for this update.}
 
-\item{history}{See the description.}
+\item{history}{List of the same, one per recent archived week.}
 
-\item{min_weeks}{See the description.}
+\item{min_weeks}{Weeks of history a source needs.}
 
-\item{min_postings}{See the description.}
+\item{min_postings}{Postings a source needs this update.}
 
-\item{min_other}{See the description.}
+\item{min_other}{Other postings a source needs this update.}
 
-\item{jump}{See the description.}
+\item{jump}{Smallest rise in the share of Other (a proportion) that is flagged.}
 
-\item{ratio}{See the description.}
+\item{ratio}{Smallest ratio of this update's share to the usual share that is flagged.}
+}
+\value{
+Data frame of flagged sources: \code{name}, \code{mean_share}, \code{n_weeks}, \code{n}, \code{other}.
 }
 \description{
 current: other_share_counts() for this run. history: a list of the same,

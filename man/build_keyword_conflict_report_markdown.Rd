@@ -7,11 +7,14 @@
 build_keyword_conflict_report_markdown(hits, date = Sys.Date(), max_rows = 25)
 }
 \arguments{
-\item{hits}{See the description.}
+\item{hits}{Data frame: \code{source}, \code{type}, \code{title}, \code{bucket}, \code{rule}.}
 
-\item{date}{See the description.}
+\item{date}{Date in the section heading.}
 
-\item{max_rows}{See the description.}
+\item{max_rows}{Most titles listed.}
+}
+\value{
+Character vector of markdown lines; empty when \code{hits} has no rows.
 }
 \description{
 hits: data.frame(source, type, title, bucket, rule).

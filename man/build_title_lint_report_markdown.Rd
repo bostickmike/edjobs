@@ -7,11 +7,14 @@
 build_title_lint_report_markdown(hits, date = Sys.Date(), max_per_source = 5)
 }
 \arguments{
-\item{hits}{See the description.}
+\item{hits}{Data frame of flagged titles: \code{source}, \code{type}, \code{title}, \code{reason}.}
 
-\item{date}{See the description.}
+\item{date}{Date in the section heading.}
 
-\item{max_per_source}{See the description.}
+\item{max_per_source}{Most titles listed per source.}
+}
+\value{
+Character vector of markdown lines; empty when \code{hits} has no rows.
 }
 \description{
 hits: data.frame(source, type, title, reason). At most max_per_source

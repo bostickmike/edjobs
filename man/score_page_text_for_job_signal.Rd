@@ -7,7 +7,10 @@
 score_page_text_for_job_signal(page_text)
 }
 \arguments{
-\item{page_text}{See the description.}
+\item{page_text}{Visible text of the live page.}
+}
+\value{
+"likely_broken", "looks_genuinely_empty" or "inconclusive".
 }
 \description{
 page_text: visible rendered text of a live page (document.body.innerText

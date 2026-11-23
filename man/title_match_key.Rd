@@ -7,7 +7,7 @@
 title_match_key(x)
 }
 \arguments{
-\item{x}{See the description.}
+\item{x}{Titles.}
 }
 \description{
 A title reduced for comparing an LLM's reading of a page with what a scraper

@@ -28,6 +28,9 @@ build_drift_report_markdown(
 listed last so a source that drops to zero is still named in the issue (University of Providence was judged
 empty from 2026-11-10 and appeared in no drift comment). NULL or no rows: no section.}
 }
+\value{
+Character vector of markdown lines for the drift issue.
+}
 \description{
 Flagged sources grouped by verdict, each with what the statewide feed says about it, then the feed
 summary. \code{intro_explanation} replaces the default explanation (a state can add its own history).

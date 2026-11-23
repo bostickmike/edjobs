@@ -7,9 +7,12 @@
 autofix_linked_prs(prs, issue_number)
 }
 \arguments{
-\item{prs}{See the description.}
+\item{prs}{Pull requests from \verb{gh pr list --json number,state,changedFiles,body}.}
 
-\item{issue_number}{See the description.}
+\item{issue_number}{The auto-fix issue's number.}
+}
+\value{
+Data frame of the PRs that say they fix the issue: \code{number}, \code{state}, \code{changed_files}.
 }
 \description{
 PRs (from \verb{gh pr list --json number,state,changedFiles,body}) that say

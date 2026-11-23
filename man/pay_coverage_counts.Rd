@@ -7,9 +7,12 @@
 pay_coverage_counts(names, has_pay)
 }
 \arguments{
-\item{names}{See the description.}
+\item{names}{Each posting's source name.}
 
-\item{has_pay}{See the description.}
+\item{has_pay}{Logical, one per posting: does it state pay?}
+}
+\value{
+Data frame with one row per source: \code{name}, \code{n}, \code{with_pay}.
 }
 \description{
 One row per source: postings (n) and how many state pay (with_pay).

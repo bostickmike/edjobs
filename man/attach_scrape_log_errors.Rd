@@ -7,9 +7,12 @@
 attach_scrape_log_errors(flagged, scrape_log)
 }
 \arguments{
-\item{flagged}{See the description.}
+\item{flagged}{Flagged sources (a \code{name} column).}
 
-\item{scrape_log}{See the description.}
+\item{scrape_log}{This update's scrape log.}
+}
+\value{
+\code{flagged} with a \code{scrape_error} column: the logged error, or NA.
 }
 \description{
 A source dropping to (near) zero is ambiguous on count alone: a genuinely

@@ -7,13 +7,13 @@
 text_diff(old_text, new_text, old_label = "old", new_label = "new")
 }
 \arguments{
-\item{old_text}{See the description.}
+\item{old_text}{The earlier text.}
 
-\item{new_text}{See the description.}
+\item{new_text}{The later text.}
 
-\item{old_label}{See the description.}
+\item{old_label}{Label for the earlier text in the diff header.}
 
-\item{new_label}{See the description.}
+\item{new_label}{Label for the later text.}
 }
 \description{
 Unified diff of two texts after trimming lines and dropping blanks

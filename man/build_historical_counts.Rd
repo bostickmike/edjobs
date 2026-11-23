@@ -23,6 +23,9 @@ the pipeline as it now is); defaults to the session's
 \item{failed}{Source-weeks to leave out: a data frame with \code{name} and
 \code{date} ("YYYY-MM-DD"), or NULL.}
 }
+\value{
+Data frame with one row per source: \code{name}, \code{mean_count}, \code{n_weeks}.
+}
 \description{
 \code{archive_snapshots}: a named list (run date -> data frame), one per archived run (a plain argument,
 not a directory scan, so it is testable on in-memory frames). Returns one row per source: \code{name},

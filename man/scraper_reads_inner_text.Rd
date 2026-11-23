@@ -7,9 +7,12 @@
 scraper_reads_inner_text(fetch_fn, scraper_lines)
 }
 \arguments{
-\item{fetch_fn}{See the description.}
+\item{fetch_fn}{Name of the source's fetch function.}
 
-\item{scraper_lines}{See the description.}
+\item{scraper_lines}{Lines of the state's scraper files.}
+}
+\value{
+TRUE when that function's parser reads \code{document.body.innerText}.
 }
 \description{
 Whether fetch_fn's parser consumes document.body.innerText -- the form the

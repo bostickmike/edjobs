@@ -11,11 +11,14 @@ llm_titles_from_page_text(
 )
 }
 \arguments{
-\item{page_text}{See the description.}
+\item{page_text}{The flagged page's visible text, as the drift check rendered it.}
 
-\item{url}{See the description.}
+\item{url}{Label for the page in the parsed rows.}
 
-\item{max_titles}{See the description.}
+\item{max_titles}{Most titles accepted; a longer answer is rejected.}
+}
+\value{
+Character vector of titles the model read off the page and that pass the guardrails, or \code{NULL} when there is no answer.
 }
 \description{
 --- 4b. drift-check corroboration ---------------------------------------

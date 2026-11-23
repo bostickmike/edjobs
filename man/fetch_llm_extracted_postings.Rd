@@ -12,13 +12,13 @@ fetch_llm_extracted_postings(
 )
 }
 \arguments{
-\item{chromote_session}{See the description.}
+\item{chromote_session}{A chromote session.}
 
-\item{url}{See the description.}
+\item{url}{The district's employment page.}
 
-\item{location_fallback}{See the description.}
+\item{location_fallback}{Location for rows the model gave none.}
 
-\item{model}{See the description.}
+\item{model}{Model name.}
 }
 \description{
 Fetch llm extracted postings

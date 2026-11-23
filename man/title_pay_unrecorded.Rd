@@ -7,9 +7,12 @@
 title_pay_unrecorded(title, pay_min)
 }
 \arguments{
-\item{title}{See the description.}
+\item{title}{Posting titles.}
 
-\item{pay_min}{See the description.}
+\item{pay_min}{Each posting's \code{Pay_Min}.}
+}
+\value{
+Logical vector: TRUE where the title states pay but the posting's posted pay is blank.
 }
 \description{
 Titles that state pay ("Secretary - $14 per hour", "Substitute Teachers

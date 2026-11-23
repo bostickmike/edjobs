@@ -23,6 +23,9 @@ flag_drift(
 
 \item{drop_threshold}{Flag at or below this share of the average.}
 }
+\value{
+Data frame of flagged sources: \code{name}, \code{mean_count}, \code{n_weeks}, \code{count}.
+}
 \description{
 \code{baseline}: \code{build_historical_counts()}. A source needs \code{min_weeks} weeks of history and an average
 above 0 and at least \code{min_mean_count} before it can be flagged: a district averaging 1-2 postings that

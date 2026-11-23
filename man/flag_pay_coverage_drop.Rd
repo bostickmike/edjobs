@@ -14,17 +14,20 @@ flag_pay_coverage_drop(
 )
 }
 \arguments{
-\item{current}{See the description.}
+\item{current}{\code{pay_coverage_counts()} for this update.}
 
-\item{history}{See the description.}
+\item{history}{List of the same, one per archived week with pay columns.}
 
-\item{min_weeks}{See the description.}
+\item{min_weeks}{Weeks of history a source needs.}
 
-\item{min_postings}{See the description.}
+\item{min_postings}{Postings a source needs this update.}
 
-\item{min_share}{See the description.}
+\item{min_share}{Usual share of postings stating pay a source needs to be watched.}
 
-\item{drop_threshold}{See the description.}
+\item{drop_threshold}{Flag when this update's share is at most this fraction of the usual share.}
+}
+\value{
+Data frame of flagged sources: \code{name}, \code{mean_share}, \code{n_weeks}, \code{n}, \code{with_pay}.
 }
 \description{
 current: pay_coverage_counts() for this run. history: a list of the same,

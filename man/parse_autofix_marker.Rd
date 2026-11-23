@@ -7,7 +7,10 @@
 parse_autofix_marker(body)
 }
 \arguments{
-\item{body}{See the description.}
+\item{body}{An issue body.}
+}
+\value{
+The source name in the issue's \code{autofix-source} marker, or NA.
 }
 \description{
 Parse autofix marker

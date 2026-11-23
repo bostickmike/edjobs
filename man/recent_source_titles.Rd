@@ -13,15 +13,18 @@ recent_source_titles(
 )
 }
 \arguments{
-\item{name}{See the description.}
+\item{name}{District or college name, as archived.}
 
-\item{type}{See the description.}
+\item{type}{"K-12" or "Higher Ed".}
 
-\item{days}{See the description. The default, 56, is the 8 weekly runs it used to read.}
+\item{days}{How many days back from the newest archive to read (56 days = 8 weeks).}
 
-\item{k12_dir}{See the description.}
+\item{k12_dir}{Folder of the raw K-12 archives.}
 
-\item{he_dir}{See the description.}
+\item{he_dir}{Folder of the raw higher-ed archives.}
+}
+\value{
+Character vector of the source's titles over those days, or \code{NULL} when there are no archives.
 }
 \description{
 The titles one source returned in the archived runs of the last \code{days} days, counted back from the

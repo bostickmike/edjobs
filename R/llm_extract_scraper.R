@@ -176,9 +176,9 @@ llm_extract_empty <- function() {
 # --- 1. render the page (chromote) -----------------------------------------
 
 #' Llm extract render text
-#' @param chromote_session See the description.
-#' @param url See the description.
-#' @param settle_seconds See the description.
+#' @param chromote_session A chromote session.
+#' @param url Page to render.
+#' @param settle_seconds Seconds to wait after the page loads before reading its text.
 #' @keywords internal
 llm_extract_render_text <- function(chromote_session, url, settle_seconds = 4) {
   chromote_session$Page$navigate(url)
@@ -198,11 +198,12 @@ llm_extract_render_text <- function(chromote_session, url, settle_seconds = 4) {
 #' message -- safe_scrape() upstream turns that into an "error" row in
 #' scrape_log.csv, and "HTTP 400: <what the API actually said>" is a lot more
 #' useful there than a bare "HTTP 400 Bad Request".
-#' @param page_text See the description.
-#' @param model See the description.
-#' @param endpoint See the description.
-#' @param token See the description.
-#' @param max_tries See the description.
+#' @param page_text The page's visible text.
+#' @param model Model name (`llm_extract_model()`).
+#' @param endpoint OpenAI-compatible chat completions URL (`llm_extract_endpoint()`).
+#' @param token API key; with none, the call is skipped.
+#' @param max_tries Attempts, for rate limits and server errors.
+#' @return A list of postings (each a list with `title`, `location`, `posted_date`), or `NULL` when there is no key, the text is blank or the answer can't be parsed.
 #' @export
 llm_extract_call <- function(page_text,
                              model = llm_extract_model(),
@@ -250,9 +251,9 @@ llm_extract_call <- function(page_text,
 #' Does (a leading chunk of) each title literally appear in the page text?
 #' The single strongest anti-hallucination check: the model can only return
 #' a title that a person could have read off the page.
-#' @param titles See the description.
-#' @param page_text See the description.
-#' @param probe_len See the description.
+#' @param titles Titles the model returned.
+#' @param page_text The page's visible text.
+#' @param probe_len How many leading characters of each title must appear on the page.
 #' @keywords internal
 llm_extract_title_on_page <- function(titles, page_text, probe_len = 20L) {
   page_norm <- tolower(gsub("[[:space:]]+", " ", page_text))
@@ -269,7 +270,7 @@ llm_extract_title_on_page <- function(titles, page_text, probe_len = 20L) {
 #' title that merely *mentions* a form -- e.g. Apptegy's
 #' "Assistant Cook | Classified Application | 2026-2027" -- is kept (the
 #' "| ..." suffix is stripped before matching).
-#' @param titles See the description.
+#' @param titles Titles the model returned.
 #' @keywords internal
 llm_extract_looks_boilerplate <- function(titles) {
   core <- trimws(sub("\\s*\\|.*$", "", as.character(titles)))
@@ -291,12 +292,13 @@ llm_extract_looks_boilerplate <- function(titles) {
 #' llm_postings: the list returned by llm_extract_call() (or NULL).
 #' Returns the standard 4-column scraper frame (Title, Location, Posted_Date,
 #' Link). Any failure mode -> a 0-row frame; never a fabricated row.
-#' @param page_text See the description.
-#' @param llm_postings See the description.
-#' @param url See the description.
-#' @param location_fallback See the description.
-#' @param max_plausible See the description.
-#' @param stale_after_days See the description.
+#' @param page_text The page's visible text.
+#' @param llm_postings The list `llm_extract_call()` returned, or NULL.
+#' @param url The page URL (each row's `Link`).
+#' @param location_fallback Location for rows the model gave none.
+#' @param max_plausible Most postings accepted; a longer answer is rejected whole.
+#' @param stale_after_days Postings dated longer ago than this are dropped.
+#' @return Data frame with `Title`, `Location`, `Posted_Date`, `Link`; zero rows on any failure, never an invented row.
 #' @export
 parse_llm_extracted_postings <- function(page_text, llm_postings, url,
                                          location_fallback = NA_character_,
@@ -355,10 +357,10 @@ parse_llm_extracted_postings <- function(page_text, llm_postings, url,
 # --- 4. one district: render -> call -> parse -----------------------------
 
 #' Fetch llm extracted postings
-#' @param chromote_session See the description.
-#' @param url See the description.
-#' @param location_fallback See the description.
-#' @param model See the description.
+#' @param chromote_session A chromote session.
+#' @param url The district's employment page.
+#' @param location_fallback Location for rows the model gave none.
+#' @param model Model name.
 #' @keywords internal
 fetch_llm_extracted_postings <- function(chromote_session, url,
                                          location_fallback = NA_character_,
@@ -381,9 +383,10 @@ fetch_llm_extracted_postings <- function(chromote_session, url,
 #' model read the page and found no postings: [combine_verdict_with_llm()]
 #' treats the two differently (edjobs 0.56.0). Never throws, never
 #' fabricates (same guardrails as the shadow pilot).
-#' @param page_text See the description.
-#' @param url See the description.
-#' @param max_titles See the description.
+#' @param page_text The flagged page's visible text, as the drift check rendered it.
+#' @param url Label for the page in the parsed rows.
+#' @param max_titles Most titles accepted; a longer answer is rejected.
+#' @return Character vector of titles the model read off the page and that pass the guardrails, or `NULL` when there is no answer.
 #' @export
 llm_titles_from_page_text <- function(page_text,
                                       url = "drift-corroboration",
@@ -415,7 +418,7 @@ llm_titles_from_page_text <- function(page_text,
 LLM_EXTRACT_TARGETS_PATH <- "llm_extract_targets.csv"
 
 #' Read llm extract targets
-#' @param path See the description.
+#' @param path Path to `llm_extract_targets.csv`.
 #' @keywords internal
 read_llm_extract_targets <- function(path = LLM_EXTRACT_TARGETS_PATH) {
   empty <- data.frame(District = character(0), Job_Link = character(0),
@@ -429,11 +432,12 @@ read_llm_extract_targets <- function(path = LLM_EXTRACT_TARGETS_PATH) {
 }
 
 #' Fetch all llm extracted postings
-#' @param chromote_session_factory See the description.
-#' @param targets See the description.
-#' @param model See the description.
-#' @param token See the description.
-#' @param log_path See the description.
+#' @param chromote_session_factory Function returning a chromote session (one is opened for all targets).
+#' @param targets Targets data frame (`read_llm_extract_targets()`).
+#' @param model Model name.
+#' @param token API key; with none, nothing is called.
+#' @param log_path Scrape log the outcome of each target is written to.
+#' @return Data frame of every target's extracted postings (`Title`, `Location`, `Posted_Date`, `Link`, `District`); zero rows when there are no targets or no key.
 #' @export
 fetch_all_llm_extracted_postings <- function(chromote_session_factory = NULL,
                                              targets = read_llm_extract_targets(),
