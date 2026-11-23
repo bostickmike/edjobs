@@ -1,3 +1,14 @@
+# edjobs 0.83.0
+
+* **"Last 12 Weeks" sparklines plot one point per week** (`latest_run_per_week()`; Mike, 2026-11-23). The Home
+  tab's top-districts, top-colleges and top-job-type tables and the Trends tabs' current tables took the last 12
+  runs; since both states update twice a week (2026-11-17) that covered about 6 weeks (69 days in MT on 11-23), and
+  an extra manual run added a point. Each sparkline now takes the latest count in each of the last 12 ISO weeks.
+* **Plain time words in the dashboard text.** "This week's scrape", "weekly scrapes" and "scraped weekly" read
+  "the latest update", "each of the last 12 weeks (the latest count each week)", "read twice a week"; the Listing
+  Duration notes and the Data tab's download sources no longer say "scrape" (Mike: visitors don't know what a run
+  or a scrape is; units are days, weeks, months).
+
 # edjobs 0.82.0
 
 * **An acknowledged silent source must still read as empty** (`check_ack_empty_text()`, `page_visible_text()`,

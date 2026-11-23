@@ -51,7 +51,7 @@ k12_spells_panel <- function() {
           "Postings and how long they stayed listed",
           info_popover(
             "How days listed is counted",
-            htmltools::p(class = "mb-0", "Days listed = the span from the first to the last weekly scrape that showed the posting, plus 7 days. It starts at the first scrape that showed the posting (often after it was posted) and ends when it stopped appearing, whatever the reason.")
+            htmltools::p(class = "mb-0", "Days listed = the span from the first to the last update that showed the posting, plus 7 days. It starts at the first update that showed the posting (often after it was posted) and ends when it stopped appearing, whatever the reason.")
           )
         ),
         bslib::card_body(
@@ -109,7 +109,7 @@ he_spells_panel <- function() {
           "Postings and how long they stayed listed",
           info_popover(
             "How days listed is counted",
-            htmltools::p(class = "mb-0", "Days listed = the span from the first to the last weekly scrape that showed the posting, plus 7 days. It starts at the first scrape that showed the posting (often after it was posted) and ends when it stopped appearing, whatever the reason.")
+            htmltools::p(class = "mb-0", "Days listed = the span from the first to the last update that showed the posting, plus 7 days. It starts at the first update that showed the posting (often after it was posted) and ends when it stopped appearing, whatever the reason.")
           )
         ),
         bslib::card_body(
