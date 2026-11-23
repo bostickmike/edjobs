@@ -305,7 +305,7 @@ apply_k12_role_hint <- function(position, role_hint) {
 #' OPI Jobs for Teachers' title is its category field, and these two
 #' categories name no job (MT drift triage, 2026-11-22: a cook, a district
 #' clerk, a band teacher and a culture teacher among them).
-#' @keywords internal
+#' @export
 FEED_GENERIC_TITLES <- c("Other", "Administrative - Other")
 
 #' A feed posting's title, from its description when the feed's title names no job
