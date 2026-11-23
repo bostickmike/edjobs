@@ -27,10 +27,12 @@ CULTURE TEACHER SALARY: ..."), else the role after "looking for",
 "seeking", "recruiting" or "accepting applications for" ("seeking a
 dependable, motivated, and skilled Head of Maintenance to join"), with
 leading lowercase words dropped ("Head of Maintenance"). A name that
-classifies as "Other" ("a professional to serve as ...") is not used.
+classifies as "Other" ("a professional to serve as ...") is not used, nor
+a labeled name that is only a building ("Position: HC - Davis
+Elementary"); the phrase is tried instead.
 Every other title, and a generic one with no usable name, is returned as
 it is. Measured 2026-11-22 on the 18 distinct generic-titled OPI postings
-(hand-labeled): position and subject right for 15, was 9, none made
+(hand-labeled): position and subject right for 16, was 9, none made
 worse; on 224 OPI postings with specific titles (held out), the extracted
 name never disagreed with the title's bucket.
 }

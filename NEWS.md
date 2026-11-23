@@ -9,8 +9,11 @@
   "Other" is not used. `Posting_ID` is set before and doesn't change. Measured on the 18 distinct generic-titled OPI
   postings in MT's archives (hand-labeled): position and subject right for 16, was 9, none made worse; on 224 OPI
   postings with specific titles (held out) the extracted name never disagreed with the title's bucket, and no
-  specific title changes. WY's feed has no descriptions: no change there.
-* **"Family Consumer Science" and "Family & Consumer Science" are their subject** (`classify_k12_subject()`), not
+  specific title changes. WY's feed has no descriptions: no change there. A labeled name that is only a building
+  ("Position: HC - Davis Elementary") is not used (review, 2026-11-22). The archive diff and
+  `reclassify_committed_data.R`'s guard see only `R/k12_he_classification.R`; this change is in
+  `build_k12_combinedclean()`, so restate a state's history with 0.81.0 installed (rebuild, then `--skip-guard`).
+* **"Family Consumer Science", "Family & Consumer Science" and "Family – Consumer Science" are their subject** (`classify_k12_subject()`), not
   Science Education. Archive diff, both states: 9 titles move, all to Family and Consumer Science.
 
 # edjobs 0.80.0

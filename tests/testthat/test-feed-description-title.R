@@ -54,3 +54,22 @@ test_that("Family Consumer Sciences without 'and' is its subject", {
   expect_equal(classify_k12_subject(c("Family Consumer Sciences teacher", "Family & Consumer Science Teacher")),
                rep("Family and Consumer Science", 2))
 })
+
+test_that("a labeled building is not a job name; the phrase is tried instead (review 2026-11-22)", {
+  # Real held-out shape: an OPI posting with "Position: HC - Davis Elementary".
+  expect_equal(feed_description_title("Other", "Position: HC - Davis Elementary Salary: DOE. Special education teacher."), "Other")
+  expect_equal(feed_description_title("Other", "Position: Lincoln Elementary School Salary: DOE. We are seeking a Head Cook."),
+               "Head Cook")
+  # A labeled role at a building keeps its name.
+  expect_equal(feed_description_title("Other", "Position: Elementary Teacher Salary: DOE"), "Elementary Teacher")
+})
+
+test_that("description length must match title (or be one)", {
+  expect_error(feed_description_title("Other", c("seeking a Cook.", "x")))
+  expect_equal(feed_description_title(c("Other", "Other"), "seeking a Head Cook."), c("Head Cook", "Head Cook"))
+})
+
+test_that("Family – Consumer Science (en dash, archived title) and doubled spaces are FCS", {
+  expect_equal(classify_k12_subject(c("Family – Consumer Science Teacher", "Family  and Consumer Sciences")),
+               rep("Family and Consumer Science", 2))
+})
