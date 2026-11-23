@@ -79,7 +79,7 @@ k12_districts_panel <- function(districts, compare_selected, openings_note, dire
           dash_card("Active Openings",
                     shinycssloaders::withSpinner(plotly::plotlyOutput("k12_compare_openings_plot", height = "360px")),
                     info = help_popover("Active openings",
-                      htmltools::p("Postings in this week's scrape, all job types (teachers, aides, coaches, drivers and so on)."),
+                      htmltools::p("Postings in the latest update, all job types (teachers, aides, coaches, drivers and so on)."),
                       source = openings_source))
         ),
         dash_card("Active Openings in Selected Districts",

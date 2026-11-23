@@ -14,9 +14,9 @@ need_shiny_ui <- function(fn) {
 #' @export
 spells_footnote <- function() {
   htmltools::p(class = "text-muted small mt-3 mb-0",
-    "Days listed run from the first to the last weekly scrape that showed a posting, plus 7 days. This is how long a ",
+    "Days listed run from the first to the last update that showed a posting, plus 7 days. This is how long a ",
     "posting was listed, not time to fill: a listing ends when it stops appearing, whether it was filled, cancelled, ",
-    "moved to another board or missed by a scrape, and a posting already listed when its board was first scraped ",
+    "moved to another board or missed in one update, and a posting already listed when its board was first checked ",
     "starts late. \u201cNo longer listed\u201d means only that it no longer appears.")
 }
 

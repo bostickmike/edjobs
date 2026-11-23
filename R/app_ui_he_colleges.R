@@ -22,7 +22,7 @@ he_colleges_panel <- function(institutions, compare_selected, salaries_note, cou
         value = "he_summary_dir",
         htmltools::h4("One row per institution -- current openings, faculty vacancy rate, and salary data ",
            help_popover("Institution directory",
-             htmltools::p(htmltools::tags$strong("Openings: "), "postings in this week's scrape, split into full-time and adjunct/part-time faculty by the job title, and those new since last week."),
+             htmltools::p(htmltools::tags$strong("Openings: "), "postings in the latest update, split into full-time and adjunct/part-time faculty by the job title, and those new since last week."),
              htmltools::p(htmltools::tags$strong("Faculty vacancy rate, faculty count and students per faculty: "), "full-time faculty postings, and enrollment, divided by full-time instructional staff (IPEDS)."),
              htmltools::p(htmltools::tags$strong("Salaries: "), salaries_note),
              htmltools::p(htmltools::tags$strong("Students: "), "5-year enrollment trend (IPEDS) and the share of students receiving Pell Grants (Federal Student Aid)."),
