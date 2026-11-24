@@ -15,4 +15,8 @@ test_that("k12_trends_panel shows the slider label and counting note only when a
                                         counting_note = htmltools::tagList(htmltools::tags$strong("How: "), "once.")))
   expect_match(full, "id=\"k12_slider_label\"", fixed = TRUE)
   expect_match(full, "role=\"note\">\\s*<strong>How: </strong>\\s*once.\\s*</div>")
+  # The plot's container is as tall as the plot the server draws (500px), so nothing sits on its axis; the note is a
+  # plain footnote (placement checked by eye in the running app, 2026-11-24).
+  expect_match(full, "id=\"k12_longitudinal_plot\"[^>]*height:\\s*500px")
+  expect_no_match(full, "alert-info", fixed = TRUE)
 })

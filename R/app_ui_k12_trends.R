@@ -1,6 +1,6 @@
 # The K-12 Trends tab's UI (step 7 slice 2b, 2026-11-21). Both states' app.R had the same nav_panel: Current Trends
 # (district and view filters; the sparkline table) and Multi-Year Trends (district, category and view filters; the
-# timeline slider and plot). Montana alone shows a label above the slider and, under the plot, how postings on both
+# timeline slider and plot). Montana alone shows a label above the slider and, in a footnote at the tab's bottom, how postings on both
 # a district board and OPI's statewide board are counted; the slider's opening window also differs (MT bounds it to
 # the last WINDOW_WEEKS, WY shows the last 365 days). Server side is in dashboard_server_shared() and the state.
 
@@ -13,7 +13,7 @@
 #' @param timeline_value The timeline slider's opening range: two dates within `range(k12sum$Archive_Date)`.
 #' @param slider_label `TRUE` to show the `k12_slider_label` text output above the slider (the state's server must
 #'   then define it).
-#' @param counting_note `NULL`, or tags/strings for a note under the plot on how postings are counted.
+#' @param counting_note `NULL`, or tags/strings for a footnote at the bottom of the tab on how postings are counted.
 #' @return A bslib `nav_panel()`.
 #' @export
 k12_trends_panel <- function(k12nowsum, k12sum,
@@ -93,10 +93,14 @@ k12_trends_panel <- function(k12nowsum, k12sum,
             timeFormat = "%Y-%m-%d",
             width = "100%"
           ),
-          shinycssloaders::withSpinner(plotly::plotlyOutput("k12_longitudinal_plot")),
-          if (!is.null(counting_note)) htmltools::div(class = "alert alert-info small mt-3 mb-0", role = "note", counting_note)
+          # The server draws the plot 500px tall (ggplotly(height = 500)); a shorter container lets its axis and
+          # legend spill over whatever comes next.
+          shinycssloaders::withSpinner(plotly::plotlyOutput("k12_longitudinal_plot", height = "500px"))
         )
       )
-    )
+    ),
+    # A footnote at the bottom of the tab, above the site's data-sources footer (Mike 2026-11-24: under the plot it
+    # sat on the plot's date axis).
+    if (!is.null(counting_note)) htmltools::div(class = "text-muted small mt-3 mb-0", role = "note", counting_note)
   )
 }

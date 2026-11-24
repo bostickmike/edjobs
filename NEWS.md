@@ -1,3 +1,11 @@
+# edjobs 0.91.0
+
+* **K-12 Trends tab:** `k12_trends_panel(counting_note = )` is now a footnote at the bottom of the tab (small muted
+  text, above the site's data-sources footer) instead of a box under the multi-year plot, where it covered the plot's
+  date axis. Cause: the server draws both Trends plots 500px tall (`ggplotly(height = 500)`) while their containers
+  were plotly's default 400px, so the axis and legend spilled onto what came next. Both containers (K-12 and higher
+  ed) are now 500px.
+
 # edjobs 0.90.0
 
 * **Stale board ads** (`flag_stale_board_postings()`, `stale_board_rule()`, `stale_board_reason()`,
