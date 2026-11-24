@@ -1,3 +1,16 @@
+# edjobs 0.92.0
+
+* **K-12 direct-board stage** (2026-11-17 review, step 5): `scrape_registry_platforms(registry, platforms)` scrapes
+  every registry row on the listed platforms through its `scraper_spec()` (the call the live check and repro script
+  already make), under `safe_scrape()` with the district as the source, and returns one K-12 frame per platform
+  group. `registry_posting_source()` labels a row from the registry's new optional `Posting_Source` column (blank:
+  "<District> site (direct board)"). Each group's dates are parsed together, because `standardize_date()` picks
+  formats from the whole vector. Montana's Rmd replaces 46 per-platform blocks with one call; a stub replay of
+  the old blocks gives identical frames.
+* The default `CyberSchool` spec passes the mode ("items") and the registry list rules, as the Rmds did, so a rule
+  added to a CyberSchool row is read by the live check too.
+* `resolve_scraper_call()`'s per-row lookup is now `scraper_call_for_row()` (internal), shared with the stage.
+
 # edjobs 0.91.0
 
 * **K-12 Trends tab:** `k12_trends_panel(counting_note = )` is now a footnote at the bottom of the tab (small muted

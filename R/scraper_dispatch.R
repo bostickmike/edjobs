@@ -98,7 +98,9 @@ default_scraper_specs <- function() {
     RedRoverK12  = scraper_spec("fetch_redrover_postings",
                                 list(registry_text("Platform_Key"), function(row) redrover_org_slug(row$Job_Link)),
                                 parse_fn = "parse_redrover_json"),
-    CyberSchool  = scraper_spec("fetch_cyberschool_postings",  list("Job_Link", registry_text("City"))),
+    # Mode and list rules passed as the state Rmds did (0.92.0), so a rule added to a CyberSchool row is read.
+    CyberSchool  = scraper_spec("fetch_cyberschool_postings",
+                                c(list("Job_Link", registry_text("City"), function(row) "items"), rules)),
     CyberSchoolText = scraper_spec("fetch_cyberschool_postings",
                                    c(list("Job_Link", registry_text("City"), function(row) "text"), rules)),
     # The doc ids are in Platform_Key.
@@ -225,17 +227,22 @@ resolve_scraper_call <- function(name, sources = state_scraper_sources()) {
     table <- scraper_source_table(source)
     hit <- which(table[[source$name_col]] == name)
     if (length(hit) == 0) next
-    row <- table[hit[1], , drop = FALSE]
-    platform <- row[[source$platform_col]]
-    spec <- source$specs[[platform]]
-    if (is.null(spec) && !is.null(source$fallback)) spec <- source$fallback(platform, row)
-    if (is.null(spec)) return(NULL)
-    args <- lapply(spec$args, function(a) if (is.function(a)) a(row) else row[[a]])
-    return(list(fn = spec$fn, args = args, session = spec$session, map = spec$map, defined_in = spec$defined_in,
-                platform = platform, where = source$where, fixture_prefix = spec$fixture_prefix,
-                parse_fn = spec$parse_fn))
+    return(scraper_call_for_row(source, table[hit[1], , drop = FALSE]))
   }
   NULL
+}
+
+# One registry row's call: its platform's spec (or the registry's fallback) with the row's values as arguments;
+# NULL when the platform has no spec. Shared by resolve_scraper_call() and scrape_registry_platforms().
+scraper_call_for_row <- function(source, row) {
+  platform <- row[[source$platform_col]]
+  spec <- source$specs[[platform]]
+  if (is.null(spec) && !is.null(source$fallback)) spec <- source$fallback(platform, row)
+  if (is.null(spec)) return(NULL)
+  args <- lapply(spec$args, function(a) if (is.function(a)) a(row) else row[[a]])
+  list(fn = spec$fn, args = args, session = spec$session, map = spec$map, defined_in = spec$defined_in,
+       platform = platform, where = source$where, fixture_prefix = spec$fixture_prefix,
+       parse_fn = spec$parse_fn)
 }
 
 #' Describe a scraper call
