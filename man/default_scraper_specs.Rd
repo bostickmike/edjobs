@@ -20,6 +20,6 @@ state's own specs through \code{\link[=scraper_specs]{scraper_specs()}}.
 \details{
 K-12: AppliTrack, SchoolSpring, TedK12, RedRoverK12, CyberSchool,
 CyberSchoolText, GoogleDoc, Apptegy (rendered text), ApptegyPageBuilder,
-GoogleSites, Finalsite, WordPress, Edlio, Joomla. Colleges: PeopleAdmin,
-Neogov.
+GoogleSites, Finalsite, WordPress, Edlio, Joomla, SmartSites, Trakstar. Colleges:
+PeopleAdmin, Neogov.
 }

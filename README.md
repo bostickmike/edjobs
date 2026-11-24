@@ -43,6 +43,7 @@ general-purpose scraping tool.
 | `bls_oews_scraper.R`, `qcew_school_pay.R`, `ipeds_staff_salaries.R` | Federal pay benchmarks (BLS OEWS, BLS QCEW, IPEDS) |
 | `app_helpers.R` | The dashboards' shared app helpers: pay, date and margin-of-error text, sparklines, trend and mover summaries, job search matching |
 | `apptegy.R`, `cyberschool.R`, `edlio.R`, `finalsite.R`, `googledoc.R`, `googlesites.R`, `joomla.R`, `wordpress.R` | CMS-family routines: one reader per site family (district employment pages), with per-district list rules in the registry (`List_Start` / `List_Stop` / `List_Skip`) |
+| `smartsites.R` | SmartSites (ParentSquare) district pages: the site family's three posting widgets (document list, image gallery, posts), read the same way on every site, so no per-district rules |
 | `presence_check.R` | The daily presence check: each board with stable posting IDs and each statewide feed read once a day, recorded on each state's `presence` branch (not yet used by the posting spells; the plan is day-precision endings) |
 | `he_campus.R` | Which town a college posting is in (branch campuses, outreach sites), from its location text, title, a department table or its own page |
 | `ccd.R`, `saipe.R`, `census_acs.R`, `ipeds_he.R` | Federal context: NCES CCD staffing and enrollment, Census SAIPE child poverty, Census ACS county context, IPEDS faculty salaries, enrollment and Pell share |

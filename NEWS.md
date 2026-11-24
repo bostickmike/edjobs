@@ -1,3 +1,16 @@
+# edjobs 0.88.0
+
+* **SmartSites (ParentSquare) district pages** (`fetch_smartsites_postings(url, location)`,
+  `parse_smartsites_postings()`, spec `SmartSites` on `Job_Link` and `City`). One reader for the site family's
+  three posting widgets, each read wherever it appears on the page: the document list (title in `data-searchText`,
+  date "added YYYY-MM-DD" in the link's label), the image gallery (each flyer's alt text, no date) and posts (title
+  and "July 10, 2026" date). SmartSites renders them the same way on every site, so there are no per-district
+  rules. Application forms and "logo" images are dropped; Link is the page. A SmartSites page with no widget reads
+  as zero rows; a page with no SmartSites markup at all is an error (the site has moved), so it isn't logged as an
+  empty board. Replaces three state scrapers: one board on each widget (measured 2026-11-23: on their fixtures and
+  that day's pages the reader gives the same rows, titles, dates and links as the old parsers). Free text typed
+  into an editor block isn't read (`parse_css_board()` reads that with a per-source selector).
+
 # edjobs 0.87.0
 
 * **CSS boards** (`parse_css_board()`, `fetch_css_board_postings()`, `css_board_rules()`, `css_board_rule()`,
