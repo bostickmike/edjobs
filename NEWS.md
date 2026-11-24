@@ -1,3 +1,24 @@
+# edjobs 0.90.0
+
+* **Stale board ads** (`flag_stale_board_postings()`, `stale_board_rule()`, `stale_board_reason()`,
+  `stale_cutoff_date()`, `mark_stale_feed_rows()`, `drop_stale_rows()`, `is_stale_flagged()`; Mike, 2026-11-24).
+  A board platform keeps an ad listed, and takes applications for it, until the district deactivates it, whatever its
+  dates: AppliTrack's "Closing Date" is free text the district types. A dated board posting whose posted date, or a
+  stated closing date that parses as a date, is before the start of the previous school year (with the defaults the
+  July 1 that began it: 2025-07-01 during 2026-27) is flagged in `Stale_Reason` and not counted. Never flagged:
+  standing pools (`STANDING_POOL_PATTERN`), ongoing roles (`STALE_ONGOING_ROLE_PATTERN`: bus drivers and aides,
+  paraprofessionals and aides, custodians and maintenance, food service) and athletic coaches
+  (`STALE_ATHLETIC_COACH_PATTERN`; an instructional, academic or literacy coach is judged by its dates). The
+  school-year start, how many years back the cutoff is, and the exempt titles are a `stale_board_rule()`, set per
+  state with `state_config(stale_rule = )`. It works for any source with a posted or closing date (AppliTrack,
+  SchoolSpring, Tyler Portico, Red Rover, TedK12, dated district pages). Flag, don't delete: the raw archive keeps
+  the rows, and `drop_stale_rows()` leaves them out of what is counted; an archive without the column is unchanged.
+  A feed row that is the same ad as a flagged board posting is marked with `mark_stale_feed_rows()` (the match is
+  the state's own). The toy state runs it. Replayed on the latest archives: 43 of 1,164 Montana board rows on
+  2026-11-23 (2 of them placeholders already not counted), releasing the 5 OPI postings matched to them; 6 of 688
+  Wyoming board rows on 2026-11-20. Measured in the workspace's `claude-notes/2026-11-24_stale-ats-ads/README.md`
+  (option C).
+
 # edjobs 0.89.0
 
 * **`scraper_spec(parse_fn = )`**: a platform's dispatch entry can name its parser when it isn't the fetch

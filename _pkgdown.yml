@@ -175,6 +175,19 @@ reference:
   - posting_status_platform
   - posting_status_rechecks
   - refresh_posting_status
+- title: "Stale board ads"
+  contents:
+  - flag_stale_board_postings
+  - stale_board_rule
+  - stale_board_reason
+  - stale_cutoff_date
+  - mark_stale_feed_rows
+  - drop_stale_rows
+  - is_stale_flagged
+  - STALE_EXEMPT_PATTERNS
+  - STALE_ONGOING_ROLE_PATTERN
+  - STALE_ATHLETIC_COACH_PATTERN
+  - STALE_POSTED_REASON
 - title: "Coverage calendar"
   contents:
   - COVERAGE_CALENDAR_COLUMNS

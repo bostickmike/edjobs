@@ -57,11 +57,14 @@ toy_k12_run <- function(out_dir, run_date, session_factory = NULL) {
   rows$title <- fix_title_encoding(rows$title)
   rows <- toy_posting_identity(move_title_detail(rows))
   rows$Archive_Date <- as.character(run_date)
+  # Board ads from before the previous school year are flagged, kept in the archive and not counted
+  # (flag_stale_board_postings(); the toy has no statewide feed, so every row is a board row).
+  rows <- flag_stale_board_postings(rows, run_date)
   utils::write.csv(rows, file.path(archive, paste0("combined_", run_date, ".csv")), row.names = FALSE)
 
   # Build this run's files and append them to the accumulated ones.
   oews <- utils::read.csv(file.path(toy_dir, "oews_role_wages.csv"), colClasses = c(Area_Code = "character", SOC = "character", Year = "character"))
-  combinedclean <- build_k12_combinedclean(dplyr::distinct(rows), oews, registry[c("District", "County")], state = "ZZ")
+  combinedclean <- build_k12_combinedclean(dplyr::distinct(drop_stale_rows(rows)), oews, registry[c("District", "County")], state = "ZZ")
   utils::write.csv(combinedclean, file.path(app, "combinedclean.csv"), row.names = FALSE)
   teacher <- build_k12_teacher_rows(combinedclean)
   write_accumulated <- function(file, new_rows) {
