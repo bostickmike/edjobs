@@ -12,7 +12,9 @@ scrape_registry_platforms(
   expected_cols = c("Title", "Location", "Posted_Date", "Link"),
   session_factory = NULL,
   envir = parent.frame(),
-  log_path = "scrape_log.csv"
+  log_path = "scrape_log.csv",
+  shape = c("k12", "raw"),
+  after = list()
 )
 }
 \arguments{
@@ -21,11 +23,13 @@ scrape_registry_platforms(
 \item{platforms}{The groups, in order: a list (or character vector) whose elements are platform names; an element
 with several names is one group (a family read by two platform modes). Names, when given, name the output.}
 
-\item{source}{The \code{\link[=scraper_registry]{scraper_registry()}} holding the specs, by default the session's first registry source.}
+\item{source}{The \code{\link[=scraper_registry]{scraper_registry()}} holding the specs, or its \code{where} ("he_institution_registry.csv"); by default
+the session's first registry source. Its name column ("District", "Institution") names the log entries.}
 
-\item{label}{Function of a registry row giving the row's \code{Posting_Source}; \code{\link[=registry_posting_source]{registry_posting_source()}}.}
+\item{label}{Function of a registry row giving the row's \code{Posting_Source} (k12 shape); \code{\link[=registry_posting_source]{registry_posting_source()}}.}
 
-\item{expected_cols}{What \code{\link[=safe_scrape]{safe_scrape()}} returns on a failure.}
+\item{expected_cols}{What \code{\link[=safe_scrape]{safe_scrape()}} returns on a failure: one set, or a list by platform (others get the
+standard four).}
 
 \item{session_factory}{Called (no arguments) for a chromote session, for specs with \code{session = TRUE}.}
 
@@ -33,13 +37,20 @@ with several names is one group (a family read by two platform modes). Names, wh
 has its own, such as a test's stub).}
 
 \item{log_path}{The scrape log, as \code{\link[=safe_scrape]{safe_scrape()}}.}
+
+\item{shape}{"k12" reshapes to the K-12 columns; "raw" keeps each scraper's own columns (the higher-ed chunk) and
+adds the name column, unless the scraper set it itself.}
+
+\item{after}{Named list by platform: a function of the scraped frame and its registry row, run on a non-empty
+result (a shared board's postings assigned to their own campus).}
 }
 \value{
-A list of data frames, one per group, each with \code{title}, \code{date_posted} (a Date), \code{position} (NA),
-\code{location}, \code{url}, \code{District}, \code{Posting_Source}, and the four posted-pay columns when the scraper returned any.
+A list of data frames, one per group. k12: \code{title}, \code{date_posted} (a Date), \code{position} (NA), \code{location},
+\code{url}, \code{District}, \code{Posting_Source}, and the four posted-pay columns when the scraper returned any. raw: the
+scrapers' frames bound together, with the name column.
 }
 \description{
-The K-12 "direct board" stage (2026-11-17 package review, step 5, slice 4): every registry row on the given
+The "Direct board" stage (2026-11-17 package review, step 5, slices 4 and 5): every registry row on the given
 platforms is scraped through its \code{scraper_spec()} (\code{\link[=scraper_registry]{scraper_registry()}}'s specs or fallback, the same call the
 live check and the repro script make), under \code{\link[=safe_scrape]{safe_scrape()}} with the district as the source name, and its rows
 put in the K-12 columns. A state lists its platforms; a district on one of them is a registry row, with no code.

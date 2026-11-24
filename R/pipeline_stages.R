@@ -123,7 +123,7 @@ registry_posting_source <- function(row) {
 
 #' Scrape the registry's direct boards, platform by platform
 #'
-#' The K-12 "direct board" stage (2026-11-17 package review, step 5, slice 4): every registry row on the given
+#' The "Direct board" stage (2026-11-17 package review, step 5, slices 4 and 5): every registry row on the given
 #' platforms is scraped through its `scraper_spec()` ([scraper_registry()]'s specs or fallback, the same call the
 #' live check and the repro script make), under [safe_scrape()] with the district as the source name, and its rows
 #' put in the K-12 columns. A state lists its platforms; a district on one of them is a registry row, with no code.
@@ -134,25 +134,35 @@ registry_posting_source <- function(row) {
 #' @param registry The registry (a data frame with `District` and the platform column).
 #' @param platforms The groups, in order: a list (or character vector) whose elements are platform names; an element
 #'   with several names is one group (a family read by two platform modes). Names, when given, name the output.
-#' @param source The [scraper_registry()] holding the specs, by default the session's first registry source.
-#' @param label Function of a registry row giving the row's `Posting_Source`; [registry_posting_source()].
-#' @param expected_cols What [safe_scrape()] returns on a failure.
+#' @param source The [scraper_registry()] holding the specs, or its `where` ("he_institution_registry.csv"); by default
+#'   the session's first registry source. Its name column ("District", "Institution") names the log entries.
+#' @param label Function of a registry row giving the row's `Posting_Source` (k12 shape); [registry_posting_source()].
+#' @param expected_cols What [safe_scrape()] returns on a failure: one set, or a list by platform (others get the
+#'   standard four).
 #' @param session_factory Called (no arguments) for a chromote session, for specs with `session = TRUE`.
 #' @param envir Where the state's scraper functions are, and the `safe_scrape()` used (the package's unless `envir`
 #'   has its own, such as a test's stub).
 #' @param log_path The scrape log, as [safe_scrape()].
-#' @return A list of data frames, one per group, each with `title`, `date_posted` (a Date), `position` (NA),
-#'   `location`, `url`, `District`, `Posting_Source`, and the four posted-pay columns when the scraper returned any.
+#' @param shape "k12" reshapes to the K-12 columns; "raw" keeps each scraper's own columns (the higher-ed chunk) and
+#'   adds the name column, unless the scraper set it itself.
+#' @param after Named list by platform: a function of the scraped frame and its registry row, run on a non-empty
+#'   result (a shared board's postings assigned to their own campus).
+#' @return A list of data frames, one per group. k12: `title`, `date_posted` (a Date), `position` (NA), `location`,
+#'   `url`, `District`, `Posting_Source`, and the four posted-pay columns when the scraper returned any. raw: the
+#'   scrapers' frames bound together, with the name column.
 #' @export
 scrape_registry_platforms <- function(registry, platforms, source = NULL, label = registry_posting_source,
                                       expected_cols = c("Title", "Location", "Posted_Date", "Link"),
-                                      session_factory = NULL, envir = parent.frame(), log_path = "scrape_log.csv") {
-  if (is.null(source)) {
-    regs <- Filter(function(s) identical(s$kind, "registry"), state_scraper_sources())
-    if (length(regs) == 0) stop("scrape_registry_platforms(): no scraper_registry() in the state config; pass `source`")
-    source <- regs[[1]]
+                                      session_factory = NULL, envir = parent.frame(), log_path = "scrape_log.csv",
+                                      shape = c("k12", "raw"), after = list()) {
+  shape <- match.arg(shape)
+  source <- registry_scraper_source(source)
+  id_col <- source$name_col
+  stopifnot(is.data.frame(registry), is.function(label), is.list(after))
+  expected_for <- function(platform) {
+    if (!is.list(expected_cols)) return(expected_cols)
+    if (!is.null(expected_cols[[platform]])) expected_cols[[platform]] else c("Title", "Location", "Posted_Date", "Link")
   }
-  stopifnot(is.data.frame(registry), inherits(source, "edjobs_scraper_source"), is.function(label))
   platforms <- as.list(platforms)
   pcol <- source$platform_col
   # safe_scrape() as the caller's environment sees it, as the per-platform blocks called it: a test that stubs
@@ -163,18 +173,21 @@ scrape_registry_platforms <- function(registry, platforms, source = NULL, label 
     parts <- lapply(seq_len(nrow(rows)), function(i) {
       row <- rows[i, , drop = FALSE]
       call <- scraper_call_for_row(source, row)
-      if (is.null(call)) stop("scrape_registry_platforms(): no scraper spec for platform '", row[[pcol]], "' (",
-                              row$District, ")")
-      df <- run_safely(row$District,
+      platform <- row[[pcol]]
+      name <- row[[id_col]]
+      if (is.null(call)) stop("scrape_registry_platforms(): no scraper spec for platform '", platform, "' (", name, ")")
+      df <- run_safely(name,
                         scrape_fn = function() run_scraper_call(call, session_factory = session_factory, envir = envir),
-                        expected_cols = expected_cols, log_path = log_path)
+                        expected_cols = expected_for(platform), log_path = log_path)
       if (nrow(df) > 0) {
-        df$District <- row$District
-        df$Posting_Source <- label(row)
+        # K-12: the registry's name always; raw: the scraper's own (JazzHR splits one board between two campuses).
+        if (shape == "k12" || !id_col %in% names(df)) df[[id_col]] <- name
+        if (shape == "k12") df$Posting_Source <- label(row)
+        if (is.function(after[[platform]])) df <- after[[platform]](df, row)
       }
       df
     })
-    registry_rows_to_k12(dplyr::bind_rows(parts))
+    if (shape == "raw") dplyr::bind_rows(parts) else registry_rows_to_k12(dplyr::bind_rows(parts))
   })
   if (!is.null(names(platforms))) names(out) <- names(platforms)
   out
@@ -198,4 +211,18 @@ registry_rows_to_k12 <- function(df) {
   }
   out$date_posted <- standardize_date(out$date_posted)
   out
+}
+
+# The registry source a stage runs from: NULL, the session's first registry; a string, the one whose `where` is it.
+registry_scraper_source <- function(source) {
+  if (inherits(source, "edjobs_scraper_source")) return(source)
+  regs <- Filter(function(s) identical(s$kind, "registry"), state_scraper_sources())
+  if (is.null(source)) {
+    if (length(regs) == 0) stop("scrape_registry_platforms(): no scraper_registry() in the state config; pass `source`")
+    return(regs[[1]])
+  }
+  stopifnot(is.character(source), length(source) == 1)
+  hit <- Filter(function(s) identical(s$where, source), regs)
+  if (length(hit) == 0) stop("scrape_registry_platforms(): no registry '", source, "' in the state config")
+  hit[[1]]
 }

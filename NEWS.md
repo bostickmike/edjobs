@@ -1,3 +1,11 @@
+# edjobs 0.94.0
+
+* **Direct-board stage, higher ed** (review step 5, slice B): `scrape_registry_platforms(shape = "raw")` keeps each
+  scraper's own columns and adds the registry's name column (`Institution`) unless the scraper set it (JazzHR's parser
+  splits Montana Tech and Highlands College). `after` runs a hook per platform on a non-empty result (NEOGOV's shared
+  board assigned to campuses). `source` may name a registry by its `where` ("he_institution_registry.csv"), and
+  `expected_cols` may be a list by platform. Montana's higher-ed chunk (12 platforms) replays identically through it.
+
 # edjobs 0.93.0
 
 * **Trends tabs (K-12 and higher ed):** the multi-year plot's legend sits under the date axis, anchored left, titled
