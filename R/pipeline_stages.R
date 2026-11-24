@@ -138,7 +138,8 @@ registry_posting_source <- function(row) {
 #' @param label Function of a registry row giving the row's `Posting_Source`; [registry_posting_source()].
 #' @param expected_cols What [safe_scrape()] returns on a failure.
 #' @param session_factory Called (no arguments) for a chromote session, for specs with `session = TRUE`.
-#' @param envir Where the state's scraper functions are.
+#' @param envir Where the state's scraper functions are, and the `safe_scrape()` used (the package's unless `envir`
+#'   has its own, such as a test's stub).
 #' @param log_path The scrape log, as [safe_scrape()].
 #' @return A list of data frames, one per group, each with `title`, `date_posted` (a Date), `position` (NA),
 #'   `location`, `url`, `District`, `Posting_Source`, and the four posted-pay columns when the scraper returned any.
@@ -154,6 +155,9 @@ scrape_registry_platforms <- function(registry, platforms, source = NULL, label 
   stopifnot(is.data.frame(registry), inherits(source, "edjobs_scraper_source"), is.function(label))
   platforms <- as.list(platforms)
   pcol <- source$platform_col
+  # safe_scrape() as the caller's environment sees it, as the per-platform blocks called it: a test that stubs
+  # safe_scrape there (the state's pipeline dry run) reaches the stage too, instead of the live sites.
+  run_safely <- get0("safe_scrape", envir = envir, mode = "function", ifnotfound = safe_scrape)
   out <- lapply(platforms, function(group) {
     rows <- registry[registry[[pcol]] %in% group, , drop = FALSE]
     parts <- lapply(seq_len(nrow(rows)), function(i) {
@@ -161,7 +165,7 @@ scrape_registry_platforms <- function(registry, platforms, source = NULL, label 
       call <- scraper_call_for_row(source, row)
       if (is.null(call)) stop("scrape_registry_platforms(): no scraper spec for platform '", row[[pcol]], "' (",
                               row$District, ")")
-      df <- safe_scrape(row$District,
+      df <- run_safely(row$District,
                         scrape_fn = function() run_scraper_call(call, session_factory = session_factory, envir = envir),
                         expected_cols = expected_cols, log_path = log_path)
       if (nrow(df) > 0) {

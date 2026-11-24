@@ -225,3 +225,17 @@ test_that("registry_posting_source uses the column, else the district's default"
   expect_identical(registry_posting_source(data.frame(District = "X SD", Posting_Source = "")), "X SD site (direct board)")
   expect_identical(registry_posting_source(data.frame(District = "X SD")), "X SD site (direct board)")
 })
+
+test_that("scrape_registry_platforms uses the caller's safe_scrape, so a pipeline dry run's stub reaches it", {
+  dir <- withr::local_tempdir(); withr::local_dir(dir)
+  called <- character(0)
+  fetch_alpha_postings <- function(url) stop("the live scraper must not run")
+  safe_scrape <- function(source_name, scrape_fn, expected_cols, log_path = NULL) {
+    called <<- c(called, source_name)
+    data.frame(Title = "Stub", Location = "", Posted_Date = "2026-11-01", Link = "u")
+  }
+  out <- scrape_registry_platforms(toy_registry(), "AlphaHeuristic", source = toy_source())
+  expect_identical(called, "Alpha SD")
+  expect_identical(out[[1]]$title, "Stub")
+  expect_false(file.exists("scrape_log.csv"))
+})

@@ -29,7 +29,8 @@ with several names is one group (a family read by two platform modes). Names, wh
 
 \item{session_factory}{Called (no arguments) for a chromote session, for specs with \code{session = TRUE}.}
 
-\item{envir}{Where the state's scraper functions are.}
+\item{envir}{Where the state's scraper functions are, and the \code{safe_scrape()} used (the package's unless \code{envir}
+has its own, such as a test's stub).}
 
 \item{log_path}{The scrape log, as \code{\link[=safe_scrape]{safe_scrape()}}.}
 }
