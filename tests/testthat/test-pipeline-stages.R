@@ -141,3 +141,87 @@ test_that("refresh_file_columns' then and relationship reproduce the SAIPE and l
                                     expected_cols = c("District", "Free_Reduced_Lunch_Share"), relationship = "many-to-one",
                                     config = f$config))
 })
+
+# --- scrape_registry_platforms() (slice 4) -----------------------------------------------------------------------
+
+toy_registry <- function() {
+  data.frame(District = c("Alpha SD", "Beta SD", "Gamma SD", "Delta SD", "Echo SD"),
+             Platform = c("AlphaHeuristic", "Fam", "FamText", "Fam", "Skip"),
+             Job_Link = c("https://alpha.example/jobs", "https://beta.example/jobs", "https://gamma.example/jobs",
+                          "https://delta.example/jobs", "https://echo.example/jobs"),
+             City = c("Alpha", "Beta", "Gamma", NA, "Echo"),
+             Posting_Source = c("Alpha board (direct board)", "", "Gamma board (direct board)", NA, ""),
+             stringsAsFactors = FALSE)
+}
+
+toy_source <- function() {
+  scraper_registry(toy_registry(), "District", "toy registry",
+    specs = list(Fam = scraper_spec("fetch_fam_postings", list("Job_Link", registry_text("City"))),
+                 FamText = scraper_spec("fetch_fam_postings", list("Job_Link", registry_text("City"), function(row) "text"))),
+    fallback = function(platform, row) {
+      if (grepl("Heuristic$", platform)) scraper_spec(paste0("fetch_", tolower(sub("Heuristic$", "", platform)), "_postings"), "Job_Link")
+    })
+}
+
+test_that("scrape_registry_platforms runs each row's spec, labels it, and keeps groups apart", {
+  dir <- withr::local_tempdir(); withr::local_dir(dir)
+  calls <- list()
+  fetch_alpha_postings <- function(url) {
+    calls[[length(calls) + 1]] <<- list("alpha", url)
+    data.frame(Title = "Teacher", Location = "Alpha", Posted_Date = "11/03/2026", Link = paste0(url, "/1"))
+  }
+  fetch_fam_postings <- function(url, city, mode = "html") {
+    calls[[length(calls) + 1]] <<- list("fam", url, city, mode)
+    if (grepl("delta", url)) stop("site down")
+    data.frame(Title = c("Aide", "Cook"), Location = city, Posted_Date = c("2026-11-01", NA),
+               Link = paste0(url, c("/a", "/b")), Pay_Min = c(15, NA), Pay_Max = NA_real_,
+               Pay_Unit = c("hour", NA), Pay_Text = c("$15/hour", NA))
+  }
+  out <- scrape_registry_platforms(toy_registry(), list(alpha = "AlphaHeuristic", fam = c("Fam", "FamText")),
+                                   source = toy_source())
+  expect_named(out, c("alpha", "fam"))
+  expect_identical(calls, list(list("alpha", "https://alpha.example/jobs"),
+                               list("fam", "https://beta.example/jobs", "Beta", "html"),
+                               list("fam", "https://gamma.example/jobs", "Gamma", "text"),
+                               list("fam", "https://delta.example/jobs", NA_character_, "html")))
+  expect_identical(out$alpha, data.frame(title = "Teacher", date_posted = as.Date("2026-11-03"), position = NA_character_,
+                                         location = "Alpha", url = "https://alpha.example/jobs/1", District = "Alpha SD",
+                                         Posting_Source = "Alpha board (direct board)"))
+  # Registry order within a group; a blank label falls back to the district's; Delta's failure is logged, not fatal.
+  expect_identical(out$fam$District, c("Beta SD", "Beta SD", "Gamma SD", "Gamma SD"))
+  expect_identical(out$fam$Posting_Source, rep(c("Beta SD site (direct board)", "Gamma board (direct board)"), each = 2))
+  expect_identical(out$fam$Pay_Text, c("$15/hour", NA, "$15/hour", NA))
+  expect_identical(out$fam$date_posted, as.Date(c("2026-11-01", NA, "2026-11-01", NA)))
+  log <- utils::read.csv("scrape_log.csv")
+  expect_identical(log$source, c("Alpha SD", "Beta SD", "Gamma SD", "Delta SD"))
+  expect_identical(log$status, c("ok", "ok", "ok", "error"))
+})
+
+test_that("scrape_registry_platforms returns the empty K-12 frame for a group with no rows, and stops on no spec", {
+  dir <- withr::local_tempdir(); withr::local_dir(dir)
+  out <- scrape_registry_platforms(toy_registry(), "NobodyHeuristic", source = toy_source())
+  expect_length(out, 1)
+  expect_identical(names(out[[1]]), c("title", "date_posted", "position", "location", "url", "District", "Posting_Source"))
+  expect_s3_class(out[[1]]$date_posted, "Date")
+  expect_equal(nrow(out[[1]]), 0)
+  expect_error(scrape_registry_platforms(toy_registry(), "Skip", source = toy_source()), "no scraper spec for platform 'Skip'")
+})
+
+test_that("a group's dates are standardized together, as the per-platform blocks did", {
+  # parse_date_time() picks formats from the whole vector: the stage must not merge groups before parsing.
+  dir <- withr::local_tempdir(); withr::local_dir(dir)
+  reg <- data.frame(District = c("A", "B"), Platform = c("AHeuristic", "BHeuristic"), Job_Link = c("a", "b"))
+  fetch_a_postings <- function(url) data.frame(Title = "x", Location = "", Posted_Date = "03/04/2026", Link = url)
+  fetch_b_postings <- function(url) data.frame(Title = "y", Location = "", Posted_Date = c("13/04/2026", "14/04/2026", "03/04/2026"), Link = url)
+  src <- scraper_registry(reg, "District", "r", fallback = function(platform, row)
+    scraper_spec(paste0("fetch_", tolower(sub("Heuristic$", "", platform)), "_postings"), "Job_Link"))
+  out <- scrape_registry_platforms(reg, c("AHeuristic", "BHeuristic"), source = src)
+  expect_identical(out[[1]]$date_posted, standardize_date("03/04/2026"))
+  expect_identical(out[[2]]$date_posted, standardize_date(c("13/04/2026", "14/04/2026", "03/04/2026")))
+})
+
+test_that("registry_posting_source uses the column, else the district's default", {
+  expect_identical(registry_posting_source(data.frame(District = "X SD", Posting_Source = "X board")), "X board")
+  expect_identical(registry_posting_source(data.frame(District = "X SD", Posting_Source = "")), "X SD site (direct board)")
+  expect_identical(registry_posting_source(data.frame(District = "X SD")), "X SD site (direct board)")
+})

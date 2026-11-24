@@ -22,7 +22,7 @@ k12_trends_panel(
 \item{slider_label}{\code{TRUE} to show the \code{k12_slider_label} text output above the slider (the state's server must
 then define it).}
 
-\item{counting_note}{\code{NULL}, or tags/strings for a note under the plot on how postings are counted.}
+\item{counting_note}{\code{NULL}, or tags/strings for a footnote at the bottom of the tab on how postings are counted.}
 }
 \value{
 A bslib \code{nav_panel()}.

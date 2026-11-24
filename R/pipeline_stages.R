@@ -107,3 +107,91 @@ refresh_source_record_links <- function(files = c("salarymap2.csv", "salarymap.c
   for (p in paths) utils::write.csv(add_source_record_links(utils::read.csv(p, fileEncoding = "UTF-8")), p, row.names = FALSE)
   invisible(paths)
 }
+
+#' A registry row's posting-source label
+#'
+#' The default `label` for [scrape_registry_platforms()]: the row's `Posting_Source` column when it has one, else
+#' "<District> site (direct board)". A label is what the spells and the weekly checks call the board, so a district
+#' keeps its label when its scraper changes (a one-off moved into a family reader).
+#' @param row One registry row.
+#' @return One string.
+#' @export
+registry_posting_source <- function(row) {
+  v <- registry_text("Posting_Source")(row)
+  if (is.na(v)) paste0(row$District, " site (direct board)") else v
+}
+
+#' Scrape the registry's direct boards, platform by platform
+#'
+#' The K-12 "direct board" stage (2026-11-17 package review, step 5, slice 4): every registry row on the given
+#' platforms is scraped through its `scraper_spec()` ([scraper_registry()]'s specs or fallback, the same call the
+#' live check and the repro script make), under [safe_scrape()] with the district as the source name, and its rows
+#' put in the K-12 columns. A state lists its platforms; a district on one of them is a registry row, with no code.
+#'
+#' Each group's dates go through [standardize_date()] together, as the per-platform blocks this replaces did: the
+#' parser picks its formats from the whole vector, so splitting or merging groups can change how an ambiguous date
+#' reads.
+#' @param registry The registry (a data frame with `District` and the platform column).
+#' @param platforms The groups, in order: a list (or character vector) whose elements are platform names; an element
+#'   with several names is one group (a family read by two platform modes). Names, when given, name the output.
+#' @param source The [scraper_registry()] holding the specs, by default the session's first registry source.
+#' @param label Function of a registry row giving the row's `Posting_Source`; [registry_posting_source()].
+#' @param expected_cols What [safe_scrape()] returns on a failure.
+#' @param session_factory Called (no arguments) for a chromote session, for specs with `session = TRUE`.
+#' @param envir Where the state's scraper functions are.
+#' @param log_path The scrape log, as [safe_scrape()].
+#' @return A list of data frames, one per group, each with `title`, `date_posted` (a Date), `position` (NA),
+#'   `location`, `url`, `District`, `Posting_Source`, and the four posted-pay columns when the scraper returned any.
+#' @export
+scrape_registry_platforms <- function(registry, platforms, source = NULL, label = registry_posting_source,
+                                      expected_cols = c("Title", "Location", "Posted_Date", "Link"),
+                                      session_factory = NULL, envir = parent.frame(), log_path = "scrape_log.csv") {
+  if (is.null(source)) {
+    regs <- Filter(function(s) identical(s$kind, "registry"), state_scraper_sources())
+    if (length(regs) == 0) stop("scrape_registry_platforms(): no scraper_registry() in the state config; pass `source`")
+    source <- regs[[1]]
+  }
+  stopifnot(is.data.frame(registry), inherits(source, "edjobs_scraper_source"), is.function(label))
+  platforms <- as.list(platforms)
+  pcol <- source$platform_col
+  out <- lapply(platforms, function(group) {
+    rows <- registry[registry[[pcol]] %in% group, , drop = FALSE]
+    parts <- lapply(seq_len(nrow(rows)), function(i) {
+      row <- rows[i, , drop = FALSE]
+      call <- scraper_call_for_row(source, row)
+      if (is.null(call)) stop("scrape_registry_platforms(): no scraper spec for platform '", row[[pcol]], "' (",
+                              row$District, ")")
+      df <- safe_scrape(row$District,
+                        scrape_fn = function() run_scraper_call(call, session_factory = session_factory, envir = envir),
+                        expected_cols = expected_cols, log_path = log_path)
+      if (nrow(df) > 0) {
+        df$District <- row$District
+        df$Posting_Source <- label(row)
+      }
+      df
+    })
+    registry_rows_to_k12(dplyr::bind_rows(parts))
+  })
+  if (!is.null(names(platforms))) names(out) <- names(platforms)
+  out
+}
+
+# A group's scraped rows in the K-12 columns (the transmute every per-platform block wrote), dates standardized.
+registry_rows_to_k12 <- function(df) {
+  pay <- c("Pay_Min", "Pay_Max", "Pay_Unit", "Pay_Text")
+  if (nrow(df) == 0) {
+    out <- data.frame(title = character(0), date_posted = character(0), position = character(0),
+                      location = character(0), url = character(0), District = character(0),
+                      Posting_Source = character(0), stringsAsFactors = FALSE)
+  } else {
+    out <- data.frame(title = df$Title, date_posted = df$Posted_Date, position = NA_character_,
+                      location = df$Location, url = df$Link, District = df$District,
+                      Posting_Source = df$Posting_Source, stringsAsFactors = FALSE)
+    if (any(pay %in% names(df))) {
+      df <- ensure_posted_pay_columns(df)
+      out[pay] <- df[pay]
+    }
+  }
+  out$date_posted <- standardize_date(out$date_posted)
+  out
+}
