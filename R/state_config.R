@@ -57,6 +57,10 @@
 #' @param drift_intro The drift report's opening explanation ([build_drift_report_markdown()]), or NULL for the
 #'   package's.
 #' @param salary_checks What the weekly salary check ([salary_drift_step()]) looks at: a [salary_checks()], or NULL.
+#' @param stale_rule The rule [flag_stale_board_postings()] applies to the state's board ads: a [stale_board_rule()]
+#'   (its school-year start, how many school years back the cutoff is, and the titles it never flags). The default is
+#'   `stale_board_rule()`: ads from before the July 1 that began the previous school year, other than standing pools
+#'   and ongoing roles.
 #' @param autofix Settings for the auto-fix issue: `scraper_files` (the
 #'   state's scraper files, read as text), `fixtures_by` (`"name"` or
 #'   `"tests"`, see `gather_autofix_evidence()`) and `fixture_example` (a path
@@ -67,7 +71,7 @@ state_config <- function(state, fips, app_dir, reference_tables = list(), feed =
                          scraper_sources = list(), autofix = list(), timezone = NULL, oews_areas = NULL,
                          county_suffix = NULL, k12_source_names = NULL, drift_min_mean = 3, direct_registry = NULL,
                          saipe_gaps = character(0), canonical_source_name = NULL, drift_intro = NULL,
-                         salary_checks = NULL) {
+                         salary_checks = NULL, stale_rule = stale_board_rule()) {
   stopifnot(is.character(state), length(state) == 1, nzchar(state),
             is.character(fips), grepl("^\\d{2}$", fips), is.character(app_dir), length(app_dir) == 1,
             is.list(reference_tables))
@@ -102,12 +106,13 @@ state_config <- function(state, fips, app_dir, reference_tables = list(), feed =
   if (!is.null(canonical_source_name) && !is.function(canonical_source_name)) stop("canonical_source_name must be a function or NULL")
   if (!is.null(drift_intro) && !(is.character(drift_intro) && length(drift_intro) == 1)) stop("drift_intro must be one string or NULL")
   if (!is.null(salary_checks) && !inherits(salary_checks, "edjobs_salary_checks")) stop("salary_checks must come from salary_checks()")
+  if (!inherits(stale_rule, "edjobs_stale_rule")) stop("stale_rule must come from stale_board_rule()")
   structure(list(state = state, fips = fips, timezone = timezone, oews_areas = oews_areas, county_suffix = county_suffix,
                  app_dir = app_dir, reference_tables = reference_tables, feed = feed,
                  scraper_sources = scraper_sources, autofix = autofix,
                  k12_source_names = k12_source_names, drift_min_mean = drift_min_mean, direct_registry = direct_registry,
                  saipe_gaps = saipe_gaps, canonical_source_name = canonical_source_name, drift_intro = drift_intro,
-                 salary_checks = salary_checks,
+                 salary_checks = salary_checks, stale_board_rule = stale_rule,
                  drift_baseline_from = if (is.null(drift_baseline_from)) NULL else as.Date(drift_baseline_from)),
             class = "edjobs_state_config")
 }

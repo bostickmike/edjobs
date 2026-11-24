@@ -22,7 +22,8 @@ state_config(
   saipe_gaps = character(0),
   canonical_source_name = NULL,
   drift_intro = NULL,
-  salary_checks = NULL
+  salary_checks = NULL,
+  stale_rule = stale_board_rule()
 )
 }
 \arguments{
@@ -92,6 +93,11 @@ corroboration (\code{\link[=corroborate_drift_step]{corroborate_drift_step()}}) 
 package's.}
 
 \item{salary_checks}{What the weekly salary check (\code{\link[=salary_drift_step]{salary_drift_step()}}) looks at: a \code{\link[=salary_checks]{salary_checks()}}, or NULL.}
+
+\item{stale_rule}{The rule \code{\link[=flag_stale_board_postings]{flag_stale_board_postings()}} applies to the state's board ads: a \code{\link[=stale_board_rule]{stale_board_rule()}}
+(its school-year start, how many school years back the cutoff is, and the titles it never flags). The default is
+\code{stale_board_rule()}: ads from before the July 1 that began the previous school year, other than standing pools
+and ongoing roles.}
 }
 \value{
 A list of class \code{edjobs_state_config}.
