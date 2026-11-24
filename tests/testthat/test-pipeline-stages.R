@@ -295,3 +295,17 @@ test_that("a source can be named by its where, and expected_cols can differ by p
   expect_identical(names(out$shared), c("Title", "Location", "Posted_Date", "Link"))
   expect_error(scrape_registry_platforms(he_toy_registry(), "JobBoard", source = "nope"), "no registry 'nope'")
 })
+
+test_that("platforms = NULL makes each registry row its own group, in the registry's order", {
+  dir <- withr::local_tempdir(); withr::local_dir(dir)
+  order_seen <- character(0)
+  fetch_board_postings <- function(url) { order_seen <<- c(order_seen, url); data.frame(Title = "P", Location = "", Posted_Date = NA, Link = url) }
+  fetch_shared_postings <- function(url) { order_seen <<- c(order_seen, url); data.frame(Title = "S", Location = "", Posted_Date = NA, Link = url) }
+  reg <- he_toy_registry()[c(2, 1), ]   # the file order, not the platform order
+  out <- scrape_registry_platforms(reg, NULL, source = he_toy_source(), shape = "raw")
+  expect_named(out, c("Beta U", "Alpha College"))
+  expect_identical(order_seen, c("https://beta.example/feed", "https://alpha.example/feed"))
+  expect_identical(vapply(out, nrow, integer(1)), c("Beta U" = 1L, "Alpha College" = 1L))
+  log <- utils::read.csv("scrape_log.csv")
+  expect_identical(log$source, c("Beta U", "Alpha College"))
+})

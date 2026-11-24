@@ -134,6 +134,7 @@ registry_posting_source <- function(row) {
 #' @param registry The registry (a data frame with `District` and the platform column).
 #' @param platforms The groups, in order: a list (or character vector) whose elements are platform names; an element
 #'   with several names is one group (a family read by two platform modes). Names, when given, name the output.
+#'   `NULL`: every registry row is its own group, in the registry's order, named by its name column.
 #' @param source The [scraper_registry()] holding the specs, or its `where` ("he_institution_registry.csv"); by default
 #'   the session's first registry source. Its name column ("District", "Institution") names the log entries.
 #' @param label Function of a registry row giving the row's `Posting_Source` (k12 shape); [registry_posting_source()].
@@ -163,13 +164,15 @@ scrape_registry_platforms <- function(registry, platforms, source = NULL, label 
     if (!is.list(expected_cols)) return(expected_cols)
     if (!is.null(expected_cols[[platform]])) expected_cols[[platform]] else c("Title", "Location", "Posted_Date", "Link")
   }
-  platforms <- as.list(platforms)
   pcol <- source$platform_col
+  # NULL: every registry row its own group, in file order (a state's frames keep the registry's order).
+  groups <- if (is.null(platforms)) as.list(seq_len(nrow(registry))) else lapply(as.list(platforms), function(g) which(registry[[pcol]] %in% g))
+  group_names <- if (is.null(platforms)) as.character(registry[[id_col]]) else names(platforms)
   # safe_scrape() as the caller's environment sees it, as the per-platform blocks called it: a test that stubs
   # safe_scrape there (the state's pipeline dry run) reaches the stage too, instead of the live sites.
   run_safely <- get0("safe_scrape", envir = envir, mode = "function", ifnotfound = safe_scrape)
-  out <- lapply(platforms, function(group) {
-    rows <- registry[registry[[pcol]] %in% group, , drop = FALSE]
+  out <- lapply(groups, function(idx) {
+    rows <- registry[idx, , drop = FALSE]
     parts <- lapply(seq_len(nrow(rows)), function(i) {
       row <- rows[i, , drop = FALSE]
       call <- scraper_call_for_row(source, row)
@@ -189,7 +192,7 @@ scrape_registry_platforms <- function(registry, platforms, source = NULL, label 
     })
     if (shape == "raw") dplyr::bind_rows(parts) else registry_rows_to_k12(dplyr::bind_rows(parts))
   })
-  if (!is.null(names(platforms))) names(out) <- names(platforms)
+  if (!is.null(group_names)) names(out) <- group_names
   out
 }
 
