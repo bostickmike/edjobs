@@ -115,3 +115,22 @@ test_that("css_board_spec() resolves a registry row to the fetch call with its r
   expect_equal(call$args[[2]], "Hometown")
   expect_equal(call$args[[3]]$Title_CSS, "h2")
 })
+
+test_that("an href with spaces keeps the page's own text, made absolute (the same page, 2026-11-24)", {
+  rule <- rule_of(Title_CSS = ".field--name-body table a[href$='.pdf']", Link_CSS = "@title")
+  result <- parse_css_board(read_fixture("css_board_lbhc_2026-11-24.html"), "http://lbhc.edu/Job_opportunities",
+                            "Crow Agency", rule)
+  expect_equal(result$Title, c("Dean of Student Services", "Human Resources Director", "Computer Science Instructor",
+                               "Ag Instructor"))
+  expect_equal(result$Link, paste0("http://lbhc.edu/sites/default/files/lbhc/humanresources/", c(
+    "Dean of Student Services App Packet.pdf", "Human Resources App Packet.pdf",
+    "Computer_Science_Instructor_Position.pdf", "Ag_Instructor.pdf")))
+  expect_false(anyNA(result$Link))
+})
+
+test_that("css_board_absolute(): relative, rooted, absolute, query-only and unjoinable hrefs", {
+  expect_equal(css_board_absolute(c("a b.pdf", "/x y/z.pdf", "https://h.org/p q", "?q=1", "http://[bad"),
+                                  "http://site.org/dir/page"),
+               c("http://site.org/dir/a b.pdf", "http://site.org/x y/z.pdf", "https://h.org/p q",
+                 "http://site.org/dir/page?q=1", "http://[bad"))
+})

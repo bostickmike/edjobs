@@ -148,9 +148,29 @@ parse_css_board <- function(html_text, url, location, rule) {
   if (nzchar(get("Max_Title_Chars"))) keep <- keep & nchar(title) <= as.integer(get("Max_Title_Chars"))
   if (!any(keep)) return(empty)
   href <- trimws(href[keep])
-  link <- ifelse(is.na(href) | !nzchar(href), url, xml2::url_absolute(ifelse(is.na(href), "", href), url))
+  link <- ifelse(is.na(href) | !nzchar(href), url, css_board_absolute(ifelse(is.na(href), "", href), url))
   place <- place[keep]
   place <- ifelse(is.na(place) | !nzchar(place), location, place)
   data.frame(Title = title[keep], Location = as.character(place), Posted_Date = NA_character_,
              Link = as.character(link), stringsAsFactors = FALSE)
+}
+
+#' Links as a page writes them, made absolute
+#'
+#' `xml2::url_absolute()` gives NA for an href with a space in it, which small sites write ("/files/Dean of
+#' Students App Packet.pdf", a college page 2026-11-24). Spaces are encoded for the join and put back after, so the
+#' link is the page's own (the same text the one-off parsers stored, and so the same posting link). An href that
+#' still can't be joined is kept when absolute, joined to the page's host when it starts with "/", else the page.
+#' @param href Hrefs as written on the page.
+#' @param url The page's address.
+#' @return Absolute links.
+#' @keywords internal
+css_board_absolute <- function(href, url) {
+  spaced <- grepl(" ", href, fixed = TRUE)
+  out <- xml2::url_absolute(gsub(" ", "%20", href, fixed = TRUE), url)
+  out[spaced] <- gsub("%20", " ", out[spaced], fixed = TRUE)
+  host <- sub("^(https?://[^/?#]+).*$", "\\1", url)
+  bad <- is.na(out)
+  out[bad] <- ifelse(grepl("^https?://", href[bad]), href[bad], ifelse(startsWith(href[bad], "/"), paste0(host, href[bad]), url))
+  out
 }
