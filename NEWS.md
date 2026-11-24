@@ -1,3 +1,15 @@
+# edjobs 0.89.0
+
+* **`scraper_spec(parse_fn = )`**: a platform's dispatch entry can name its parser when it isn't the fetch
+  function's `parse_*` twin. `resolve_scraper_call()` returns it, and the auto-fix evidence
+  (`gather_autofix_evidence()`, `fixtures_by = "tests"`) finds a source's fixtures from the tests of the fetch
+  function and of that parser. Until now the parser was always guessed by swapping `fetch_` for `parse_`, which
+  for `fetch_css_board_postings()` gave `parse_css_board_postings` (no such function), so a test block titled
+  `parse_css_board: <source>` gave the issue no fixtures. Named: `css_board_spec()` (`parse_css_board`),
+  AppliTrack (`parse_applitrack_output`), SchoolSpring (`parse_schoolspring_json`), Red Rover
+  (`parse_redrover_json`), NEOGOV (`parse_neogov_html`), Trakstar (`parse_trakstar_list`). A test checks every
+  default spec's parser exists and is the one its fetch function calls.
+
 # edjobs 0.88.0
 
 * **SmartSites (ParentSquare) district pages** (`fetch_smartsites_postings(url, location)`,

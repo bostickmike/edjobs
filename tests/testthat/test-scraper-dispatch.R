@@ -175,6 +175,51 @@ test_that("fixtures_used_by_tests finds a scraper's fixtures from its tests, dat
   expect_equal(fixtures_used_by_tests(NA_character_, tests), character(0))
 })
 
+test_that("a spec's parse_fn: its parser's tests give the fixtures when it isn't the parse_* twin", {
+  tests <- list("test-boards.R" = c(
+    'test_that("parse_css_board: Zeta College, accordion", {',
+    '  x <- read_page(test_path("fixtures", "zeta_jobs_2026-11-24.html"))',
+    '})',
+    'test_that("parse_css_board: Eta College, cards", {',
+    '  x <- read_page(test_path("fixtures", "eta_jobs.html"))',
+    '})'))
+  # The twin guess (parse_css_board_postings) names no test.
+  expect_equal(fixtures_used_by_tests("fetch_css_board_postings", tests, "Zeta College"), character(0))
+  expect_equal(fixtures_used_by_tests("fetch_css_board_postings", tests, "Zeta College", parse_fn = "parse_css_board"),
+               "zeta_jobs_2026-11-24.html")
+  expect_equal(fixtures_used_by_tests("fetch_css_board_postings", tests, parse_fn = "parse_css_board"),
+               c("zeta_jobs_2026-11-24.html", "eta_jobs.html"))
+
+  reg <- scraper_registry(data.frame(Institution = "Zeta College", Platform = "CSSBoard", Feed_URL = "u", Town = "Z",
+                                     stringsAsFactors = FALSE), "Institution", "registry",
+                          specs = list(CSSBoard = css_board_spec(data.frame(Source = "Zeta College", Title_CSS = "h2"),
+                                                                 "Feed_URL", "Town", "Institution")))
+  call <- resolve_scraper_call("Zeta College", list(reg))
+  expect_equal(call$parse_fn, "parse_css_board")
+  root <- withr::local_tempdir()
+  dir.create(file.path(root, "tests", "testthat", "fixtures"), recursive = TRUE)
+  writeLines(tests[[1]], file.path(root, "tests", "testthat", "test-boards.R"))
+  ev <- gather_autofix_evidence(call, "Zeta College", NA_character_, repo_root = root, scraper_files = character(0),
+                                fixtures_by = "tests")
+  expect_equal(ev$fetch_fn, "fetch_css_board_postings")
+  expect_equal(ev$fixtures, "zeta_jobs_2026-11-24.html")
+
+  expect_null(scraper_spec("fetch_x", "Job_Link")$parse_fn)
+  expect_error(scraper_spec("fetch_x", "Job_Link", parse_fn = ""))
+  expect_error(scraper_spec("fetch_x", "Job_Link", parse_fn = c("a", "b")))
+})
+
+test_that("every default spec's parser exists and is the one its fetch function calls", {
+  ns <- asNamespace("edjobs")
+  for (platform in names(default_scraper_specs())) {
+    spec <- default_scraper_specs()[[platform]]
+    parser <- if (is.null(spec$parse_fn)) sub("^fetch_", "parse_", spec$fn) else spec$parse_fn
+    expect_true(exists(parser, envir = ns, inherits = FALSE), info = paste(platform, parser))
+    expect_match(paste(deparse(get(spec$fn, envir = ns)), collapse = "\n"), paste0(parser, "("), fixed = TRUE,
+                 info = paste(platform, spec$fn))
+  }
+})
+
 test_that("fixtures_named_for_source picks this district's fixture, not another's on the same parser", {
   files <- c("misc_districts/apptegy_niobrara_rendered.txt", "misc_districts/apptegy_platte2_rendered.txt",
              "misc_districts/apptegy_weston7_rendered.txt", "misc_districts/apptegy_weston7_rendered_2026-10-01.txt",

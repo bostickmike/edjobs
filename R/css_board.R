@@ -89,7 +89,8 @@ css_board_spec <- function(rules, url_col, place_col, name_col) {
   force(rules); force(name_col)
   scraper_spec("fetch_css_board_postings", list(
     url_col, registry_text(place_col),
-    function(row) css_board_rule(if (is.function(rules)) rules() else rules, row[[name_col]])))
+    function(row) css_board_rule(if (is.function(rules)) rules() else rules, row[[name_col]])),
+    parse_fn = "parse_css_board")
 }
 
 #' Fetch a CSS board's postings
