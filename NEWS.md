@@ -1,3 +1,15 @@
+# edjobs 0.86.0
+
+* **Live dashboard check** (`live_check_step()`, `check_live_dashboard()`; reusable workflow
+  `.github/workflows/live-check.yml`). Connect Cloud redeploys a state's app on every push to main, and every other
+  check runs before that push. This one reads the live page's "Refreshed on" date, from the HTML the server sends,
+  until it equals the latest `Archive_Date` in main's `allsum.csv` and `allsum_he.csv`. It reads again while
+  the page is Connect Cloud's "Loading..." page or still shows the previous date, for up to 40 minutes. A failure
+  (`stale`, `no_app`, `unreachable`) files one issue, or comments on the open one, and fails the run. A pass closes
+  that issue. On 2026-11-23 both live dashboards passed (MT November 23, WY November 20, the dates on their mains).
+  It checks the date only. After a change to code alone the date doesn't move, so a pass then shows the page loads
+  with the right data, not that it runs the new code.
+
 # edjobs 0.85.0
 
 * **Trakstar Hire boards** (`fetch_trakstar_postings()`, spec `Trakstar` on `Job_Link`; first used for St. Labre

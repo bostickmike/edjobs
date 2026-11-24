@@ -1,0 +1,112 @@
+# Live dashboard check for a state dashboard repo (edjobs::live_check_step(), 0.86.0).
+#
+# Connect Cloud redeploys the state's app on every push to main. Everything else checks the app before that push;
+# this checks the app Connect Cloud then serves: it reads the live page's "Refreshed on" date until it equals the
+# latest Archive_Date in main's allsum.csv / allsum_he.csv, or `wait_minutes` pass (a redeploy takes a while). On a
+# failure it files one issue ("Live dashboard check: ...") or comments on the open one, and the job fails; on a pass it
+# closes that issue. Installs edjobs at the caller's EDJOBS_VERSION, as presence.yml and weekly-run.yml do.
+#
+# Called from a state repo:
+#   on:
+#     schedule: [{ cron: '47 15 * * *' }]
+#     workflow_run: { workflows: ["Weekly job data refresh"], types: [completed] }
+#     push: { branches: [main], paths: ['Mt_Ed_Jobs/**', 'EDJOBS_VERSION'] }
+#     workflow_dispatch: {}
+#   permissions: { contents: read, issues: write }
+#   jobs:
+#     live:
+#       uses: bostickmike/edjobs/.github/workflows/live-check.yml@v0.86.0
+#       with:
+#         url: https://bostickmike-montana-education-jobs-dashboard.share.connect.posit.cloud
+#         app_dir: Mt_Ed_Jobs
+#
+# The weekly run's own data push (Actions token) starts no push-triggered workflow, so the caller listens for that
+# run's completion (workflow_run) instead.
+name: Live dashboard check (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      url:
+        description: The live dashboard URL
+        type: string
+        required: true
+      app_dir:
+        description: The app folder (Mt_Ed_Jobs), whose allsum.csv / allsum_he.csv give the expected date
+        type: string
+        required: true
+      wait_minutes:
+        description: How long to keep reading a page that is still loading or shows the previous date
+        type: number
+        default: 40
+      file_issue:
+        description: File (or close) the issue; false only reports in the run summary
+        type: boolean
+        default: true
+      edjobs_ref:
+        description: Install edjobs at this git ref instead of the caller's EDJOBS_VERSION (for testing a branch)
+        type: string
+        default: ''
+
+concurrency:
+  group: live-check-${{ github.repository }}
+  cancel-in-progress: true
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      ISSUE_TITLE: "Live dashboard check: the dashboard isn't showing main's data"
+    steps:
+      # main's tip when the job starts, not the commit the trigger saw: a workflow_run or a queued run should compare
+      # with the newest data.
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: 'release'
+          use-public-rspm: true
+
+      - name: Install edjobs at the pinned version
+        env:
+          EDJOBS_REF: ${{ inputs.edjobs_ref }}
+        run: |
+          Rscript -e 'ref <- Sys.getenv("EDJOBS_REF"); if (!nzchar(ref)) ref <- paste0("v", trimws(readLines("EDJOBS_VERSION")))' \
+                  -e 'install.packages("pak"); pak::pak(paste0("bostickmike/edjobs@", ref), ask = FALSE)'
+
+      - name: Read the live dashboard
+        env:
+          URL: ${{ inputs.url }}
+          APP_DIR: ${{ inputs.app_dir }}
+          WAIT: ${{ inputs.wait_minutes }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          Rscript -e 'edjobs::live_check_step(Sys.getenv("URL"), Sys.getenv("APP_DIR"), wait_minutes = as.numeric(Sys.getenv("WAIT")),' \
+                  -e '                        report_path = "/tmp/live_check_report.md", summary_path = Sys.getenv("GITHUB_STEP_SUMMARY"),' \
+                  -e '                        run_url = Sys.getenv("RUN_URL"))'
+
+      - name: File, update or close the issue
+        if: ${{ inputs.file_issue }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "in:title \"Live dashboard check\"" \
+                       --json number --jq '.[0].number // empty')
+          if [ -f /tmp/live_check_report.md ]; then
+            if [ -n "$existing" ]; then
+              gh issue comment "$existing" --repo "$GITHUB_REPOSITORY" --body-file /tmp/live_check_report.md
+            else
+              gh issue create --repo "$GITHUB_REPOSITORY" --title "$ISSUE_TITLE" --body-file /tmp/live_check_report.md
+            fi
+          elif [ -n "$existing" ]; then
+            gh issue close "$existing" --repo "$GITHUB_REPOSITORY" \
+              --comment "The live dashboard shows main's data again ([run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}))."
+          fi
+
+      - name: Fail the run if the live dashboard didn't pass
+        run: |
+          if [ -f /tmp/live_check_report.md ]; then cat /tmp/live_check_report.md; exit 1; fi
