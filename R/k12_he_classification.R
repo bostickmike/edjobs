@@ -722,8 +722,26 @@ extract_posted_pay <- function(text) {
     if (m[1] == -1) next
     starts <- as.integer(m); lens <- attr(m, "match.length")
     cs <- attr(m, "capture.start"); cl <- attr(m, "capture.length")
-    best <- NULL; best_score <- -Inf; skipped_end <- NA_integer_
+    best <- NULL; best_score <- -Inf; skipped_end <- NA_integer_; chain_end <- NA_integer_
     for (j in seq_along(starts)) {
+      # A pay grade's low-mid-high steps ("Salary Grade: 13A ($100,323-$125,404-$150,812)/yr", St. Labre's
+      # Trakstar board, 2026-11-23): the range runs from the first amount to the last, not the first two. The
+      # third amount's own match is part of the range, not an amount of its own. Only a rising chain whose top is at
+      # most twice the middle is a pay grade: "$20 - $25 - $3,000 signing bonus" stays $20-$25.
+      if (!is.na(chain_end) && starts[j] <= chain_end) next
+      third <- NA_real_
+      if (cl[j, 3] > 0) {
+        tail_txt <- substr(t, starts[j] + lens[j], starts[j] + lens[j] + 25)
+        tm <- regmatches(tail_txt, regexec("^\\s*(?:-|\u2013|\u2014)\\s*\\$\\s?((?:\\d{1,3}(?:,\\d{3})+|\\d+)(?:\\.\\d{1,3})?)\\*{0,2}",
+                                           tail_txt, perl = TRUE))[[1]]
+        mid <- to_num(substr(t, cs[j, 3], cs[j, 3] + cl[j, 3] - 1), NA)
+        if (length(tm) == 2 && !is.na(mid) && cl[j, 4] == 0 && !is.na(to_num(tm[2], NA)) && to_num(tm[2], NA) > mid &&
+            to_num(tm[2], NA) <= 2 * mid) {
+          third <- to_num(tm[2], NA)
+          lens[j] <- lens[j] + nchar(tm[1])
+          chain_end <- starts[j] + lens[j] - 1
+        }
+      }
       before <- tolower(substr(t, max(1, starts[j] - 60), starts[j] - 1))
       after <- tolower(substr(t, starts[j] + lens[j], starts[j] + lens[j] + 45))
       near_before <- substr(before, max(1, nchar(before) - 30), nchar(before))
@@ -771,6 +789,7 @@ extract_posted_pay <- function(text) {
       }
       cap <- function(k) if (cl[j, k] > 0) substr(t, cs[j, k], cs[j, k] + cl[j, k] - 1) else NA_character_
       lo <- to_num(cap(1), cap(2)); hi <- if (!is.na(cap(3))) to_num(cap(3), cap(4)) else lo
+      if (!is.na(third)) hi <- third
       # A high end written without "$" that is below the low end isn't one: Missoula County's "$24.00/hour - 2/hour
       # minimum" (a two-hour minimum shift, 2026-11-19) read as $2-$24 an hour and was blanked as implausible.
       if (!is.na(cap(3)) && !is.na(hi) && hi < lo &&

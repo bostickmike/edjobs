@@ -260,3 +260,19 @@ test_that("a full or half day written before the amount is a day rate", {
   expect_equal(p$Pay_Min, c(100, 55, 100))
   expect_equal(p$Pay_Unit, c("day", "day", NA))
 })
+
+test_that("a pay grade's low-mid-high steps read as the first to the last amount", {
+  # St. Labre's Trakstar board (2026-11-23): every classified and exempt grade is written this way.
+  p <- extract_posted_pay(c("Salary Grade: 13A ($100,323-$125,404-$150,812)/yr",
+                            "Job Code: 4B ($13.44 -$15.47 -$17.49)/hr.",
+                            "Salary Grade: 4B ($13.44–$15.47-$17.49)",
+                            "Salary Grade: 3B ($12.00- $13.81-$15.61)/hr."))
+  expect_equal(p$Pay_Min, c(100323, 13.44, 13.44, 12))
+  expect_equal(p$Pay_Max, c(150812, 17.49, 17.49, 15.61))
+  expect_equal(p$Pay_Unit, c("year", "hour", "hour", "hour"))
+  expect_equal(p$Pay_Text[1], "Salary Grade: 13A ($100,323-$125,404-$150,812)/yr")
+  # Only a rising chain with its top under twice the middle: a third amount that's something else isn't the top.
+  expect_equal(c(extract_posted_pay("$20 - $25 - $3,000 signing bonus")$Pay_Min,
+                 extract_posted_pay("$20 - $25 - $3,000 signing bonus")$Pay_Max), c(20, 25))
+  expect_equal(extract_posted_pay("$45,000-$50,000 - $1,000 stipend")$Pay_Max, 50000)
+})

@@ -498,3 +498,81 @@ test_that("a PeopleAdmin posting page with no HTML leaves only that posting's pa
   expect_equal(nrow(result), 9)
   expect_true(all(is.na(result$Pay_Min)) && all(is.na(result$Close_Date)))
 })
+
+# ---- Trakstar Hire ------------------------------------------------------------
+
+test_that("parse_jobposting_jsonld reads Trakstar's block despite the raw line breaks in its strings", {
+  # St. Labre's posting pages (2026-11-23) write the description's line breaks raw, which strict JSON forbids.
+  j <- parse_jobposting_jsonld(read_fixture("trakstar_posting_stlabre_fk0pace_2026-11-23.html"))
+  expect_equal(j$Date_Posted, "2026-06-29")
+  expect_equal(j$Organization, "St Labre Indian School")
+  expect_equal(j$Locality, "Ashland")
+  expect_true(is.na(j$Valid_Through))
+  expect_true(is.na(j$Pay_Min))
+})
+
+test_that("parse_trakstar_list reads each card's title, place and type, with the board's links and ids", {
+  p1 <- parse_trakstar_list(read_fixture("trakstar_stlabre_p1_2026-11-23.html"), "https://stlabre.hire.trakstar.com")
+  expect_equal(nrow(p1), 25)
+  expect_equal(p1$Title[1], "Director of Schools - To Begin 2026/2027 School Year")
+  expect_equal(p1$Location[1], "Ashland, Montana")
+  expect_equal(p1$Link[1], "https://stlabre.hire.trakstar.com/jobs/fk0pace/")
+  expect_equal(p1$Posting_ID[1], "trakstar:stlabre:fk0pace")
+  expect_equal(p1$Employment_Type[1], "Full-time")
+  # The city field sometimes holds "Ashland, MT" already: no second state.
+  expect_equal(p1$Location[p1$Title == "Administrative Assistant"], "Ashland, MT")
+  # The list's "&" is the card's own text, decoded once (the JSON-LD title is escaped twice).
+  expect_true("Director of Mission & Ministry Integration" %in% p1$Title)
+  expect_true(all(c("Pryor, Montana", "Saint Xavier, Montana") %in% p1$Location))
+  expect_true(all(is.na(p1$Pay_Min)))
+  expect_equal(nrow(parse_trakstar_list(read_fixture("trakstar_stlabre_p3_empty_2026-11-23.html"),
+                                        "https://stlabre.hire.trakstar.com")), 0)
+})
+
+test_that("parse_trakstar_posting_page takes the posted date from the block and the grade's pay from the description", {
+  director <- parse_trakstar_posting_page(read_fixture("trakstar_posting_stlabre_fk0pace_2026-11-23.html"))
+  expect_equal(director$Posted_Date, "2026-06-29")
+  expect_true(is.na(director$Close_Date))
+  expect_equal(c(director$Pay_Min, director$Pay_Max), c(100323, 150812))
+  expect_equal(director$Pay_Unit, "year")
+  expect_match(director$Pay_Text, "13A", fixed = TRUE)
+  # A teacher's page says "Certified Salary Schedule": no amount, no pay.
+  theology <- parse_trakstar_posting_page(read_fixture("trakstar_posting_stlabre_fk0pd1g_2026-11-23.html"))
+  expect_equal(theology$Posted_Date, "2025-12-02")
+  expect_true(is.na(theology$Pay_Min))
+  sub <- parse_trakstar_posting_page(read_fixture("trakstar_posting_stlabre_fk0p11a_2026-11-23.html"))
+  expect_equal(c(sub$Pay_Min, sub$Pay_Max, sub$Pay_Unit), c("14.28", "14.28", "hour"))
+  expect_true(all(is.na(unlist(parse_trakstar_posting_page(NA_character_)))))
+})
+
+test_that("fetch_trakstar_postings reads list pages until an empty one, then each posting's page", {
+  pages <- c(read_fixture("trakstar_stlabre_p1_2026-11-23.html"), read_fixture("trakstar_stlabre_p2_2026-11-23.html"),
+             read_fixture("trakstar_stlabre_p3_empty_2026-11-23.html"))
+  director <- read_fixture("trakstar_posting_stlabre_fk0pace_2026-11-23.html")
+  theology <- read_fixture("trakstar_posting_stlabre_fk0pd1g_2026-11-23.html")
+  seen <- character(0)
+  httr2::local_mocked_responses(function(req) {
+    seen <<- c(seen, req$url)
+    if (grepl("/jobs/fk0pace/", req$url, fixed = TRUE)) return(httr2::response(200, url = req$url, body = charToRaw(director)))
+    if (grepl("/jobs/fk0ztgo/", req$url, fixed = TRUE)) return(httr2::response(500, url = req$url))
+    if (grepl("/jobs/", req$url, fixed = TRUE)) return(httr2::response(200, url = req$url, body = charToRaw(theology)))
+    k <- if (grepl("p=3", req$url, fixed = TRUE)) 3 else if (grepl("p=2", req$url, fixed = TRUE)) 2 else 1
+    httr2::response(200, url = req$url, body = charToRaw(pages[k]))
+  })
+  r <- suppressMessages(fetch_trakstar_postings("https://stlabre.hire.trakstar.com/jobs/", detail_delay = 0))
+  expect_equal(nrow(r), 38)
+  expect_equal(sum(!grepl("/jobs/", seen)), 3)
+  expect_equal(sum(grepl("/jobs/", seen)), 38)
+  expect_equal(anyDuplicated(r$Posting_ID), 0)
+  d <- r[r$Posting_ID == "trakstar:stlabre:fk0pace", ]
+  expect_equal(c(d$Posted_Date, d$Pay_Max), c("2026-06-29", "150812"))
+  failed <- r[r$Posting_ID == "trakstar:stlabre:fk0ztgo", ]
+  expect_true(is.na(failed$Posted_Date))
+  expect_equal(failed$Title, "Administrative Assistant")
+  expect_true(all(c("Title", "Location", "Posted_Date", "Posting_ID", "Link", POSTED_PAY_COLUMNS, "Close_Date") %in% names(r)))
+
+  list_only <- suppressMessages(fetch_trakstar_postings("https://stlabre.hire.trakstar.com", details = FALSE))
+  expect_equal(nrow(list_only), 38)
+  expect_true(all(is.na(list_only$Posted_Date)))
+  expect_error(fetch_trakstar_postings("https://example.com/careers"), "hire.trakstar.com")
+})

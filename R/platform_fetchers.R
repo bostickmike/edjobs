@@ -492,13 +492,7 @@ parse_neogov_posting_page <- function(html_text) {
 #' @export
 parse_jobposting_jsonld <- function(html_text) {
   none <- jobposting_none()
-  if (is.null(html_text) || length(html_text) != 1 || is.na(html_text)) return(none)
-  blocks <- tryCatch(rvest::html_text(rvest::html_elements(rvest::read_html(html_text), "script[type='application/ld+json']")),
-                     error = function(e) character(0))
-  for (b in blocks) {
-    j <- tryCatch(jsonlite::fromJSON(b, simplifyVector = FALSE), error = function(e) NULL)
-    j <- jobposting_find(j)
-    if (is.null(j)) next
+  for (j in jobposting_blocks(html_text)) {
     # One odd block gives NA for that page, never an error for the board.
     row <- tryCatch(jobposting_row(j), error = function(e) {
       message("JobPosting block could not be read: ", conditionMessage(e))
@@ -507,6 +501,24 @@ parse_jobposting_jsonld <- function(html_text) {
     if (!is.null(row)) return(row)
   }
   none
+}
+
+# Every JobPosting object in a page's JSON-LD blocks, in page order (one per block: jobposting_find()).
+jobposting_blocks <- function(html_text) {
+  if (is.null(html_text) || length(html_text) != 1 || is.na(html_text)) return(list())
+  blocks <- tryCatch(rvest::html_text(rvest::html_elements(rvest::read_html(html_text), "script[type='application/ld+json']")),
+                     error = function(e) character(0))
+  out <- list()
+  for (b in blocks) {
+    j <- tryCatch(jsonlite::fromJSON(b, simplifyVector = FALSE), error = function(e) NULL)
+    # Trakstar writes the description's line breaks raw inside the JSON string, which strict JSON forbids
+    # (St. Labre's board, 2026-11-23: every posting page). Read as spaces, the block parses.
+    if (is.null(j)) j <- tryCatch(jsonlite::fromJSON(gsub("[\r\n\t]", " ", b), simplifyVector = FALSE),
+                                  error = function(e) NULL)
+    j <- jobposting_find(j)
+    if (!is.null(j)) out[[length(out) + 1]] <- j
+  }
+  out
 }
 
 jobposting_none <- function() {
