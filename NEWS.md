@@ -1,3 +1,17 @@
+# edjobs 0.87.0
+
+* **CSS boards** (`parse_css_board()`, `fetch_css_board_postings()`, `css_board_rules()`, `css_board_rule()`,
+  `css_board_spec()`; package review step 8, slice 4). One reader for job pages with no platform behind them whose
+  one-off parsers differed only in their selectors. Each source's selectors are a row of the state's own
+  `css_board_rules.csv`, keyed by its registry name: `Title_CSS`, optional `Item_CSS` (one element per posting; its
+  title, link and location are read inside it), `Link_CSS` (blank: the page; `@title`: the title's own `href`; or a
+  selector in the item), `Location_CSS` (falls back to the registry's place), `Board_CSS` (an element the board
+  always has: missing, the scrape stops with an error instead of reporting no postings), `Exclude_Regex`,
+  `Include_Regex`, `Max_Title_Chars` and `Max_Tries`. Links are made absolute against the page; titles are trimmed
+  and blanks dropped; repeated titles are kept. A state's registry rows use `Platform = CSSBoard` and
+  `css_board_spec(rules, url_col, place_col, name_col)` in its `scraper_specs()`. First used for five Montana
+  college pages, whose old parsers give the same rows on every captured fixture.
+
 # edjobs 0.86.0
 
 * **Live dashboard check** (`live_check_step()`, `check_live_dashboard()`; reusable workflow
