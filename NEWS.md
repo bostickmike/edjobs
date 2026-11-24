@@ -5,6 +5,10 @@
   date axis. Cause: the server draws both Trends plots 500px tall (`ggplotly(height = 500)`) while their containers
   were plotly's default 400px, so the axis and legend spilled onto what came next. Both containers (K-12 and higher
   ed) are now 500px.
+* K-12 Trends help popovers (Current and Multi-Year) now say what the counts leave out: "Counts full teaching
+  positions only: part-time teacher, substitute and coaching postings are not included." The charts count postings
+  classified Teacher; Part-Time Teacher, Substitute and Athletics are separate classes (Montana 2026-11-23: 318 Teacher
+  postings counted; 15 part-time teacher, 264 substitute and 183 athletics postings not).
 
 # edjobs 0.90.0
 

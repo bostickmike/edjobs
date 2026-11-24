@@ -11,6 +11,8 @@ test_that("k12_trends_panel shows the slider label and counting note only when a
   expect_match(plain, "Dist Z", fixed = TRUE)
   expect_no_match(plain, "k12_slider_label", fixed = TRUE)
   expect_no_match(plain, "alert-info", fixed = TRUE)
+  # Both popovers say what the counts leave out (Mike 2026-11-24), so a reader knows what the charts show.
+  expect_equal(lengths(regmatches(plain, gregexpr("Counts full teaching positions only: part-time teacher, substitute and coaching postings are not included.", plain, fixed = TRUE))), 2)
   full <- as.character(k12_trends_panel(now, k12sum, c(max(d) - 70, max(d)), slider_label = TRUE,
                                         counting_note = htmltools::tagList(htmltools::tags$strong("How: "), "once.")))
   expect_match(full, "id=\"k12_slider_label\"", fixed = TRUE)
