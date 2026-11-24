@@ -239,3 +239,59 @@ test_that("scrape_registry_platforms uses the caller's safe_scrape, so a pipelin
   expect_identical(out[[1]]$title, "Stub")
   expect_false(file.exists("scrape_log.csv"))
 })
+
+# --- scrape_registry_platforms(shape = "raw"): higher ed (slice 5) ----------------------------------------------
+
+he_toy_registry <- function() {
+  data.frame(Institution = c("Alpha College", "Beta U"), Platform = c("JobBoard", "Shared"),
+             Feed_URL = c("https://alpha.example/feed", "https://beta.example/feed"),
+             Job_Link = c("https://alpha.example", "https://beta.example"), stringsAsFactors = FALSE)
+}
+
+he_toy_source <- function() {
+  scraper_registry(he_toy_registry(), "Institution", "he toy registry",
+    specs = list(JobBoard = scraper_spec("fetch_board_postings", "Feed_URL"),
+                 Shared = scraper_spec("fetch_shared_postings", "Feed_URL")))
+}
+
+test_that("raw shape keeps the scraper's columns, adds the name column, and runs the after hook", {
+  dir <- withr::local_tempdir(); withr::local_dir(dir)
+  fetch_board_postings <- function(url) data.frame(Title = "Prof", Location = "X", Posted_Date = "2026-11-01", Link = url, Close_Date = "2026-12-01")
+  fetch_shared_postings <- function(url) data.frame(Title = c("A", "B"), Location = "Y", Posted_Date = NA, Link = url, Unit = c("m", "n"))
+  out <- scrape_registry_platforms(he_toy_registry(), list(board = "JobBoard", shared = "Shared"), source = he_toy_source(),
+                                   shape = "raw",
+                                   after = list(Shared = function(df, row) { df$Institution <- paste(df$Unit, row$Institution); df }))
+  expect_identical(names(out$board), c("Title", "Location", "Posted_Date", "Link", "Close_Date", "Institution"))
+  expect_identical(out$board$Institution, "Alpha College")
+  expect_identical(out$shared$Institution, c("m Beta U", "n Beta U"))
+  expect_false("Posting_Source" %in% names(out$board))
+  log <- utils::read.csv("scrape_log.csv")
+  expect_identical(log$source, c("Alpha College", "Beta U"))
+})
+
+test_that("raw shape keeps an id column the scraper set itself (JazzHR's campus split)", {
+  dir <- withr::local_tempdir(); withr::local_dir(dir)
+  fetch_board_postings <- function(url) data.frame(Title = "P", Location = "", Posted_Date = NA, Link = url, Institution = "Highlands College")
+  out <- scrape_registry_platforms(he_toy_registry()[1, ], "JobBoard", source = he_toy_source(), shape = "raw")
+  expect_identical(out[[1]]$Institution, "Highlands College")
+})
+
+test_that("k12 shape always takes the registry's name, as the old blocks did", {
+  dir <- withr::local_tempdir(); withr::local_dir(dir)
+  fetch_alpha_postings <- function(url) data.frame(Title = "T", Location = "", Posted_Date = NA, Link = url, District = "Somewhere else")
+  out <- scrape_registry_platforms(toy_registry(), "AlphaHeuristic", source = toy_source())
+  expect_identical(out[[1]]$District, "Alpha SD")
+})
+
+test_that("a source can be named by its where, and expected_cols can differ by platform", {
+  dir <- withr::local_tempdir(); withr::local_dir(dir)
+  local_mocked_bindings(state_scraper_sources = function() list(toy_source(), he_toy_source()))
+  fetch_board_postings <- function(url) data.frame(Title = character(0))
+  fetch_shared_postings <- function(url) data.frame(Title = character(0))
+  out <- scrape_registry_platforms(he_toy_registry(), list(board = "JobBoard", shared = "Shared"),
+                                   source = "he toy registry", shape = "raw",
+                                   expected_cols = list(JobBoard = c("Title", "Institution")))
+  expect_identical(names(out$board), c("Title", "Institution"))
+  expect_identical(names(out$shared), c("Title", "Location", "Posted_Date", "Link"))
+  expect_error(scrape_registry_platforms(he_toy_registry(), "JobBoard", source = "nope"), "no registry 'nope'")
+})
