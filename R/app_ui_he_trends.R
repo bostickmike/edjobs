@@ -95,7 +95,7 @@ he_trends_panel <- function(henowsum, hesum,
             timeFormat = "%Y-%m-%d",
             width = "100%"
           ),
-          shinycssloaders::withSpinner(plotly::plotlyOutput("he_longitudinal_plot"))
+          shinycssloaders::withSpinner(plotly::plotlyOutput("he_longitudinal_plot", height = "500px"))
         )
       )
     )
