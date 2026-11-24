@@ -21,7 +21,8 @@ scrape_registry_platforms(
 \item{registry}{The registry (a data frame with \code{District} and the platform column).}
 
 \item{platforms}{The groups, in order: a list (or character vector) whose elements are platform names; an element
-with several names is one group (a family read by two platform modes). Names, when given, name the output.}
+with several names is one group (a family read by two platform modes). Names, when given, name the output.
+\code{NULL}: every registry row is its own group, in the registry's order, named by its name column.}
 
 \item{source}{The \code{\link[=scraper_registry]{scraper_registry()}} holding the specs, or its \code{where} ("he_institution_registry.csv"); by default
 the session's first registry source. Its name column ("District", "Institution") names the log entries.}

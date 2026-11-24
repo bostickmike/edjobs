@@ -1,3 +1,9 @@
+# edjobs 0.95.0
+
+* `scrape_registry_platforms(platforms = NULL)`: every registry row is its own group, in the registry's order, named by
+  its name column (Wyoming's nine colleges keep their file order through it). Wyoming's higher-ed chunk replays
+  identically (9 of 9 frames, same log order).
+
 # edjobs 0.94.0
 
 * **Direct-board stage, higher ed** (review step 5, slice B): `scrape_registry_platforms(shape = "raw")` keeps each
