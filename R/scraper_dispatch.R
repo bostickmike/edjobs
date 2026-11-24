@@ -73,8 +73,8 @@ registry_text <- function(col) {
 #'
 #' K-12: AppliTrack, SchoolSpring, TedK12, RedRoverK12, CyberSchool,
 #' CyberSchoolText, GoogleDoc, Apptegy (rendered text), ApptegyPageBuilder,
-#' GoogleSites, Finalsite, WordPress, Edlio, Joomla. Colleges: PeopleAdmin,
-#' Neogov.
+#' GoogleSites, Finalsite, WordPress, Edlio, Joomla, SmartSites, Trakstar. Colleges:
+#' PeopleAdmin, Neogov.
 #' @return A named list of `scraper_spec()`.
 #' @export
 default_scraper_specs <- function() {
@@ -105,6 +105,8 @@ default_scraper_specs <- function() {
     WordPress    = family("fetch_wordpress_postings"),
     Edlio        = family("fetch_edlio_postings"),
     Joomla       = family("fetch_joomla_postings"),
+    # SmartSites (ParentSquare): the widgets are read the same way on every site, so no list rules.
+    SmartSites   = scraper_spec("fetch_smartsites_postings", list("Job_Link", registry_text("City"))),
     PeopleAdmin  = scraper_spec("fetch_peopleadmin_atom", c("Feed_URL", "Institution")),
     Neogov       = scraper_spec("fetch_neogov_postings", "Feed_URL"),
     Trakstar     = scraper_spec("fetch_trakstar_postings", "Job_Link")

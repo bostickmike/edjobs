@@ -88,6 +88,8 @@ reference:
   - parse_edlio_postings
   - fetch_joomla_postings
   - parse_joomla_postings
+  - fetch_smartsites_postings
+  - parse_smartsites_postings
   - district_page_text
 - title: "LLM extraction tier (shadow pilot)"
   contents:
