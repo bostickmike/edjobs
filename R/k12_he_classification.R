@@ -732,7 +732,7 @@ extract_posted_pay <- function(text) {
       third <- NA_real_
       if (cl[j, 3] > 0) {
         tail_txt <- substr(t, starts[j] + lens[j], starts[j] + lens[j] + 25)
-        tm <- regmatches(tail_txt, regexec("^\\s*(?:-|–|—)\\s*\\$\\s?((?:\\d{1,3}(?:,\\d{3})+|\\d+)(?:\\.\\d{1,3})?)\\*{0,2}",
+        tm <- regmatches(tail_txt, regexec("^\\s*(?:-|\u2013|\u2014)\\s*\\$\\s?((?:\\d{1,3}(?:,\\d{3})+|\\d+)(?:\\.\\d{1,3})?)\\*{0,2}",
                                            tail_txt, perl = TRUE))[[1]]
         mid <- to_num(substr(t, cs[j, 3], cs[j, 3] + cl[j, 3] - 1), NA)
         if (length(tm) == 2 && !is.na(mid) && cl[j, 4] == 0 && !is.na(to_num(tm[2], NA)) && to_num(tm[2], NA) > mid &&
