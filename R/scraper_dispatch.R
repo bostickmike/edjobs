@@ -31,17 +31,22 @@
 #'   `<prefix>_<district>...` (`fixtures_named_for_source()`): the prefix,
 #'   when it isn't the lower-cased platform name (WY's `EducationalNetworks`
 #'   fixtures start `educational_networks_`).
+#' @param parse_fn Name of the parser `fn` calls, when it isn't `fn` with
+#'   `fetch_` replaced by `parse_` (`fetch_css_board_postings()` calls
+#'   `parse_css_board()`). The auto-fix evidence finds a source's fixtures from
+#'   the tests of `fn` and of this parser (`fixtures_used_by_tests()`).
 #' @return A list of class `edjobs_scraper_spec`.
 #' @export
 scraper_spec <- function(fn, args = character(0), session = FALSE, map = FALSE, defined_in = NULL,
-                         fixture_prefix = NULL) {
+                         fixture_prefix = NULL, parse_fn = NULL) {
   stopifnot(is.character(fn), length(fn) == 1, nzchar(fn))
   if (!is.list(args)) args <- as.list(args)
   ok <- vapply(args, function(a) is.function(a) || (is.character(a) && length(a) == 1), logical(1))
   if (!all(ok)) stop("scraper_spec(args = ) entries must be column names or functions of the registry row")
   stopifnot(is.null(fixture_prefix) || (is.character(fixture_prefix) && length(fixture_prefix) == 1))
+  stopifnot(is.null(parse_fn) || (is.character(parse_fn) && length(parse_fn) == 1 && nzchar(parse_fn)))
   structure(list(fn = fn, args = args, session = isTRUE(session), map = isTRUE(map), defined_in = defined_in,
-                 fixture_prefix = fixture_prefix),
+                 fixture_prefix = fixture_prefix, parse_fn = parse_fn),
             class = "edjobs_scraper_spec")
 }
 
@@ -86,12 +91,13 @@ default_scraper_specs <- function() {
                  session = TRUE)
   }
   list(
-    AppliTrack   = scraper_spec("fetch_applitrack_postings",   "Platform_Key"),
-    SchoolSpring = scraper_spec("fetch_schoolspring_postings", "Platform_Key"),
+    AppliTrack   = scraper_spec("fetch_applitrack_postings",   "Platform_Key", parse_fn = "parse_applitrack_output"),
+    SchoolSpring = scraper_spec("fetch_schoolspring_postings", "Platform_Key", parse_fn = "parse_schoolspring_json"),
     TedK12       = scraper_spec("fetch_tedk12_postings",       "Job_Link"),
     # Platform_Key is the numeric org id; the link slug comes from Job_Link.
     RedRoverK12  = scraper_spec("fetch_redrover_postings",
-                                list(registry_text("Platform_Key"), function(row) redrover_org_slug(row$Job_Link))),
+                                list(registry_text("Platform_Key"), function(row) redrover_org_slug(row$Job_Link)),
+                                parse_fn = "parse_redrover_json"),
     CyberSchool  = scraper_spec("fetch_cyberschool_postings",  list("Job_Link", registry_text("City"))),
     CyberSchoolText = scraper_spec("fetch_cyberschool_postings",
                                    c(list("Job_Link", registry_text("City"), function(row) "text"), rules)),
@@ -108,8 +114,8 @@ default_scraper_specs <- function() {
     # SmartSites (ParentSquare): the widgets are read the same way on every site, so no list rules.
     SmartSites   = scraper_spec("fetch_smartsites_postings", list("Job_Link", registry_text("City"))),
     PeopleAdmin  = scraper_spec("fetch_peopleadmin_atom", c("Feed_URL", "Institution")),
-    Neogov       = scraper_spec("fetch_neogov_postings", "Feed_URL"),
-    Trakstar     = scraper_spec("fetch_trakstar_postings", "Job_Link")
+    Neogov       = scraper_spec("fetch_neogov_postings", "Feed_URL", parse_fn = "parse_neogov_html"),
+    Trakstar     = scraper_spec("fetch_trakstar_postings", "Job_Link", parse_fn = "parse_trakstar_list")
   )
 }
 
@@ -203,7 +209,7 @@ scraper_source_table <- function(source) {
 #' @param name A drift-check source name (district or institution).
 #' @param sources List of `scraper_registry()` / `scraper_calls()`; defaults
 #'   to the session's `state_config(scraper_sources = )`.
-#' @return `list(fn, args, session, map, defined_in, platform, where, fixture_prefix)` with
+#' @return `list(fn, args, session, map, defined_in, platform, where, fixture_prefix, parse_fn)` with
 #'   `args` as actual values, or NULL when the source has no single-source
 #'   scraper call (unknown name, or a platform with no spec).
 #' @export
@@ -214,7 +220,7 @@ resolve_scraper_call <- function(name, sources = state_scraper_sources()) {
       if (is.null(spec)) next
       platform <- if (is.null(spec$platform)) sub("^fetch_(.*?)_(postings|atom|jobs)$", "\\1", spec$fn) else spec$platform
       return(list(fn = spec$fn, args = as.list(spec$args), session = isTRUE(spec$session), map = FALSE,
-                  defined_in = NULL, platform = platform, where = source$where))
+                  defined_in = NULL, platform = platform, where = source$where, parse_fn = spec$parse_fn))
     }
     table <- scraper_source_table(source)
     hit <- which(table[[source$name_col]] == name)
@@ -226,7 +232,8 @@ resolve_scraper_call <- function(name, sources = state_scraper_sources()) {
     if (is.null(spec)) return(NULL)
     args <- lapply(spec$args, function(a) if (is.function(a)) a(row) else row[[a]])
     return(list(fn = spec$fn, args = args, session = spec$session, map = spec$map, defined_in = spec$defined_in,
-                platform = platform, where = source$where, fixture_prefix = spec$fixture_prefix))
+                platform = platform, where = source$where, fixture_prefix = spec$fixture_prefix,
+                parse_fn = spec$parse_fn))
   }
   NULL
 }
@@ -353,8 +360,8 @@ scraper_fetch_fn <- function(call, scraper_lines) {
 
 #' Fixtures a scraper's tests use
 #'
-#' Fixture files referenced by the tests of `fetch_fn` or its `parse_*` twin,
-#' newest first: dated names by date, then undated ones in file order. For
+#' Fixture files referenced by the tests of `fetch_fn` or its parser
+#' (`parse_fn`, else `fetch_fn`'s `parse_*` twin), newest first: dated names by date, then undated ones in file order. For
 #' fixtures whose names don't carry the source.
 #' @param fetch_fn A `fetch_*` function name, or NA.
 #' @param test_files Named list of test-file lines (name = file name).
@@ -362,10 +369,12 @@ scraper_fetch_fn <- function(call, scraper_lines) {
 #'   blocks name it in their description (a family routine's per-district
 #'   tests, "parse_apptegy_postings: Melstone Public Schools"), only those
 #'   blocks' fixtures.
+#' @param parse_fn The parser's name when it isn't the `parse_*` twin
+#'   (`scraper_spec(parse_fn = )`), or NULL.
 #' @keywords internal
-fixtures_used_by_tests <- function(fetch_fn, test_files, source_name = NULL) {
+fixtures_used_by_tests <- function(fetch_fn, test_files, source_name = NULL, parse_fn = NULL) {
   if (is.na(fetch_fn)) return(character(0))
-  fns <- c(fetch_fn, sub("^fetch_", "parse_", fetch_fn))
+  fns <- c(fetch_fn, if (is.null(parse_fn)) sub("^fetch_", "parse_", fetch_fn) else parse_fn)
   found <- character(0); named <- character(0)
   for (lines in test_files) {
     starts <- grep("^\\s*test_that\\(", lines)
@@ -457,7 +466,9 @@ gather_autofix_evidence <- function(call, source_name, page_text, repo_root = ".
   } else {
     test_paths <- list.files(file.path(repo_root, "tests", "testthat"), pattern = "^test-.*[.]R$", full.names = TRUE)
     test_files <- stats::setNames(lapply(test_paths, readLines, warn = FALSE), basename(test_paths))
-    fx <- list(platform = character(0), own = fixtures_used_by_tests(fetch_fn, test_files, source_name))
+    # A map entry's fetch function is read from the scraper file, so the spec's parser may not be its parser.
+    parse_fn <- if (isTRUE(call$map)) NULL else call$parse_fn
+    fx <- list(platform = character(0), own = fixtures_used_by_tests(fetch_fn, test_files, source_name, parse_fn))
   }
   inner_text <- scraper_reads_inner_text(fetch_fn, scraper_lines)
   has_text <- length(page_text) == 1 && !is.na(page_text) && nzchar(trimws(page_text))

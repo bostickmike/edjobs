@@ -4,7 +4,12 @@
 \alias{fixtures_used_by_tests}
 \title{Fixtures a scraper's tests use}
 \usage{
-fixtures_used_by_tests(fetch_fn, test_files, source_name = NULL)
+fixtures_used_by_tests(
+  fetch_fn,
+  test_files,
+  source_name = NULL,
+  parse_fn = NULL
+)
 }
 \arguments{
 \item{fetch_fn}{A \verb{fetch_*} function name, or NA.}
@@ -15,10 +20,13 @@ fixtures_used_by_tests(fetch_fn, test_files, source_name = NULL)
 blocks name it in their description (a family routine's per-district
 tests, "parse_apptegy_postings: Melstone Public Schools"), only those
 blocks' fixtures.}
+
+\item{parse_fn}{The parser's name when it isn't the \verb{parse_*} twin
+(\code{scraper_spec(parse_fn = )}), or NULL.}
 }
 \description{
-Fixture files referenced by the tests of \code{fetch_fn} or its \verb{parse_*} twin,
-newest first: dated names by date, then undated ones in file order. For
+Fixture files referenced by the tests of \code{fetch_fn} or its parser
+(\code{parse_fn}, else \code{fetch_fn}'s \verb{parse_*} twin), newest first: dated names by date, then undated ones in file order. For
 fixtures whose names don't carry the source.
 }
 \keyword{internal}

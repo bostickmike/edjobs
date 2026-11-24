@@ -10,7 +10,8 @@ scraper_spec(
   session = FALSE,
   map = FALSE,
   defined_in = NULL,
-  fixture_prefix = NULL
+  fixture_prefix = NULL,
+  parse_fn = NULL
 )
 }
 \arguments{
@@ -33,6 +34,11 @@ auto-fix agent).}
 \verb{<prefix>_<district>...} (\code{fixtures_named_for_source()}): the prefix,
 when it isn't the lower-cased platform name (WY's \code{EducationalNetworks}
 fixtures start \code{educational_networks_}).}
+
+\item{parse_fn}{Name of the parser \code{fn} calls, when it isn't \code{fn} with
+\code{fetch_} replaced by \code{parse_} (\code{fetch_css_board_postings()} calls
+\code{parse_css_board()}). The auto-fix evidence finds a source's fixtures from
+the tests of \code{fn} and of this parser (\code{fixtures_used_by_tests()}).}
 }
 \value{
 A list of class \code{edjobs_scraper_spec}.

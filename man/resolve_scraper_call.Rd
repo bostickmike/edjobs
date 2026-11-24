@@ -13,7 +13,7 @@ resolve_scraper_call(name, sources = state_scraper_sources())
 to the session's \code{state_config(scraper_sources = )}.}
 }
 \value{
-\code{list(fn, args, session, map, defined_in, platform, where, fixture_prefix)} with
+\code{list(fn, args, session, map, defined_in, platform, where, fixture_prefix, parse_fn)} with
 \code{args} as actual values, or NULL when the source has no single-source
 scraper call (unknown name, or a platform with no spec).
 }
