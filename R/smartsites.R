@@ -71,7 +71,7 @@ parse_smartsites_postings <- function(html_text, url, location) {
              Link = rep(url, n), stringsAsFactors = FALSE)
 }
 
-smartsites_clean <- function(x) trimws(gsub("[[:space:] ]+", " ", x))
+smartsites_clean <- function(x) trimws(gsub("[[:space:]\u00a0]+", " ", x))
 
 # "July 10, 2026" -> "2026-07-10", by English month name or abbreviation whatever the locale (as.Date's %B reads
 # the locale's names).
