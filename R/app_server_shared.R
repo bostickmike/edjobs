@@ -672,7 +672,7 @@ dashboard_server_shared <- function(input, output, session, data, state_name, fe
         legend.title = ggplot2::element_text(size = 10)
       )
 
-    plotly::ggplotly(p, height = 500, tooltip = "text")
+    trends_plotly(p)
   })
 
   output$k12_current_trends_table <- shiny::renderTable({
@@ -1012,7 +1012,7 @@ dashboard_server_shared <- function(input, output, session, data, state_name, fe
         legend.title = ggplot2::element_text(size = 10)
       )
 
-    plotly::ggplotly(p, height = 500, tooltip = "text")
+    trends_plotly(p)
   })
 
   output$he_current_trends_table <- shiny::renderTable({
@@ -1475,3 +1475,13 @@ dashboard_server_data_names <- function() {
     "vacancy_rate_domain", "vacancy_rate_palette", "WINDOW_WEEKS")
 }
 
+
+# A Trends tab's multi-year plot as plotly (K-12 and higher ed, 0.93.0): drawn 500px tall to fill its container
+# (0.91.0), with the legend under the date axis, anchored left and titled "Category" above its items. ggplotly()'s
+# own horizontal legend put the column name to the left of the items, so on a full-width plot the title was clipped
+# ("road_Category") and the last item ran off the right edge ("Librai").
+trends_plotly <- function(p) {
+  plotly::ggplotly(p, height = 500, tooltip = "text") %>%
+    plotly::layout(legend = list(orientation = "h", x = 0, xanchor = "left", y = -0.3, yanchor = "top",
+                                 title = list(text = "Category", side = "top"), font = list(size = 11)))
+}

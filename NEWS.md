@@ -1,3 +1,10 @@
+# edjobs 0.93.0
+
+* **Trends tabs (K-12 and higher ed):** the multi-year plot's legend sits under the date axis, anchored left, titled
+  "Category" above its items (`trends_plotly()`, internal). `ggplotly()`'s own horizontal legend put the raw column
+  name to the left of the items, so on a full-width plot the title was clipped ("road_Category") and the last item
+  ran off the right edge ("Librai"). Checked by screenshot on both states' committed data.
+
 # edjobs 0.92.0
 
 * **K-12 direct-board stage** (2026-11-17 review, step 5): `scrape_registry_platforms(registry, platforms)` scrapes
