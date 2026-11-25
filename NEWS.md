@@ -1,3 +1,11 @@
+# edjobs 0.96.0
+
+* `build_k12_history()` and `write_k12_history()` (review step 5, slice C1): the five K-12 history tables from counted
+  postings (`k12jobanalysis`, district and job-type weekly totals, `allsum`, `allnow`), built one way by the weekly
+  run and the from-archive rebuild. `id_col` keeps each state's counting (MT distinct `Posting_ID`, WY rows). Every file's
+  append is checked before any is written. Both states' old steps replay byte for byte (5 of 5 files, same-day re-run and
+  a new run date). The toy state uses it.
+
 # edjobs 0.95.0
 
 * `scrape_registry_platforms(platforms = NULL)`: every registry row is its own group, in the registry's order, named by

@@ -190,3 +190,61 @@ build_k12_teacher_rows <- function(combinedclean) {
                   Broad_Category = classify_k12_broad_category(Category)) %>%
     dplyr::select(dplyr::all_of(K12_TEACHER_COLUMNS))
 }
+
+#' The K-12 history tables from counted postings
+#'
+#' What every state's weekly run appends and its from-archive rebuild writes whole, built one way: one run's rows give
+#' that run's rows, every run's give the full tables.
+#' @param combinedclean `build_k12_combinedclean()`'s result, one or more runs.
+#' @param id_col Count district and job-type totals as distinct values of this column (MT, `"Posting_ID"`), or
+#'   NULL to count rows (WY), as in [posting_run_totals()].
+#' @return A list: `k12jobs` (teacher rows), `k12_district_weekly_totals`, `k12_jobtype_weekly_totals`, `allsum`
+#'   (teacher postings by category, run and district, with a `Total` that is the sum of the districts) and `allnow`
+#'   (the latest run's, with `Sum`).
+#' @export
+build_k12_history <- function(combinedclean, id_col = NULL) {
+  k12jobs <- build_k12_teacher_rows(combinedclean)
+  by_district <- summarize_k12_posting_counts(k12jobs)
+  # Total = the sum of the districts, not its own n_distinct(): two districts' postings can share display text.
+  total <- by_district %>%
+    dplyr::group_by(Broad_Category, Archive_Date) %>%
+    dplyr::summarize(sum = sum(sum), .groups = "drop") %>%
+    dplyr::mutate(District = "Total") %>%
+    dplyr::select(Broad_Category, Archive_Date, District, sum)
+  check_total_matches_parts(total, by_district, group_cols = c("Broad_Category", "Archive_Date"))
+  latest <- if (nrow(by_district) == 0) by_district else
+    by_district[by_district$Archive_Date == max(by_district$Archive_Date), , drop = FALSE]
+  now_by_district <- latest %>% dplyr::transmute(Broad_Category, Sum = sum, District)
+  now_total <- now_by_district %>%
+    dplyr::group_by(Broad_Category) %>%
+    dplyr::summarize(Sum = sum(Sum), .groups = "drop") %>%
+    dplyr::mutate(District = "Total")
+  list(
+    k12jobs = k12jobs,
+    k12_district_weekly_totals = posting_run_totals(combinedclean, "District", "position", "title", "k12", id_col = id_col),
+    k12_jobtype_weekly_totals = jobtype_run_totals(combinedclean, "position", "title", "k12", id_col = id_col),
+    allsum = dplyr::bind_rows(total, by_district),
+    allnow = dplyr::bind_rows(now_total, now_by_district)
+  )
+}
+
+#' Append one run's K-12 history to the dashboard's files
+#'
+#' [build_k12_history()] on one run, appended ([append_weekly_rows()]) to `k12jobanalysis.csv`,
+#' `k12_district_weekly_totals.csv`, `k12_jobtype_weekly_totals.csv` and `allsum.csv`; `allnow.csv` is this run's
+#' alone. Every file is checked before any is written.
+#' @param combinedclean One run's `combinedclean.csv` rows.
+#' @param app_dir The dashboard folder; defaults to `state_config(app_dir = )`.
+#' @inheritParams build_k12_history
+#' @return [build_k12_history()]'s list for this run, invisibly.
+#' @export
+write_k12_history <- function(combinedclean, app_dir = current_state_config()$app_dir, id_col = NULL) {
+  stopifnot(is.character(app_dir), length(app_dir) == 1)
+  run <- build_k12_history(combinedclean, id_col)
+  files <- c(k12jobs = "k12jobanalysis.csv", k12_district_weekly_totals = "k12_district_weekly_totals.csv",
+             k12_jobtype_weekly_totals = "k12_jobtype_weekly_totals.csv", allsum = "allsum.csv")
+  out <- lapply(names(files), function(n) append_weekly_rows(file.path(app_dir, files[[n]]), run[[n]]))
+  for (i in seq_along(files)) utils::write.csv(out[[i]], file.path(app_dir, files[[i]]), row.names = FALSE)
+  utils::write.csv(run$allnow, file.path(app_dir, "allnow.csv"), row.names = FALSE)
+  invisible(run)
+}

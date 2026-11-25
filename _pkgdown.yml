@@ -271,11 +271,13 @@ reference:
   - K12_POSTING_COLUMNS
   - append_weekly_rows
   - build_k12_combinedclean
+  - build_k12_history
   - build_k12_teacher_rows
   - summarize_k12_posting_counts
   - check_file_schema
   - check_total_matches_parts
   - rebuild_parity_row
+  - write_k12_history
 - title: "Run expectations"
   contents:
   - RUN_EXPECTATION_COLUMNS

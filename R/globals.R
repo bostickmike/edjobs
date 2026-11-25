@@ -6,7 +6,7 @@ utils::globalVariables(c("N_Rows", ".data", "parts_sum", "total_value", "Distric
                          "Is_Feed", "date_posted", "Posted_Approx", "url", "Close_Date", "First_Seen", "Next_Run",
                          "Source_First_Run", "Start_Date", "End_Date", "Gap_Censored",
                          # k12_history.R
-                         "Broad_Category", "Archive_Date", "Category", "Role_Hint", "position",
+                         "Broad_Category", "Archive_Date", "Category", "Role_Hint", "position", "Sum",
                          # app_helpers.R
                          "Current Postings", "Delta",
                          # k12_he_classification.R: posting_run_totals()
