@@ -153,6 +153,45 @@ test_that("build_k12_teacher_rows and summarize_k12_posting_counts count distinc
   expect_equal(summarize_k12_posting_counts(teach, id_col = "posting_id")$sum, counts$sum)
 })
 
+k12_history_cc <- function(dates = "2026-11-06") {
+  one <- function(d) data.frame(title = c("Math Teacher", "Math Teacher", "Custodian", "Science Teacher"), Archive_Date = d,
+                                position = c("Teacher", "Teacher", "Custodial/Maintenance", "Teacher"), location = "L", url = "u",
+                                District = c("A", "A", "A", "B"), Posting_Source = "s", Posting_Identity_Method = "m",
+                                Posting_ID = c("p1", "p1", "p2", "p3"), Role_Hint = NA_character_, stringsAsFactors = FALSE)
+  do.call(rbind, lapply(dates, one))
+}
+
+test_that("build_k12_history's totals are the sum of the districts, and allnow is the latest run's", {
+  h <- build_k12_history(k12_history_cc(c("2026-11-06", "2026-11-10")))
+  expect_named(h, c("k12jobs", "k12_district_weekly_totals", "k12_jobtype_weekly_totals", "allsum", "allnow"))
+  expect_equal(nrow(h$k12jobs), 6)
+  tot <- h$allsum[h$allsum$District == "Total" & h$allsum$Archive_Date == "2026-11-10", ]
+  expect_equal(sum(tot$sum), 2)          # posting 1 (listed twice) and posting 3
+  expect_equal(sum(h$allnow$Sum[h$allnow$District == "Total"]), 2)
+  expect_equal(nrow(h$allnow), sum(h$allsum$Archive_Date == "2026-11-10"))
+})
+
+test_that("build_k12_history's id_col counts distinct postings, NULL counts rows", {
+  n <- function(id) { d <- build_k12_history(k12_history_cc(), id)$k12_district_weekly_totals; d$n[d$District == "A"] }
+  expect_equal(n(NULL), 3)
+  expect_equal(n("Posting_ID"), 2)
+})
+
+test_that("write_k12_history appends a run, replaces a same-day re-run, and writes nothing when one file doesn't match", {
+  app <- withr::local_tempdir()
+  write_k12_history(k12_history_cc("2026-11-06"), app)
+  write_k12_history(k12_history_cc("2026-11-10"), app)
+  write_k12_history(k12_history_cc("2026-11-10"), app)
+  expect_equal(nrow(read.csv(file.path(app, "k12jobanalysis.csv"))), 6)
+  expect_equal(unique(read.csv(file.path(app, "allsum.csv"))$Archive_Date), c("2026-11-06", "2026-11-10"))
+  expect_true(all(names(read.csv(file.path(app, "allnow.csv"))) == c("Broad_Category", "Sum", "District")))
+  bad <- read.csv(file.path(app, "allsum.csv")); bad$extra <- 1
+  write.csv(bad, file.path(app, "allsum.csv"), row.names = FALSE)
+  before <- tools::md5sum(list.files(app, full.names = TRUE))
+  expect_error(write_k12_history(k12_history_cc("2026-11-13"), app), "column mismatch")
+  expect_equal(tools::md5sum(list.files(app, full.names = TRUE)), before)
+})
+
 # Phase 4 review fixes (2026-11-13).
 test_that("append_weekly_rows keeps an existing row whose date is NA instead of turning it into an all-NA row", {
   tmp <- withr::local_tempfile(fileext = ".csv")

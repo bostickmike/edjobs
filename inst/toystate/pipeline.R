@@ -66,18 +66,6 @@ toy_k12_run <- function(out_dir, run_date, session_factory = NULL) {
   oews <- utils::read.csv(file.path(toy_dir, "oews_role_wages.csv"), colClasses = c(Area_Code = "character", SOC = "character", Year = "character"))
   combinedclean <- build_k12_combinedclean(dplyr::distinct(drop_stale_rows(rows)), oews, registry[c("District", "County")], state = "ZZ")
   utils::write.csv(combinedclean, file.path(app, "combinedclean.csv"), row.names = FALSE)
-  teacher <- build_k12_teacher_rows(combinedclean)
-  write_accumulated <- function(file, new_rows) {
-    path <- file.path(app, file)
-    utils::write.csv(append_weekly_rows(path, new_rows), path, row.names = FALSE)
-  }
-  write_accumulated("k12jobanalysis.csv", teacher)
-  write_accumulated("k12_district_weekly_totals.csv", posting_run_totals(combinedclean, "District", "position", "title", "k12"))
-  write_accumulated("k12_jobtype_weekly_totals.csv", jobtype_run_totals(combinedclean, "position", "title", "k12"))
-  by_district <- summarize_k12_posting_counts(teacher)
-  total <- dplyr::summarize(dplyr::group_by(by_district, Broad_Category, Archive_Date), sum = sum(sum), .groups = "drop")
-  total$District <- "Total"
-  check_total_matches_parts(total, by_district, group_cols = c("Broad_Category", "Archive_Date"))
-  write_accumulated("allsum.csv", dplyr::bind_rows(total[names(by_district)], by_district))
+  write_k12_history(combinedclean, app)
   invisible(combinedclean)
 }
