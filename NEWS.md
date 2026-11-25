@@ -1,3 +1,12 @@
+# edjobs 0.99.0
+
+* Text boards (review step 8): `fetch_text_board_postings()` / `parse_text_board()` read a job page with no useful markup
+  by rules on its lines of text (`text_board_rules()`: section start and stop, which lines are titles, what to strip,
+  which lines state pay), one row or more per source in the state's own file; `text_board_spec()` is its dispatch spec. A
+  missing start or stop line is an error rather than an empty board. Posted pay is read from the lines a rule names.
+* CSS boards: `Strip_Regex` (removed from titles) and `Link_CSS = "@item"` (an item that is itself the link).
+* `extract_posted_pay()` reads "$16.97 per hour to $20.04 per hour" as a range (it read the low end only).
+
 # edjobs 0.98.0
 
 * Reference and salary stages (review step 5, slice E): `refresh_pay_benchmarks()` (BLS OEWS and QCEW),

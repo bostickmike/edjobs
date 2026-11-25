@@ -18,14 +18,16 @@ One row per source, keyed by \code{Source} (the name in the state's registry). C
 \item \code{Title_CSS} (required): the title elements, inside each item when \code{Item_CSS} is set, else on the whole page.
 \item \code{Item_CSS}: one element per posting; its title, link and location are read inside it, so an item missing one
 gives a fallback for that item only. An item with no title is skipped (a template row).
-\item \code{Link_CSS}: blank, the page itself; \verb{@title}, the title element's own \code{href}; otherwise a selector inside the
-item (needs \code{Item_CSS}). Links are made absolute against the page address; an item with no link gets the page.
+\item \code{Link_CSS}: blank, the page itself; \verb{@title}, the title element's own \code{href}; \verb{@item}, the item's own (an item
+that is the link); otherwise a selector inside the item (both need \code{Item_CSS}). Links are made absolute against the page
+address; an item with no link gets the page.
 \item \code{Location_CSS}: a selector inside the item (needs \code{Item_CSS}); blank, or an item without it, gives the
 registry's place.
 \item \code{Board_CSS}: an element the page always has while it is the job board, postings or not. When set and missing,
 the reader stops, so a moved or redesigned page is an error in the scrape log instead of "no postings".
 \item \code{Exclude_Regex}, \code{Include_Regex} (case-insensitive, on the title): drop matching titles; keep only matching
-titles. \code{Max_Title_Chars}: drop longer titles (a paragraph caught by the selector).
+titles. \code{Strip_Regex} (case-insensitive): removed from the titles kept ("Hiring " before each); a title it
+empties is dropped. \code{Max_Title_Chars}: drop longer titles (a paragraph caught by the selector).
 \item \code{Max_Tries}: attempts for the page request (default 3), for a host that rate-limits.
 }
 }
