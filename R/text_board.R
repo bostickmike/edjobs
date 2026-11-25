@@ -118,7 +118,7 @@ fetch_text_board_postings <- function(url, location, rule) {
 parse_text_board <- function(html_text, url, location, rule) {
   stop_if_no_html(html_text)
   lines <- strsplit(rvest::html_text2(rvest::read_html(html_text)), "\n", fixed = TRUE)[[1]]
-  lines <- trimws(gsub("[[:space:] ]+", " ", gsub("[​‍﻿]", "", lines)))
+  lines <- trimws(gsub("[[:space:]\u00a0]+", " ", gsub("[\u200b\u200d\ufeff]", "", lines)))
   lines <- lines[nzchar(lines)]
   parts <- lapply(seq_len(nrow(rule)), function(i) text_board_section(lines, as.list(rule[i, , drop = FALSE]), url))
   rows <- do.call(rbind, parts)
