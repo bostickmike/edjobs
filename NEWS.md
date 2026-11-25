@@ -1,3 +1,11 @@
+# edjobs 0.98.0
+
+* Reference and salary stages (review step 5, slice E): `refresh_pay_benchmarks()` (BLS OEWS and QCEW),
+  `refresh_ipeds_staff_pay()`, `refresh_ipeds_he_salaries()` (with the prior-year columns, `widen_salary_trend()`),
+  `refresh_ccd_teacher_fte()` and `refresh_data_coverage()`, the blocks both states' Rmds wrote out the same way. The salary
+  trend is still fetched only when the current salaries came back. The state's own sources (DLI, WSBA, UW's salary
+  book) stay with the state.
+
 # edjobs 0.97.0
 
 * The higher-ed stage after the scrapes (review step 5, slice D): `combine_he_frames()` (scraped frames to one table),
