@@ -4,7 +4,7 @@
 # page and the place.
 
 CSS_BOARD_RULE_COLUMNS <- c("Source", "Item_CSS", "Title_CSS", "Link_CSS", "Location_CSS", "Board_CSS",
-                            "Exclude_Regex", "Include_Regex", "Max_Title_Chars", "Max_Tries")
+                            "Exclude_Regex", "Include_Regex", "Strip_Regex", "Max_Title_Chars", "Max_Tries")
 
 #' Read and check a CSS-board rules file
 #'
@@ -12,14 +12,16 @@ CSS_BOARD_RULE_COLUMNS <- c("Source", "Item_CSS", "Title_CSS", "Link_CSS", "Loca
 #' * `Title_CSS` (required): the title elements, inside each item when `Item_CSS` is set, else on the whole page.
 #' * `Item_CSS`: one element per posting; its title, link and location are read inside it, so an item missing one
 #'   gives a fallback for that item only. An item with no title is skipped (a template row).
-#' * `Link_CSS`: blank, the page itself; `@title`, the title element's own `href`; otherwise a selector inside the
-#'   item (needs `Item_CSS`). Links are made absolute against the page address; an item with no link gets the page.
+#' * `Link_CSS`: blank, the page itself; `@title`, the title element's own `href`; `@item`, the item's own (an item
+#'   that is the link); otherwise a selector inside the item (both need `Item_CSS`). Links are made absolute against the page
+#'   address; an item with no link gets the page.
 #' * `Location_CSS`: a selector inside the item (needs `Item_CSS`); blank, or an item without it, gives the
 #'   registry's place.
 #' * `Board_CSS`: an element the page always has while it is the job board, postings or not. When set and missing,
 #'   the reader stops, so a moved or redesigned page is an error in the scrape log instead of "no postings".
 #' * `Exclude_Regex`, `Include_Regex` (case-insensitive, on the title): drop matching titles; keep only matching
-#'   titles. `Max_Title_Chars`: drop longer titles (a paragraph caught by the selector).
+#'   titles. `Strip_Regex` (case-insensitive): removed from the titles kept ("Hiring " before each); a title it
+#'   empties is dropped. `Max_Title_Chars`: drop longer titles (a paragraph caught by the selector).
 #' * `Max_Tries`: attempts for the page request (default 3), for a host that rate-limits.
 #' @param rules A data frame, or the path of a CSV.
 #' @return The rules, every column present (missing optional ones blank), checked.
@@ -36,7 +38,8 @@ css_board_rules <- function(rules) {
   for (col in CSS_BOARD_RULE_COLUMNS) {
     v <- as.character(rules[[col]])
     v[is.na(v)] <- ""
-    rules[[col]] <- trimws(v)
+    # A strip pattern's own spaces count (" - .*$").
+    rules[[col]] <- if (col == "Strip_Regex") ifelse(nzchar(trimws(v)), v, "") else trimws(v)
   }
   where <- function(bad) paste(rules$Source[bad], collapse = ", ")
   if (any(!nzchar(rules$Source))) stop("css_board_rules(): a row has no Source")
@@ -52,7 +55,7 @@ css_board_rules <- function(rules) {
     bad <- nzchar(v) & !grepl("^[1-9][0-9]*$", v)
     if (any(bad)) stop("css_board_rules(): ", col, " must be a whole number for ", where(bad))
   }
-  for (col in c("Exclude_Regex", "Include_Regex")) {
+  for (col in c("Exclude_Regex", "Include_Regex", "Strip_Regex")) {
     for (i in which(nzchar(rules[[col]]))) {
       ok <- tryCatch({ suppressWarnings(grepl(rules[[col]][i], "", perl = TRUE)); TRUE }, error = function(e) FALSE)
       if (!ok) stop("css_board_rules(): ", col, " for ", rules$Source[i], " is not a valid regular expression")
@@ -131,6 +134,7 @@ parse_css_board <- function(html_text, url, location, rule) {
     title_el <- rvest::html_element(items, get("Title_CSS"))
     title <- rvest::html_text2(title_el)
     href <- if (link_css == "@title") rvest::html_attr(title_el, "href")
+            else if (link_css == "@item") rvest::html_attr(items, "href")
             else if (nzchar(link_css)) rvest::html_attr(rvest::html_element(items, link_css), "href")
             else rep(NA_character_, length(items))
     place <- if (nzchar(get("Location_CSS"))) trimws(rvest::html_text2(rvest::html_element(items, get("Location_CSS"))))
@@ -146,6 +150,11 @@ parse_css_board <- function(html_text, url, location, rule) {
   keep <- !is.na(title) & nzchar(title)
   if (nzchar(get("Exclude_Regex"))) keep <- keep & !grepl(get("Exclude_Regex"), title, ignore.case = TRUE, perl = TRUE)
   if (nzchar(get("Include_Regex"))) keep <- keep & grepl(get("Include_Regex"), title, ignore.case = TRUE, perl = TRUE)
+  strip <- rule$Strip_Regex %||% ""                          # not get(): its spaces count
+  if (!is.na(strip) && nzchar(trimws(strip))) {
+    title <- trimws(gsub(strip, "", title, ignore.case = TRUE, perl = TRUE))
+    keep <- keep & nzchar(title)
+  }
   if (nzchar(get("Max_Title_Chars"))) keep <- keep & nchar(title) <= as.integer(get("Max_Title_Chars"))
   if (!any(keep)) return(empty)
   href <- trimws(href[keep])

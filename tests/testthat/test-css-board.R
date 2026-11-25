@@ -134,3 +134,19 @@ test_that("css_board_absolute(): relative, rooted, absolute, query-only and unjo
                c("http://site.org/dir/a b.pdf", "http://site.org/x y/z.pdf", "https://h.org/p q",
                  "http://site.org/dir/page?q=1", "http://[bad"))
 })
+
+test_that("Strip_Regex is removed from the titles kept, and an item can be the link", {
+  html <- paste0('<a href="/jobs/1"><span class="t">Hiring Bus Drivers</span></a><a href="/jobs/2"><span class="t">Lunch menu</span></a>',
+                 '<a href="/"><b>Home</b></a><a href="/jobs/3"><span class="t">Hiring </span></a>')
+  rule <- rule_of(Item_CSS = "a", Title_CSS = ".t", Link_CSS = "@item", Include_Regex = "^hiring", Strip_Regex = "^hiring\\s*")
+  result <- parse_css_board(html, "https://x.org/", "X", rule)
+  expect_equal(result$Title, "Bus Drivers")
+  expect_equal(result$Link, "https://x.org/jobs/1")
+  expect_error(css_board_rules(data.frame(Source = "A", Title_CSS = "h2", Strip_Regex = "(")), "Strip_Regex for A")
+  expect_error(css_board_rules(data.frame(Source = "A", Title_CSS = "h2", Link_CSS = "@item")), "set Item_CSS for A")
+})
+
+test_that("a strip pattern's own spaces count", {
+  rule <- rule_of(Title_CSS = "h2", Strip_Regex = " - .*$")
+  expect_equal(parse_css_board("<h2>Cook - 6 hours</h2><h2>- Driver</h2>", "u", "X", rule)$Title, c("Cook", "- Driver"))
+})

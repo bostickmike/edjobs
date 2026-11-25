@@ -276,3 +276,12 @@ test_that("a pay grade's low-mid-high steps read as the first to the last amount
                  extract_posted_pay("$20 - $25 - $3,000 signing bonus")$Pay_Max), c(20, 25))
   expect_equal(extract_posted_pay("$45,000-$50,000 - $1,000 stipend")$Pay_Max, 50000)
 })
+
+test_that("an hourly range that repeats 'per hour' after its low end is a range", {
+  pay <- extract_posted_pay(c("Salary ranging from $16.97 per hour to $20.04 per hour DOE", "$21.46 per hour to $22.81 per hour",
+                              "$15 per hour to 40 hours a week", "$15 per hour - $2,000 signing bonus",
+                              "$15 per hour to $2,000 a month"))
+  expect_equal(pay$Pay_Min, c(16.97, 21.46, 15, 15, 15))
+  expect_equal(pay$Pay_Max, c(20.04, 22.81, 15, 15, 15))
+  expect_equal(pay$Pay_Unit, rep("hour", 5))
+})

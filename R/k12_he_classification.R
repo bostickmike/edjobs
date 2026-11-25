@@ -701,8 +701,10 @@ extract_posted_pay <- function(text) {
   amount <- "\\$\\s?((?:\\d{1,3}(?:,\\d{3})+|\\d+)(?:\\.\\d{1,3})?)\\s?([kK](?![a-z]))?\\*{0,2}"
   # A range may repeat the unit after its low end ("$23.684/hr - $29.604/hr"), and an hourly one may say "up to"
   # after it ("$16.50 per hour, up to $19.00"; only after an hourly unit, so "$45,000, up to $3,000 signing bonus"
-  # stays two amounts, and "$14 per hour, up to 32 hours" one).
-  pattern <- paste0(amount, "(?:(?:\\s?/\\s?(?:hr|hour)|\\s?(?:/|per)\\s?(?:hr|hour)\\s*,?\\s*up(?=\\s+to\\s*\\$))?\\s*(?:-|\u2013|\u2014|to)(?:\\s+(?:a\\s+)?max(?:imum)?(?:\\s+of)?)?\\s*\\$?\\s?((?:\\d{1,3}(?:,\\d{3})+|\\d+)(?:\\.\\d{1,3})?)\\s?([kK](?![a-z]))?\\*{0,2})?")
+  # stays two amounts, and "$14 per hour, up to 32 hours" one). "$16.97 per hour to $20.04 per hour" (Bigfork,
+  # 2026-11-25) is a range too: only "to", and only an hourly-sized dollar amount after it, so "$15 per hour to 40
+  # hours" and "$15 per hour - $2,000 signing bonus" stay $15.
+  pattern <- paste0(amount, "(?:(?:\\s?/\\s?(?:hr|hour)|\\s?per\\s?(?:hr|hour)(?=\\s+to\\s*\\$\\s?\\d{1,3}(?![\\d,]))|\\s?(?:/|per)\\s?(?:hr|hour)\\s*,?\\s*up(?=\\s+to\\s*\\$))?\\s*(?:-|\u2013|\u2014|to)(?:\\s+(?:a\\s+)?max(?:imum)?(?:\\s+of)?)?\\s*\\$?\\s?((?:\\d{1,3}(?:,\\d{3})+|\\d+)(?:\\.\\d{1,3})?)\\s?([kK](?![a-z]))?\\*{0,2})?")
   to_num <- function(x, k) {
     v <- suppressWarnings(as.numeric(gsub(",", "", x)))
     ifelse(!is.na(k) & nzchar(k), v * 1000, v)
