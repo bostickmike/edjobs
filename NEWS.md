@@ -1,3 +1,12 @@
+# edjobs 0.97.0
+
+* The higher-ed stage after the scrapes (review step 5, slice D): `combine_he_frames()` (scraped frames to one table),
+  `finish_he_rows()` (placeholders out, implausible pay blanked, IPEDS staff estimates) and `build_he_history()` /
+  `write_he_history()` (faculty rows, institution and job-type weekly totals, `allsum_he`, `allnow_he`), built one way by
+  the weekly run and the from-archive rebuild. `HE_FACULTY_COLUMNS` names `facultydata.csv`'s columns. Placing on the map,
+  a college's own salary book and the institution spellings stay with the state. Both states' old steps replay identically on
+  the newest committed archives (tables identical, 5 of 5 history files byte for byte).
+
 # edjobs 0.96.0
 
 * `build_k12_history()` and `write_k12_history()` (review step 5, slice C1): the five K-12 history tables from counted
