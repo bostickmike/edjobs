@@ -1,3 +1,11 @@
+# edjobs 0.100.0
+
+* K-12 places from CCD: `fetch_ccd_district_towns()` / `ccd_district_towns()` give each district's office town and its
+  schools' towns, `refresh_district_towns()` keeps them in the app folder's `district_towns.csv` (a reference table: a
+  failed refresh keeps the file), and `fill_k12_locations()` gives a posting with no place its district's town when all
+  the district's schools are in one town, and corrects a statewide feed's town that is none of the district's to its
+  office town.
+
 # edjobs 0.99.0
 
 * Text boards (review step 8): `fetch_text_board_postings()` / `parse_text_board()` read a job page with no useful markup

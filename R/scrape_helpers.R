@@ -256,7 +256,8 @@ REFERENCE_TABLE_RULES <- list(
                                 year_col = "Year", max_age = 2),
   ipeds_staff_salaries = list(name = "IPEDS staff salaries", required = "Avg_Salary",
                               bounds = list(Avg_Salary = c(15000, 400000)),
-                              year_col = "Year", max_age = 3)
+                              year_col = "Year", max_age = 3),
+  district_towns = list(name = "CCD district towns", required = "Office_Town", year_col = "CCD_Year", max_age = 3)
 )
 
 #' Reference rules for
