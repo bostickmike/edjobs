@@ -7,7 +7,8 @@
 check_drift_step(
   app_dir = NULL,
   today = format(Sys.Date(), "\%Y-\%m-\%d"),
-  out_csv = "/tmp/drift_flagged.csv"
+  out_csv = "/tmp/drift_flagged.csv",
+  skip_platforms = character(0)
 )
 }
 \arguments{
@@ -16,6 +17,9 @@ check_drift_step(
 \item{today}{The run date; that day's archives are left out of the baseline.}
 
 \item{out_csv}{Where the flagged sources go.}
+
+\item{skip_platforms}{K-12 registry Platforms with no board to scrape (MT's "OPIOnly"): a district moved to one
+keeps its old board's baseline, so it would read as a scraper gone quiet (MT's Lodge Grass, 2026-11-26).}
 }
 \value{
 The flagged sources, invisibly.

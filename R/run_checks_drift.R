@@ -31,9 +31,12 @@ append_drift_report <- function(lines, report_path) {
 #' @param app_dir The app folder; defaults to the session's `state_config()`.
 #' @param today The run date; that day's archives are left out of the baseline.
 #' @param out_csv Where the flagged sources go.
+#' @param skip_platforms K-12 registry Platforms with no board to scrape (MT's "OPIOnly"): a district moved to one
+#'   keeps its old board's baseline, so it would read as a scraper gone quiet (MT's Lodge Grass, 2026-11-26).
 #' @return The flagged sources, invisibly.
 #' @export
-check_drift_step <- function(app_dir = NULL, today = format(Sys.Date(), "%Y-%m-%d"), out_csv = "/tmp/drift_flagged.csv") {
+check_drift_step <- function(app_dir = NULL, today = format(Sys.Date(), "%Y-%m-%d"), out_csv = "/tmp/drift_flagged.csv",
+                             skip_platforms = character(0)) {
   app_dir <- run_app_dir(app_dir)
   config <- current_state_config()
   read_k12_archive <- function(path) {
@@ -75,6 +78,15 @@ check_drift_step <- function(app_dir = NULL, today = format(Sys.Date(), "%Y-%m-%
   }
   min_mean <- if (is.null(config$drift_min_mean)) 3 else config$drift_min_mean
   flagged_k12 <- tag_type(flag_drift(current_k12, k12_baseline, min_mean_count = min_mean), "K-12")
+  if (length(skip_platforms) > 0 && nrow(flagged_k12) > 0 && file.exists("k12_district_registry.csv")) {
+    # The registry file itself: a state's direct_registry() may leave the no-board rows out.
+    all_reg <- utils::read.csv("k12_district_registry.csv", stringsAsFactors = FALSE)
+    no_board <- unique(all_reg$District[all_reg$Platform %in% skip_platforms])
+    skipped <- intersect(flagged_k12$name, no_board)
+    if (length(skipped) > 0) cat(sprintf("Drift check: not judged (no board of their own, Platform %s): %s\n",
+                                         paste(skip_platforms, collapse = "/"), paste(skipped, collapse = ", ")))
+    flagged_k12 <- flagged_k12[!flagged_k12$name %in% no_board, , drop = FALSE]
+  }
   flagged_he <- tag_type(flag_drift(current_he, he_baseline, min_mean_count = min_mean), "Higher Ed")
   flagged <- if (nrow(flagged_k12) == 0 && nrow(flagged_he) == 0) {
     data.frame(name = character(0), mean_count = numeric(0), n_weeks = integer(0), count = numeric(0), type = character(0))

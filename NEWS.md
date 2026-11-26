@@ -1,3 +1,10 @@
+# edjobs 0.102.0
+
+* `check_drift_step(skip_platforms = )`: K-12 districts whose registry Platform has no board (MT's "OPIOnly") aren't
+  judged, as `check_silent_sources_step()` already does. A district moved to one kept its old board's baseline and read as
+  a scraper gone quiet: MT's Lodge Grass (OPI only since 11-22) filed auto-fix issue #156 on 11-26. Replayed on MT's
+  11-26 data: 4 flagged without it, 3 with it (Lodge Grass out, the rest unchanged).
+
 # edjobs 0.101.0
 
 * CSS boards: `Pay_Page_CSS` (rules column) reads posted pay from each posting's own page, the text of the elements it

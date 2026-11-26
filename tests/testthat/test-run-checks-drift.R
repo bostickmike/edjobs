@@ -37,6 +37,16 @@ test_that("the drift step flags a source that went quiet, at the state's floor, 
   expect_true(file.exists(file.path(root, "flagged.csv")))
   expect_match(out[1], "^Drift check: 2 K-12 baseline sources, 1 HE baseline sources, 1 flagged")
 
+  # A district moved to a no-board Platform keeps its old baseline: skipped, and said so.
+  write.csv(data.frame(District = c("A", "B"), Platform = c("OPIOnly", "Board")), "k12_district_registry.csv", row.names = FALSE)
+  out <- capture.output(f <- check_drift_step(today = "2026-11-01", out_csv = file.path(root, "flagged.csv"),
+                                              skip_platforms = "OPIOnly"))
+  expect_equal(nrow(f), 0)
+  expect_true(any(grepl("not judged (no board of their own, Platform OPIOnly): A", out, fixed = TRUE)))
+  capture.output(f <- check_drift_step(today = "2026-11-01", out_csv = file.path(root, "flagged.csv")))
+  expect_equal(f$name, "A")                     # without the argument, as before
+  unlink("k12_district_registry.csv")
+
   # A floor above A's average: nothing is judged.
   set_state_config(state_config("T", "00", "app", feed = feed, drift_min_mean = 6))
   capture.output(f <- check_drift_step(today = "2026-11-01", out_csv = file.path(root, "flagged.csv")))
