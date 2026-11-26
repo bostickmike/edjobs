@@ -1,3 +1,10 @@
+# edjobs 0.101.0
+
+* CSS boards: `Pay_Page_CSS` (rules column) reads posted pay from each posting's own page, the text of the elements it
+  names, for a board whose cards cut the pay off or leave it out (`css_board_page_pay()`). Only links that are their own
+  web page are fetched (not the board, not a PDF or image); a page that can't be fetched leaves that posting without pay.
+  Measured on MT's 11-23 archive: 7 of 12 such postings (Charlo 2, Rocky Mountain College 5) state their pay there.
+
 # edjobs 0.100.0
 
 * K-12 places from CCD: `fetch_ccd_district_towns()` / `ccd_district_towns()` give each district's office town and its
