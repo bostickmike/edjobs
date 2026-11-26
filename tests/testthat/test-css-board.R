@@ -150,3 +150,31 @@ test_that("a strip pattern's own spaces count", {
   rule <- rule_of(Title_CSS = "h2", Strip_Regex = " - .*$")
   expect_equal(parse_css_board("<h2>Cook - 6 hours</h2><h2>- Driver</h2>", "u", "X", rule)$Title, c("Cook", "- Driver"))
 })
+
+# Posted pay from a posting's own page (Pay_Page_CSS, 0.101.0). Pages captured 2026-11-26, the posting body kept and a
+# footer with other dollar figures added: Charlo's card cuts the pay off ("$17.40 an ..."), Rocky's cards give none.
+test_that("pay is read from the posting's own body, never the page's footer", {
+  charlo <- css_board_page_pay(read_fixture("css_board_page_charlo_2026-11-26.html"), "article.articles")
+  expect_equal(c(charlo$Pay_Min, charlo$Pay_Max), c(20.40, 20.40))
+  expect_equal(charlo$Pay_Unit, "hour")
+  rocky <- css_board_page_pay(read_fixture("css_board_page_rocky_2026-11-26.html"), "div.page-main-content")
+  expect_equal(c(rocky$Pay_Min, rocky$Pay_Max), c(35000, 43800))
+  expect_equal(rocky$Pay_Unit, "year")
+  footer_only <- css_board_page_pay(read_fixture("css_board_page_rocky_2026-11-26.html"), "footer")
+  expect_equal(footer_only$Pay_Min, 30)                 # the selector is what keeps the footer out
+  none <- css_board_page_pay("<html><body><p>Apply today.</p></body></html>", "article")
+  expect_true(is.na(none$Pay_Min))
+})
+
+test_that("only a posting's own web page is fetched for pay: not the board, not a file", {
+  board <- "https://example.org/jobs/"
+  links <- c("https://example.org/jobs/cook/", "https://example.org/jobs", "https://example.org/jobs/#top",
+             "https://example.org/files/Cook.PDF", "https://example.org/a.docx?dl=1", "https://example.org/flyer.png", NA)
+  expect_equal(edjobs:::css_board_own_page(links, board), c(TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE))
+})
+
+test_that("Pay_Page_CSS is a rules column, blank by default", {
+  rules <- css_board_rules(data.frame(Source = "A", Title_CSS = "h2", stringsAsFactors = FALSE))
+  expect_true("Pay_Page_CSS" %in% names(rules))
+  expect_identical(rules$Pay_Page_CSS, "")
+})

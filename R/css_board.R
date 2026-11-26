@@ -4,7 +4,8 @@
 # page and the place.
 
 CSS_BOARD_RULE_COLUMNS <- c("Source", "Item_CSS", "Title_CSS", "Link_CSS", "Location_CSS", "Board_CSS",
-                            "Exclude_Regex", "Include_Regex", "Strip_Regex", "Max_Title_Chars", "Max_Tries")
+                            "Exclude_Regex", "Include_Regex", "Strip_Regex", "Max_Title_Chars", "Max_Tries",
+                            "Pay_Page_CSS")
 
 #' Read and check a CSS-board rules file
 #'
@@ -23,6 +24,9 @@ CSS_BOARD_RULE_COLUMNS <- c("Source", "Item_CSS", "Title_CSS", "Link_CSS", "Loca
 #'   titles. `Strip_Regex` (case-insensitive): removed from the titles kept ("Hiring " before each); a title it
 #'   empties is dropped. `Max_Title_Chars`: drop longer titles (a paragraph caught by the selector).
 #' * `Max_Tries`: attempts for the page request (default 3), for a host that rate-limits.
+#' * `Pay_Page_CSS`: when set, each posting whose link is its own web page (not the board, not a file) is fetched
+#'   and its posted pay read from the text of these elements on it ([css_board_page_pay()]): for a board whose cards
+#'   cut the pay off or leave it out. A page that can't be fetched leaves that posting without pay.
 #' @param rules A data frame, or the path of a CSV.
 #' @return The rules, every column present (missing optional ones blank), checked.
 #' @export
@@ -107,7 +111,45 @@ css_board_spec <- function(rules, url_col, place_col, name_col) {
 fetch_css_board_postings <- function(url, location, rule) {
   tries <- if (nzchar(rule$Max_Tries %||% "")) as.integer(rule$Max_Tries) else 3L
   resp <- request(url) %>% httr2::req_user_agent(POSTING_STATUS_UA) %>% perform_with_retry(max_tries = tries)
-  parse_css_board(resp_body_string(resp), url, location, rule)
+  out <- parse_css_board(resp_body_string(resp), url, location, rule)
+  pay_css <- trimws(rule$Pay_Page_CSS %||% "")
+  if (is.na(pay_css) || !nzchar(pay_css)) return(out)
+  out <- ensure_posted_pay_columns(out)
+  for (i in which(css_board_own_page(out$Link, url))) {
+    if (i > 1) Sys.sleep(0.5)                                # one host, one page after another
+    html <- tryCatch(resp_body_string(request(out$Link[i]) %>% httr2::req_user_agent(POSTING_STATUS_UA) %>%
+                                        httr2::req_timeout(30) %>% perform_with_retry(max_tries = tries)),
+                     error = function(e) NA_character_)
+    if (is.na(html)) next
+    pay <- css_board_page_pay(html, pay_css)
+    for (col in POSTED_PAY_COLUMNS) out[[col]][i] <- pay[[col]]
+  }
+  out
+}
+
+#' Postings whose link is their own web page
+#'
+#' @param link The postings' links.
+#' @param url The board's page.
+#' @return TRUE where the link is neither the board page nor a file (PDF, Word, image).
+#' @keywords internal
+css_board_own_page <- function(link, url) {
+  strip <- function(u) sub("/+$", "", sub("#.*$", "", u))
+  !is.na(link) & nzchar(link) & strip(link) != strip(url) &
+    !grepl("\\.(pdf|docx?|png|jpe?g|gif)([?#].*)?$", link, ignore.case = TRUE, perl = TRUE)
+}
+
+#' Posted pay from a posting's own page
+#'
+#' The text of the elements `css` selects (the posting's body, so a menu or footer figure is never read), through
+#' [extract_posted_pay()].
+#' @param html_text The posting's page.
+#' @param css The rule's `Pay_Page_CSS`.
+#' @return One row of posted pay (all NA when the page states none or has no such element).
+#' @export
+css_board_page_pay <- function(html_text, css) {
+  text <- rvest::html_text2(rvest::html_elements(rvest::read_html(html_text), css))
+  extract_posted_pay(if (length(text)) paste(text, collapse = "\n") else NA_character_)
 }
 
 #' Parse a CSS board

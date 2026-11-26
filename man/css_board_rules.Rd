@@ -29,5 +29,8 @@ the reader stops, so a moved or redesigned page is an error in the scrape log in
 titles. \code{Strip_Regex} (case-insensitive): removed from the titles kept ("Hiring " before each); a title it
 empties is dropped. \code{Max_Title_Chars}: drop longer titles (a paragraph caught by the selector).
 \item \code{Max_Tries}: attempts for the page request (default 3), for a host that rate-limits.
+\item \code{Pay_Page_CSS}: when set, each posting whose link is its own web page (not the board, not a file) is fetched
+and its posted pay read from the text of these elements on it (\code{\link[=css_board_page_pay]{css_board_page_pay()}}): for a board whose cards
+cut the pay off or leave it out. A page that can't be fetched leaves that posting without pay.
 }
 }
