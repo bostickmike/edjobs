@@ -112,3 +112,23 @@ test_that("rows read back from an archive: NA and blank are not flagged; archive
   all_na <- utils::read.csv(text = "title,Stale_Reason\na,NA\n")   # read as logical NA
   expect_equal(nrow(drop_stale_rows(all_na)), 1)
 })
+
+test_that("stale_flags_for_archive judges an archive written before the rule by its own run date, and keeps a ruled one", {
+  # WY archives (Fremont County SD 38's AppliTrack board): the same Music Teacher ad, posted 4/2/2024, was current in
+  # the 2024-10-04 run (cutoff 2023-07-01) and an old ad by the 2025-09-26 run (cutoff 2024-07-01).
+  old <- data.frame(title = c("Music Teacher", "Elementary Teacher", "Substitute Teacher Pool", "Music Teacher"),
+                    date_posted = c("4/2/2024", "1/26/2023", "1/26/2023", "1/26/2023"), stringsAsFactors = FALSE)
+  feed <- c(FALSE, FALSE, FALSE, TRUE)
+  a <- stale_flags_for_archive(old, as.Date("2024-10-04"), board = !feed)
+  expect_equal(is_stale_flagged(a$Stale_Reason), c(FALSE, TRUE, FALSE, FALSE))
+  b <- stale_flags_for_archive(old, as.Date("2025-09-26"), board = !feed)
+  expect_equal(is_stale_flagged(b$Stale_Reason), c(TRUE, TRUE, FALSE, FALSE))
+  expect_equal(b$Stale_Reason[1], STALE_POSTED_REASON)
+  expect_equal(nrow(drop_stale_rows(b)), 2)
+  # An archive the rule wrote keeps that run's decisions, even where judging it now would differ.
+  ruled <- old; ruled$Stale_Reason <- c(NA, NA, NA, NA)
+  expect_identical(stale_flags_for_archive(ruled, as.Date("2025-09-26"), board = !feed), ruled)
+  back <- utils::read.csv(text = "title,date_posted,Stale_Reason\nMusic Teacher,4/2/2024,\n", colClasses = "character")
+  expect_identical(stale_flags_for_archive(back, as.Date("2025-09-26")), back)
+  expect_identical(nrow(stale_flags_for_archive(old[0, ], as.Date("2025-09-26"))), 0L)
+})

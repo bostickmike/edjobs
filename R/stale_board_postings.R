@@ -169,6 +169,26 @@ flag_stale_board_postings <- function(df, run_date, rule = NULL, board = TRUE, t
   df
 }
 
+#' Stale flags for an archived run, restating archives written before the rule
+#'
+#' Reading a run's archive back (a history rebuild, a posting panel): an archive the rule wrote (it has
+#' `Stale_Reason`) keeps that run's decisions, unchanged. An older archive has no flags, so its board rows are judged
+#' now by [flag_stale_board_postings()] with that run's own date, and every week shown is counted under one rule.
+#' Without this, the first run under the rule drops the old ads all at once, and a history chart reads that step as
+#' openings falling (MT 2026-11-26: about 23 of the 11-23 teaching postings were old ads).
+#' @param df One archived run's rows.
+#' @param run_date That run's date (the cutoff is the July 1 before the previous school year, from this date).
+#' @param board Logical, one per row (or one): which rows are board postings; feed rows are never judged by their
+#'   own dates.
+#' @param rule A [stale_board_rule()], or NULL for the state's (or the package default).
+#' @param col The reason column.
+#' @return `df`, with `Stale_Reason` added when the archive had none.
+#' @export
+stale_flags_for_archive <- function(df, run_date, board = TRUE, rule = NULL, col = "Stale_Reason") {
+  if (col %in% names(df)) return(df)
+  flag_stale_board_postings(df, run_date, rule = rule, board = board)
+}
+
 #' Mark feed rows that are the same ad as a stale board posting
 #'
 #' A statewide feed often relists a district's own ad, linking its posting. When that board posting is flagged
@@ -199,8 +219,8 @@ is_stale_flagged <- function(x) {
 
 #' Leave flagged stale rows out
 #'
-#' The rows everything counted is built from. A data frame without the column (an archive written before the rule)
-#' comes back unchanged: the rule applies from the first run that wrote it on.
+#' The rows everything counted is built from. A data frame without the column comes back unchanged; to count an
+#' archive written before the rule under it, add its flags first with [stale_flags_for_archive()].
 #' @param df Rows, with or without `Stale_Reason`.
 #' @param col The reason column.
 #' @return `df` without its flagged rows.

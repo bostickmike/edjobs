@@ -1,3 +1,12 @@
+# edjobs 0.104.0
+
+* Stale board ads, restated: `stale_flags_for_archive()` gives an archive written before the rule its flags, judged
+  with that run's own date (the cutoff moves with each run), and leaves an archive the rule wrote as it is. A state's
+  archive reader calls it before `drop_stale_rows()`, so every week shown is counted under one rule instead of the
+  rule's first run dropping the old ads all at once. Measured (both states' archives, 2026-11-26): MT -1.0% to -4.0%
+  of counted rows a week since 08-06 (about 23 of 328 teaching postings on 11-23); WY 0.3% to 3.2% a week since
+  2024-08-02 (up to 10 teaching postings a week; 264 of the 291 flagged teaching rows over all weeks are Fremont County SD 38 ads).
+
 # edjobs 0.103.0
 
 * Filled postings by public record: `filled_record()` reads and checks a state's table of postings a public record
