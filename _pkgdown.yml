@@ -181,6 +181,7 @@ reference:
   - stale_board_rule
   - stale_board_reason
   - stale_cutoff_date
+  - stale_flags_for_archive
   - mark_stale_feed_rows
   - drop_stale_rows
   - is_stale_flagged

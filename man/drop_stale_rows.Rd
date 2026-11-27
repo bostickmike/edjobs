@@ -15,6 +15,6 @@ drop_stale_rows(df, col = "Stale_Reason")
 \code{df} without its flagged rows.
 }
 \description{
-The rows everything counted is built from. A data frame without the column (an archive written before the rule)
-comes back unchanged: the rule applies from the first run that wrote it on.
+The rows everything counted is built from. A data frame without the column comes back unchanged; to count an
+archive written before the rule under it, add its flags first with \code{\link[=stale_flags_for_archive]{stale_flags_for_archive()}}.
 }
