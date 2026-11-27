@@ -1,3 +1,12 @@
+# edjobs 0.103.0
+
+* Filled postings by public record: `filled_record()` reads and checks a state's table of postings a public record
+  shows as filled (district, title, optional posted date, evidence without names, source URL, the record's date, and an
+  `Until` date), and `filled_record_reason()` gives each matching row its reason, for `Stale_Reason` or a feed's drop
+  reason. One posting at a time, each with its source; an entry expires so a job advertised again next year counts.
+  Built for MT's spring-postings check of 2026-11-26 (Custer's board still listing a PE and a Vo-Ag job its board
+  agendas record as hired).
+
 # edjobs 0.102.0
 
 * `check_drift_step(skip_platforms = )`: K-12 districts whose registry Platform has no board (MT's "OPIOnly") aren't
