@@ -285,3 +285,12 @@ test_that("an hourly range that repeats 'per hour' after its low end is a range"
   expect_equal(pay$Pay_Max, c(20.04, 22.81, 15, 15, 15))
   expect_equal(pay$Pay_Unit, rep("hour", 5))
 })
+
+test_that("monthly pay from $50 and weekly pay are plausible (full review 2026-11-27)", {
+  # UW's "Monthly Pooled - Resident Assistant, Spring 2027": $100.00/month (hedata_2026-11-24.xlsx), blanked under the $300 floor.
+  expect_false(is_implausible_pay(100, 100, "month"))
+  # An hourly range read as monthly (WY Carbon #1 Custodian, 11-20 archive) is still caught.
+  expect_true(is_implausible_pay(18.85, 23.851, "month"))
+  expect_false(is_implausible_pay(1200, 1200, "week"))
+  expect_true(is_implausible_pay(20, 20, "week"))
+})
