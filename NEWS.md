@@ -1,3 +1,13 @@
+# edjobs 0.105.0
+
+* Dashboard fixes from the 2026-11-27 full review. Home "Last 12 Weeks" sparklines count a week a district, college
+  or job type had no postings as 0 instead of skipping it and reaching further back (`group_weekly_series()`; WY's
+  Fremont County SD 25 skipped 10-09 and 10-16). Clickable names with an apostrophe work: the Home tables and map
+  popups escaped `'` as `&#39;`, which the browser decodes before the JS runs, so MT's "St Mary's School" link
+  failed (`js_attr_string()`). Compare cards no longer read "Gallatin County County" or "Albany County, Wyoming
+  County" (`county_subtitle()`). The K-12 and college trends plots show about 8 date ticks, labeled "Jan 2026" when a month or more apart and
+  "Nov 09" when closer, instead of a tick on each of WY's 121 run dates with no year (K-12).
+
 # edjobs 0.104.0
 
 * Stale board ads, restated: `stale_flags_for_archive()` gives an archive written before the rule its flags, judged
