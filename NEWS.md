@@ -1,3 +1,10 @@
+# edjobs 0.110.0
+
+* Listing Duration text: days listed run to halfway to the next update once a posting is gone, not a flat 7 days
+  (full review 2026-11-27; Mike's call). The states' duration scripts change with it: the +7 assumed weekly updates,
+  and both states update twice a week since 2026-11-17. The same end the posting spells use (midpoint to the next
+  run). Measured: ended listings' median MT K-12 35 -> 32 days, WY 28 -> 25; still-listed ones get nothing added.
+
 # edjobs 0.109.0
 
 * `k12_link_posting_id()` reads SchoolSpring's `?jobid=` links and Paylocity's `Details/<id>` links (with or without
