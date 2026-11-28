@@ -228,6 +228,32 @@ build_k12_history <- function(combinedclean, id_col = NULL) {
   )
 }
 
+#' Last two weeks of postings, every role
+#'
+#' Keeps `path` at the latest update of each of the last two ISO weeks (`latest_snapshot_per_week()`), with only the
+#' columns "new this week" compares, so the dashboard can find this week's new postings in every role. The history
+#' files hold teaching (K-12) and faculty (college) postings only, which made "New This Week" leave out every other
+#' new posting (full review 2026-11-27). A same-day re-run replaces that day's rows.
+#' @param path The file (`k12_recent_postings.csv` or `he_recent_postings.csv` in the app folder).
+#' @param rows This run's postings, one `Archive_Date`.
+#' @param cols The columns to keep (`Archive_Date` among them).
+#' @return The rows written, invisibly.
+#' @export
+write_recent_postings <- function(path, rows, cols) {
+  stopifnot("Archive_Date" %in% cols, all(cols %in% names(rows)))
+  run <- as.data.frame(lapply(rows[cols], as.character), stringsAsFactors = FALSE)
+  out <- append_weekly_rows(path, run, read_fn = function(p, ...) utils::read.csv(p, colClasses = "character", ...))
+  out <- latest_snapshot_per_week(out[cols])
+  keep <- utils::tail(sort(unique(as.Date(out$Archive_Date))), 2)
+  out <- out[as.Date(out$Archive_Date) %in% keep, , drop = FALSE]
+  utils::write.csv(out, path, row.names = FALSE)
+  invisible(out)
+}
+
+#' K-12 columns kept in `k12_recent_postings.csv`
+#' @export
+K12_RECENT_POSTING_COLUMNS <- c("Archive_Date", "Posting_ID", "title", "location", "District")
+
 #' Append one run's K-12 history to the dashboard's files
 #'
 #' [build_k12_history()] on one run, appended ([append_weekly_rows()]) to `k12jobanalysis.csv`,
@@ -246,5 +272,7 @@ write_k12_history <- function(combinedclean, app_dir = current_state_config()$ap
   out <- lapply(names(files), function(n) append_weekly_rows(file.path(app_dir, files[[n]]), run[[n]]))
   for (i in seq_along(files)) utils::write.csv(out[[i]], file.path(app_dir, files[[i]]), row.names = FALSE)
   utils::write.csv(run$allnow, file.path(app_dir, "allnow.csv"), row.names = FALSE)
+  if (all(K12_RECENT_POSTING_COLUMNS %in% names(combinedclean)))
+    write_recent_postings(file.path(app_dir, "k12_recent_postings.csv"), combinedclean, K12_RECENT_POSTING_COLUMNS)
   invisible(run)
 }

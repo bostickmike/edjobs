@@ -1,3 +1,14 @@
+# edjobs 0.107.0
+
+* "New This Week" covers every role (full review 2026-11-27; Mike's call). It compared the teaching (K-12) and faculty
+  (college) history files only, so the Jobs tabs' button on an all-roles table dropped every new paraprofessional,
+  custodian, coach or staff posting, and the map's and summary tables' "New This Week" counted teachers and faculty
+  only. `write_k12_history()` and `write_he_history()` now also keep `k12_recent_postings.csv` and
+  `he_recent_postings.csv` in the app folder (`write_recent_postings()`: the last two weeks' latest updates, every
+  role, only the columns compared), which the reusable weekly workflow commits. The K-12 rule is unchanged
+  (`find_k12_new_postings()`, rule A); the college rule both apps had is now `find_he_new_postings()` (title,
+  location, institution), and the college Jobs filter matches on all three (it left out location).
+
 # edjobs 0.106.0
 
 * Posted pay (full review 2026-11-27): a monthly amount counts from $50 (was $300), so UW's real $100-a-month

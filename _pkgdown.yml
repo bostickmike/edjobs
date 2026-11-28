@@ -284,6 +284,7 @@ reference:
   - rebuild_parity_row
   - write_he_history
   - write_k12_history
+  - write_recent_postings
 - title: "Run expectations"
   contents:
   - RUN_EXPECTATION_COLUMNS
@@ -408,6 +409,7 @@ reference:
   - county_subtitle
   - fill_first_seen
   - find_biggest_mover
+  - find_he_new_postings
   - format_bls_estimate
   - format_moe_dollars
   - format_moe_points
