@@ -1,3 +1,12 @@
+# edjobs 0.112.0
+
+* CCD matching pads NCES ids (`pad_nces_id()`, internal): a state with FIPS 01-09 whose crosswalk is read as numbers
+  loses the leading zero (`0800001` -> `800001`) and matched nothing in `parse_ccd_teacher_fte()`,
+  `parse_ccd_frl_share()` and `parse_ccd_school_staffing()` (full review 2026-11-27, 2.5). Urban's API gives padded
+  strings (checked for Colorado), so Montana and Wyoming are unchanged.
+* `parse_neogov_html()` builds links with `xml2::url_absolute()`, so an absolute `href` is kept as it is.
+* `.Rbuildignore` leaves out `.git` (a worktree's `.git` file gave an R CMD check NOTE).
+
 # edjobs 0.111.0
 
 * `built_with_edjobs()`: a "Built with edjobs" line, with a link to the package on GitHub, for each state's data-sources
