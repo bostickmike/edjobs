@@ -647,3 +647,17 @@ footer_retrieved <- function(sources, retrieved) {
   if (length(x) == 0) "" else if (length(x) == 1) paste0(" (retrieved ", x, ")") else paste0(" (retrieved ", x[1], " to ", x[length(x)], ")")
 }
 
+#' edjobs's home page on GitHub
+#' @noRd
+EDJOBS_URL <- "https://github.com/bostickmike/edjobs"
+
+#' "Built with edjobs" line for the data-sources footer
+#'
+#' Each state's app puts this in its footer, so every tab of every state credits the package and links to it.
+#' @return An htmltools `<p>`.
+#' @export
+built_with_edjobs <- function() {
+  htmltools::tags$p("Built with edjobs, an open-source R package for tracking education job postings (",
+                    htmltools::tags$a(href = EDJOBS_URL, target = "_blank", "GitHub", .noWS = "outside"), ").")
+}
+

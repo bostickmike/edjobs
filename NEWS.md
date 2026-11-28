@@ -1,3 +1,11 @@
+# edjobs 0.111.0
+
+* `built_with_edjobs()`: a "Built with edjobs" line, with a link to the package on GitHub, for each state's data-sources
+  footer (Mike 2026-11-27). The Data tab's citation card adds that edjobs is open source and another state can start
+  from it and its worked example state.
+* `LICENSE` holds the full MIT text (was the two-line R stub plus `LICENSE.md`), so GitHub labels the repository MIT
+  instead of "Other". R CMD check --as-cran gives a NOTE for it ("License stub is invalid DCF"), not a warning.
+
 # edjobs 0.110.0
 
 * Listing Duration text: days listed run to halfway to the next update once a posting is gone, not a flat 7 days
