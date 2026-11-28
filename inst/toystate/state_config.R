@@ -1,15 +1,14 @@
 # Toyland's state configuration: everything the package needs to know about the state, as data
 # (vignette("edjobs"); a real state keeps this file at its repo root). `toy_dir` is this folder.
 
-toy_registry <- function() {
-  utils::read.csv(file.path(toy_dir, "k12_district_registry.csv"), colClasses = "character", na.strings = character(0))
-}
+# The registry, read by the package (read_k12_registry()) wherever it is needed.
+toy_registry_csv <- file.path(toy_dir, "k12_district_registry.csv")
 
 set_state_config(state_config(
   state = "Toyland", fips = "99", app_dir = "app", timezone = "America/Chicago",
   oews_areas = file.path(toy_dir, "oews_areas.csv"),
   scraper_sources = list(scraper_registry(
-    toy_registry, name_col = "District", where = "k12_district_registry.csv",
+    toy_registry_csv, name_col = "District", where = "k12_district_registry.csv",
     # AppliTrack, SchoolSpring and TedK12 come from the package (default_scraper_specs()): a district on one of
     # them is a registry row and nothing else. Toyland replaces only Apptegy's.
     specs = scraper_specs(

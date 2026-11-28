@@ -15,7 +15,8 @@ scraper_registry(
 )
 }
 \arguments{
-\item{table}{The registry: a data frame, the path of a CSV, or a function
+\item{table}{The registry: a data frame, the path of a CSV (read like
+\code{read_k12_registry()}, without its schema check), or a function
 returning a data frame (read when a source is looked up, so a state's
 \code{state_config.R} can name an object defined later).}
 

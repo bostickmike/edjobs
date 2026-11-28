@@ -17,7 +17,8 @@ new state have to write" (2026-11-17 package review, step 3) and the shortest wo
 ## What a new state still writes (the gaps)
 
 Everything `pipeline.R` and `state_config.R` define as functions. `test-toy-state.R` lists them and fails when the
-list changes, so a step that moves into the package shows up as a shorter list. Four today:
+list changes, so a step that moves into the package shows up as a shorter list. Three today (the fourth, reading the
+registry, is `read_k12_registry()` since 0.113.0):
 
 1. `toy_raw_rows()`: each fetcher returns its own columns (`title`/`Title`, `url`/`Link`, `job_id`/`Posting_ID`),
    and AppliTrack's per-posting link has to be built from the job id. A package function that returns one raw-row
@@ -26,7 +27,6 @@ list changes, so a step that moves into the package shows up as a shorter list. 
    site families). Each state has its own (MT `build_k12_posting_id()`, WY `assign_posting_identity()`).
 3. `toy_k12_run()`: the stages in order (scrape, archive, combinedclean, teacher rows, totals, the accumulated files).
    Review steps 5 to 7 (pipeline stages as package functions).
-4. `toy_registry()`: reading the registry CSV (the states have `read_k12_registry()`).
 
 Not code any more: how each platform is scraped. AppliTrack, SchoolSpring and TedK12 come from the package's
 `default_scraper_specs()` (review step 4, 0.46.0), so a district on a known platform is one registry row. Toyland

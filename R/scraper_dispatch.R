@@ -143,7 +143,8 @@ scraper_specs <- function(..., defaults = default_scraper_specs()) {
 
 #' A registry of sources, one row each
 #'
-#' @param table The registry: a data frame, the path of a CSV, or a function
+#' @param table The registry: a data frame, the path of a CSV (read like
+#'   `read_k12_registry()`, without its schema check), or a function
 #'   returning a data frame (read when a source is looked up, so a state's
 #'   `state_config.R` can name an object defined later).
 #' @param name_col The column holding the source name the drift check uses.
@@ -200,7 +201,7 @@ state_autofix <- function(field, default = NULL) {
 scraper_source_table <- function(source) {
   t <- source$table
   if (is.function(t)) t <- t()
-  if (is.character(t)) t <- utils::read.csv(t, stringsAsFactors = FALSE)
+  if (is.character(t)) t <- read_registry_table(t)   # text columns, blanks "", coordinates numeric (read_k12_registry())
   t
 }
 

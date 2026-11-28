@@ -1,3 +1,16 @@
+# edjobs 0.113.0
+
+* `read_k12_registry()` and `read_he_registry()`: read a state's registry the same way in every state (Utah phase 0,
+  gap 4). Every column text with blanks as `""`, `Latitude`/`Longitude` numbers, `NCES_LEAID` 7-digit zero-padded text;
+  stops naming any missing column of `K12_REGISTRY_COLUMNS` / `HE_REGISTRY_COLUMNS`. The default path is the state's
+  file name; a relative path not in the working directory is looked for in its parents (both states did this with
+  `here::here()`, so their tests can read the registry from `tests/testthat`). Measured on both states' real
+  registries (now test fixtures): Montana's values are what its plain `read.csv()` gives, apart from `NCES_LEAID` as
+  text instead of integer; Wyoming's are what its own reader gives, apart from `City` (blank in all 52 rows), now `""`
+  instead of logical `NA`. The package's dispatch reads both the same (`registry_text()`).
+* `scraper_registry()` given a CSV path reads it this way (was a plain `read.csv()`; neither state passes a path).
+* The toy state no longer defines `toy_registry()`: the gap list in `test-toy-state.R` is three functions.
+
 # edjobs 0.112.0
 
 * CCD matching pads NCES ids (`pad_nces_id()`, internal): a state with FIPS 01-09 whose crosswalk is read as numbers
