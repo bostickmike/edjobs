@@ -177,6 +177,15 @@ test_that("parse_neogov_html dedupes the card/table double-render and extracts r
   expect_true(all(POSTED_PAY_COLUMNS %in% names(result)))
 })
 
+test_that("parse_neogov_html keeps a link NEOGOV gives as absolute", {
+  # The real CWC fragment with its first link written absolute: paste0() made "https://www.schooljobs.comhttps://...".
+  html <- sub('href="/careers/cwc/jobs/4125290/adjunct"', 'href="https://www.schooljobs.com/careers/cwc/jobs/4125290/adjunct"',
+              read_fixture("neogov_cwc.html"), fixed = TRUE)
+  base <- parse_neogov_html(read_fixture("neogov_cwc.html"), "https://www.schooljobs.com")
+  expect_equal(parse_neogov_html(html, "https://www.schooljobs.com")$Link, base$Link)
+  expect_true("https://www.schooljobs.com/careers/cwc/jobs/4125290/adjunct" %in% base$Link)
+})
+
 test_that("parse_neogov_html reads UM's real page with its campus names and card pay", {
   # UM's classic-board fragment, page 1, captured 2026-10-30.
   result <- parse_neogov_html(read_fixture("neogov_ummissoula_p1_2026-10-30.html"), "https://www.schooljobs.com")

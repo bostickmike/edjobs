@@ -75,3 +75,20 @@ test_that("surrounding_district_poverty averages a split town without counts, an
   expect_equal(surrounding_district_poverty(1, 1, saipe, geocode = function(lat, lon) stop("HTTP 502"))$status, "failed")
   expect_equal(surrounding_district_poverty(1, 1, saipe, geocode = function(lat, lon) "9")$status, "none")
 })
+
+test_that("pad_nces_id puts back the leading zero a CSV read drops for a state with FIPS 01-09", {
+  # Colorado (08): Urban's API gives "0800001" and "080000100214"; read.csv without colClasses gives numbers.
+  expect_equal(pad_nces_id(c(800001, 80000100214)), c("0800001", "080000100214"))
+  expect_equal(pad_nces_id(c("800001", " 0800001 ", "800001.0", "5600730", "560073000216")),
+               c("0800001", "0800001", "0800001", "5600730", "560073000216"))
+  expect_equal(pad_nces_id(c(NA, "", "n/a")), c(NA, "", "n/a"))
+})
+
+test_that("ids read as numbers still match (the WY fixture read without colClasses)", {
+  plain <- read.csv(test_path("fixtures", "ccd_wy_school_directory_2024_subset.csv"))
+  expect_true(is.numeric(plain$ncessch))
+  r <- parse_ccd_school_staffing(plain, list("Prairie View Community School" = 568025900599,
+                                             "Laramie Montessori Charter School" = "560073000542"))
+  expect_equal(r$Teachers_Total_FTE, c(10, 8))
+  expect_equal(parse_ccd_frl_share(plain, list(A = 5600730))$FRL_Schools_Reporting, 14)
+})

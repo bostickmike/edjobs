@@ -53,6 +53,26 @@ find_latest_ccd_directory_year <- function(fips = state_fips(), start_year = as.
   list(year = NA_integer_, data = data.frame())
 }
 
+#' NCES ids as zero-padded strings
+#'
+#' A district LEAID is 7 digits and a school NCESSCH 12, both starting with the two-digit state FIPS. A CSV read can
+#' turn the ids of a state with FIPS 01-09 into numbers and drop the leading zero (`0800001` -> `800001`); this puts
+#' it back: up to 7 digits pads to 7, 8 to 12 pads to 12. NA and anything that isn't digits are returned as they were.
+#' @param x Ids (character or numeric).
+#' @return Character vector.
+#' @keywords internal
+pad_nces_id <- function(x) {
+  na <- is.na(x)
+  x <- if (is.numeric(x)) format(x, scientific = FALSE, trim = TRUE) else trimws(as.character(x))
+  x <- sub("\\.0+$", "", x)
+  n <- nchar(x)
+  width <- ifelse(n <= 7, 7L, 12L)
+  pad <- !na & grepl("^[0-9]+$", x) & n < width
+  x[pad] <- paste0(strrep("0", width[pad] - n[pad]), x[pad])
+  x[na] <- NA_character_
+  x
+}
+
 #' Parse district teacher FTE and enrollment
 #'
 #' One row per `district_ids` entry: District, Teachers_Total_FTE and
@@ -67,14 +87,14 @@ parse_ccd_teacher_fte <- function(df, district_ids) {
                       stringsAsFactors = FALSE)
   if (nrow(df) == 0 || length(district_ids) == 0) return(empty)
   keep <- which(df$agency_type == 1 & !is.na(df$number_of_schools) & df$number_of_schools >= 1)
-  lea <- data.frame(leaid = as.character(df$leaid[keep]),
+  lea <- data.frame(leaid = pad_nces_id(df$leaid[keep]),
                     fte = ifelse(is.na(df$teachers_total_fte[keep]) | df$teachers_total_fte[keep] < 0, NA_real_,
                                  df$teachers_total_fte[keep]),
                     enr = ifelse(is.na(df$enrollment[keep]) | df$enrollment[keep] < 0, NA_real_, df$enrollment[keep]),
                     stringsAsFactors = FALSE)
   total <- function(v) if (length(v) == 0 || all(is.na(v))) NA_real_ else sum(v, na.rm = TRUE)
   dplyr::bind_rows(lapply(names(district_ids), function(d) {
-    m <- lea[lea$leaid %in% as.character(district_ids[[d]]), , drop = FALSE]
+    m <- lea[lea$leaid %in% pad_nces_id(district_ids[[d]]), , drop = FALSE]
     data.frame(District = d, Teachers_Total_FTE = total(m$fte), Enrollment = total(m$enr), stringsAsFactors = FALSE)
   }))
 }
@@ -116,12 +136,12 @@ parse_ccd_frl_share <- function(schools, id_map) {
   empty <- data.frame(District = character(0), Free_Reduced_Lunch_Share = numeric(0),
                       FRL_Schools_Reporting = integer(0), stringsAsFactors = FALSE)
   if (nrow(schools) == 0 || length(id_map) == 0) return(empty)
-  s <- data.frame(ncessch = as.character(schools$ncessch), leaid = as.character(schools$leaid),
+  s <- data.frame(ncessch = pad_nces_id(schools$ncessch), leaid = pad_nces_id(schools$leaid),
                   frl = suppressWarnings(as.numeric(schools$free_or_reduced_price_lunch)),
                   enrollment = suppressWarnings(as.numeric(schools$enrollment)), stringsAsFactors = FALSE)
   s <- s[!is.na(s$enrollment) & s$enrollment > 0, , drop = FALSE]
   rows <- lapply(names(id_map), function(entity) {
-    ids <- as.character(id_map[[entity]])
+    ids <- pad_nces_id(id_map[[entity]])
     mine <- s[s$leaid %in% ids[nchar(ids) == 7] | s$ncessch %in% ids[nchar(ids) == 12], , drop = FALSE]
     rep <- mine[!is.na(mine$frl) & mine$frl >= 0, , drop = FALSE]
     share <- if (nrow(rep) == 0 || sum(rep$enrollment) < FRL_MIN_REPORTED_SHARE * sum(mine$enrollment)) {
@@ -188,8 +208,8 @@ parse_ccd_school_staffing <- function(schools, id_map) {
   fte <- suppressWarnings(as.numeric(schools$teachers_fte)); enr <- suppressWarnings(as.numeric(schools$enrollment))
   fte[!is.na(fte) & fte < 0] <- NA; enr[!is.na(enr) & enr < 0] <- NA
   dplyr::bind_rows(lapply(names(id_map), function(entity) {
-    ids <- as.character(id_map[[entity]])
-    i <- as.character(schools$leaid) %in% ids[nchar(ids) == 7] | as.character(schools$ncessch) %in% ids[nchar(ids) == 12]
+    ids <- pad_nces_id(id_map[[entity]])
+    i <- pad_nces_id(schools$leaid) %in% ids[nchar(ids) == 7] | pad_nces_id(schools$ncessch) %in% ids[nchar(ids) == 12]
     data.frame(District = entity,
                Teachers_Total_FTE = if (any(i) && any(!is.na(fte[i]))) sum(fte[i], na.rm = TRUE) else NA_real_,
                Enrollment = if (any(i) && sum(enr[i], na.rm = TRUE) > 0) sum(enr[i], na.rm = TRUE) else NA_real_,

@@ -388,7 +388,7 @@ parse_neogov_html <- function(html_text, base_domain) {
   # blank every card after it).
   link_nodes <- rvest::html_element(cards, ".item-details-link")
   titles <- rvest::html_text2(link_nodes)
-  links <- paste0(base_domain, rvest::html_attr(link_nodes, "href"))
+  links <- xml2::url_absolute(rvest::html_attr(link_nodes, "href"), base_domain)
   locations <- vapply(cards, neogov_card_location, character(1))
   posted_dates <- rvest::html_text2(rvest::html_element(cards, ".list-entry-starts span"))
 
