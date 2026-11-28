@@ -576,3 +576,9 @@ test_that("fetch_trakstar_postings reads list pages until an empty one, then eac
   expect_true(all(is.na(list_only$Posted_Date)))
   expect_error(fetch_trakstar_postings("https://example.com/careers"), "hire.trakstar.com")
 })
+
+test_that("parse_jobposting_jsonld reads HOURLY, ANNUAL and WEEKLY unitText spellings", {
+  u <- function(unit) parse_jobposting_jsonld(jsonld_page(sprintf('{"@type":"JobPosting","title":"Aide",
+    "baseSalary":{"@type":"MonetaryAmount","currency":"USD","value":{"value":20,"unitText":"%s"}}}', unit)))$Pay_Unit
+  expect_equal(unname(vapply(c("HOURLY", "ANNUAL", "Weekly", "MONTHLY"), u, character(1))), c("hour", "year", "week", "month"))
+})

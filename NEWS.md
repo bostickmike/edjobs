@@ -1,3 +1,12 @@
+# edjobs 0.106.0
+
+* Posted pay (full review 2026-11-27): a monthly amount counts from $50 (was $300), so UW's real $100-a-month
+  resident-assistant stipend isn't blanked; over both states' archives it and one misread hourly range (which the
+  parser no longer makes) were the only monthly amounts under $300. Weekly pay has a range ($100-$10,000) instead of
+  being blanked as an unknown unit, and JSON-LD `unitText` spellings HOURLY, DAILY, WEEKLY, MONTHLY, YEARLY, ANNUAL
+  map to their units. The review's other two pay cases (WY Carbon #1's "$23.8512 month", MT Missoula's "2/hour
+  minimum") already parse right since 0.99.0; the archived values were written by older versions.
+
 # edjobs 0.105.0
 
 * Dashboard fixes from the 2026-11-27 full review. Home "Last 12 Weeks" sparklines count a week a district, college

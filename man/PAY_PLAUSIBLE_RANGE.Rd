@@ -11,5 +11,10 @@ The range a posted amount can plausibly take in each unit. An amount
 outside it is a misread (a fee, a benefit value, a phone number), not
 pay. Generous on purpose: real postings seen so far run $11-$100 an hour,
 $68-$350 a day, $35,780-$175,000 a year, $60-$5,670 a stipend and $775 a
-credit hour. "unknown" covers amounts with no unit.
+credit hour. "unknown" covers amounts with no unit. Month starts at $50
+(was $300; full review 2026-11-27): over both states' archives the only
+monthly amounts under $300 were UW's real $100 resident-assistant stipend
+and an hourly range misread as monthly ($18.85), which the parser no longer
+makes. Week (schema.org \code{unitText} WEEK) had no range, so any weekly pay was
+blanked; none has appeared yet.
 }

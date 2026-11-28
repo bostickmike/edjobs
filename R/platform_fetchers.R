@@ -599,7 +599,8 @@ jobposting_row <- function(j) {
     unit <- jp_chr(jp_get(base, "unitText"))
   }
   if (!is.na(pay_min) && !is.na(pay_max) && pay_min == 0 && pay_max == 0) pay_min <- pay_max <- NA_real_
-  unit <- if (is.na(unit)) NA_character_ else c(HOUR = "hour", DAY = "day", WEEK = "week", MONTH = "month", YEAR = "year")[toupper(unit)]
+  unit <- if (is.na(unit)) NA_character_ else c(HOUR = "hour", HOURLY = "hour", DAY = "day", DAILY = "day", WEEK = "week", WEEKLY = "week", MONTH = "month",
+                                              MONTHLY = "month", YEAR = "year", YEARLY = "year", ANNUAL = "year", ANNUALLY = "year")[toupper(unit)]
   if (is.na(pay_min) && is.na(pay_max)) unit <- NA_character_
   org <- j$hiringOrganization
   org <- if (is.list(org)) jp_get(jp_obj(org), "name") else org
