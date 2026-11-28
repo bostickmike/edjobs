@@ -90,6 +90,27 @@ build_he_history <- function(hedata) {
   )
 }
 
+#' College columns kept in `he_recent_postings.csv`
+#' @export
+HE_RECENT_POSTING_COLUMNS <- c("Archive_Date", "Title", "Location", "Institution")
+
+#' College postings new this week
+#'
+#' Postings in the latest update whose title, location and institution weren't in the previous one: the rule both
+#' states' apps had (moved here 2026-11-27).
+#' @param he_history Rows with `Archive_Date`, `Title`, `Location`, `Institution`, one update per week
+#'   ([latest_snapshot_per_week()]).
+#' @return The latest update's new rows.
+#' @export
+find_he_new_postings <- function(he_history) {
+  dates <- sort(unique(as.Date(he_history$Archive_Date)))
+  if (length(dates) < 2) return(he_history[0, , drop = FALSE])
+  key <- function(d) paste(d$Title, d$Location, d$Institution, sep = "@@@")
+  latest <- he_history[as.Date(he_history$Archive_Date) == dates[length(dates)], , drop = FALSE]
+  previous <- he_history[as.Date(he_history$Archive_Date) == dates[length(dates) - 1], , drop = FALSE]
+  latest[!key(latest) %in% key(previous), , drop = FALSE]
+}
+
 #' Append one run's higher-ed history to the dashboard's files
 #'
 #' [build_he_history()] on one run, appended ([append_weekly_rows()]) to `facultydata.csv`,
@@ -107,5 +128,6 @@ write_he_history <- function(hedata, app_dir = current_state_config()$app_dir) {
   out <- lapply(names(files), function(n) append_weekly_rows(file.path(app_dir, files[[n]]), run[[n]]))
   for (i in seq_along(files)) utils::write.csv(out[[i]], file.path(app_dir, files[[i]]), row.names = FALSE)
   utils::write.csv(run$allnow_he, file.path(app_dir, "allnow_he.csv"), row.names = FALSE)
+  write_recent_postings(file.path(app_dir, "he_recent_postings.csv"), hedata, HE_RECENT_POSTING_COLUMNS)
   invisible(run)
 }

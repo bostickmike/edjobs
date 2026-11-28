@@ -719,8 +719,8 @@ dashboard_server_shared <- function(input, output, session, data, state_name, fe
       df <- df %>% dplyr::filter(Appointment == input$he_table_appointment)
     }
     if (isTRUE(identical(input$he_quick_filter, "new"))) {
-      new_keys <- paste(he_new_this_week$Title, he_new_this_week$Institution, sep = "@@@")
-      current_keys <- paste(df$Title, df$Institution, sep = "@@@")
+      new_keys <- paste(he_new_this_week$Title, he_new_this_week$Location, he_new_this_week$Institution, sep = "@@@")
+      current_keys <- paste(df$Title, df$Location, df$Institution, sep = "@@@")
       df <- df[current_keys %in% new_keys, ]
     }
     DT::datatable(df, filter = "top", escape = FALSE, extensions = "Buttons",

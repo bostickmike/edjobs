@@ -493,7 +493,8 @@ jobs:
           git add $shared $state Archived_HE_Data/*.xlsx Archivek12_Data/*.csv
           for f in schoolspring_endings.csv posting_status.csv coverage_calendar.csv \
                    posting_spells_k12.csv posting_durations_k12.csv posting_spells_he.csv posting_durations_he.csv \
-                   advertised_windows.csv "$APP_DIR/posting_first_seen.csv" $(echo "$OPTIONAL_FILES" | xargs); do
+                   advertised_windows.csv "$APP_DIR/posting_first_seen.csv" "$APP_DIR/k12_recent_postings.csv" \
+                   "$APP_DIR/he_recent_postings.csv" $(echo "$OPTIONAL_FILES" | xargs); do
             [ -f "$f" ] && git add "$f" || true
           done
           if git diff --cached --quiet; then
