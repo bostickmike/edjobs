@@ -156,6 +156,8 @@ data_tab_panel <- function(tiles, dictionary, provenance_rows, citation, repo_ur
         citation,
         tags$a(href = repo_url, target = "_blank", repo_url)
       ),
+      htmltools::p("edjobs is open source. Anyone who wants a dashboard like this for another state can start from the package and its worked example state on ",
+        tags$a(href = EDJOBS_URL, target = "_blank", "GitHub", .noWS = "outside"), "."),
       htmltools::p(style = "margin-bottom: 0; font-size: 12px; color: #777;",
         "To report discrepancies, missing districts, or data issues, use the Feedback button at the top right (no account needed), or open an issue on the ",
         tags$a(href = paste0(repo_url, "/issues"), target = "_blank", "GitHub Issue Tracker"), ".")

@@ -33,6 +33,14 @@ test_that("data_tab_panel draws the tiles in order, the popover columns, the tab
   expect_match(html, "table table-striped table-bordered table-hover", fixed = TRUE)
   expect_match(html, "href=\"https://github.com/x/y/issues\"", fixed = TRUE)
   expect_match(html, "data_dictionary_table", fixed = TRUE)
+  expect_match(html, "another state can start from the package", fixed = TRUE)
+  expect_match(html, "on <a href=\"https://github.com/bostickmike/edjobs\" target=\"_blank\">GitHub</a>.", fixed = TRUE)
+})
+
+test_that("built_with_edjobs credits the package with a link to it", {
+  html <- as.character(built_with_edjobs())
+  expect_match(html, "^<p>\\s*Built with edjobs, an open-source R package")
+  expect_match(html, "postings (<a href=\"https://github.com/bostickmike/edjobs\" target=\"_blank\">GitHub</a>).", fixed = TRUE)
 })
 
 test_that("rows_phrase rounds down like the hand-written counts and download_rows counts what the download gives", {
