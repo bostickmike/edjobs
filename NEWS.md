@@ -1,3 +1,13 @@
+# edjobs 0.109.0
+
+* `k12_link_posting_id()` reads SchoolSpring's `?jobid=` links and Paylocity's `Details/<id>` links (with or without
+  the trailing slug), the forms WSBA links to. WY's WSBA dedupe matches by that ID, so 7 postings on 2026-11-27
+  counted twice (WSBA and the district's board, same job ID; the full review found 3: Campbell #1's two and Laramie
+  Montessori's counselor; the other 4 have WSBA's wording of the title) count once from WY's next update. WY's posting
+  spells, replayed: 13,073 -> 13,063 (10 pieces now joined by ID), medians unchanged. The review's two other pairs
+  (Carbon #2, Sweetwater #1) link WSBA to a category page with no job ID and stay as they are (Mike, 11-27: censor,
+  don't link).
+
 # edjobs 0.108.0
 
 * College tables count branch campuses in their college (full review 2026-11-27; Mike's call). The Institution
