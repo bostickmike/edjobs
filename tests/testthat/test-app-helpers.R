@@ -265,3 +265,15 @@ test_that("trend_date_labels shows the year for month-or-wider ticks and the day
   expect_equal(trend_date_labels(as.Date(c("2026-11-02", "2026-11-09"))), c("Nov 02", "Nov 09"))
   expect_equal(trend_date_labels(as.Date("2026-11-02")), "Nov 2026")
 })
+
+test_that("he_institution_rows keeps one row per college and counts its campuses in it", {
+  m <- data.frame(Type = c("K-12 District", rep("Higher Ed Institution", 4)),
+                  Name = c("D", "University of Wyoming", "University of Wyoming (Casper)", "University of Wyoming (Riverton)", "LCCC"),
+                  Campus_Of = c(NA, NA, "University of Wyoming", "University of Wyoming", NA),
+                  CurrentCount = c(5L, 213L, 15L, 5L, 11L), WeeklyNew = c(1L, 4L, NA, 1L, 0L))
+  out <- he_institution_rows(m)
+  expect_equal(out$Name, c("University of Wyoming", "LCCC"))
+  expect_equal(out$CurrentCount, c(233L, 11L))
+  expect_equal(out$WeeklyNew, c(5L, 0L))
+  expect_equal(nrow(he_institution_rows(m[, names(m) != "Campus_Of"])), 4)
+})

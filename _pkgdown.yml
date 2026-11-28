@@ -418,6 +418,7 @@ reference:
   - format_posted_pay
   - format_poverty_range
   - group_weekly_series
+  - he_institution_rows
   - he_map_name
   - indistinct_from_zero
   - js_attr_string

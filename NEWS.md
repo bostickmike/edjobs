@@ -1,3 +1,11 @@
+# edjobs 0.108.0
+
+* College tables count branch campuses in their college (full review 2026-11-27; Mike's call). The Institution
+  Summary and the comparator listed each branch-campus map dot as a college of its own (MT 10 extra rows, WY 14), with
+  0 faculty openings and no IPEDS figures, while the main row's Current Openings left those postings out and its
+  Faculty and Adjunct columns counted them. `he_institution_rows()`: one row per college, its campuses' current and
+  new-this-week counts added. The map keeps a dot per campus.
+
 # edjobs 0.107.0
 
 * "New This Week" covers every role (full review 2026-11-27; Mike's call). It compared the teaching (K-12) and faculty
