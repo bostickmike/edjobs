@@ -46,6 +46,10 @@ k12_link_posting_id <- function(url) {
   }
   pick("applitrack\\.com/([^/]+)/.*applitrackjobid=(\\d+)", "applitrack:\\1:\\2")
   pick("([a-z0-9-]+)\\.schoolspring\\.com/jobs/(\\d+)", "schoolspring:\\2")
+  # WSBA links SchoolSpring jobs as "?jobid=" and Paylocity jobs with a trailing slug: the same posting as the board's
+  # own link (WY 2026-11-27: Campbell #1's two jobs and Laramie Montessori's counselor counted twice).
+  pick("([a-z0-9-]+)\\.schoolspring\\.com/[^#]*[?&]jobid=(\\d+)", "schoolspring:\\2")
+  pick("recruiting\\.paylocity\\.com/recruiting/jobs/details/(\\d+)", "paylocity:\\1")
   pick("redroverk12\\.com/org/([^/]+)/opening/(\\d+)", "redrover:\\1:\\2")
   pick("([a-z0-9-]+)\\.tedk12\\.com/hire/viewjob\\.aspx\\?jobid=(\\d+)", "tedk12:\\1:\\2")
   pick("([a-z0-9-]+)\\.tylerportico\\.com/.*/job-list/([0-9a-f-]+)", "tylerportico:\\1:\\2")  # a GUID or a number

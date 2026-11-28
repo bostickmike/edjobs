@@ -162,3 +162,12 @@ test_that("a feed is one board: its postings keep their own districts, and an er
   checks <- read.csv(file.path(dir, "presence_checks.csv"))
   expect_equal(checks$Status[checks$Date == format(day + 2) & checks$Board == "Statewide"], "error")
 })
+
+test_that("k12_link_posting_id reads WSBA's link forms for SchoolSpring and Paylocity jobs as the board's own", {
+  # WY combinedclean.csv 2026-11-27: each pair is one posting, counted twice.
+  expect_equal(k12_link_posting_id(c("https://campbell.schoolspring.com/jobs/4949531", "https://campbell.schoolspring.com/?jobid=4949531",
+                                     "https://recruiting.paylocity.com/recruiting/jobs/Details/4552362",
+                                     "https://recruiting.paylocity.com/recruiting/jobs/Details/4552362/Laramie-Montessori-School-Inc/School-Counselor",
+                                     "https://recruiting.paylocity.com/recruiting/jobs/All/abc", "https://campbell.schoolspring.com/")),
+               c("schoolspring:4949531", "schoolspring:4949531", "paylocity:4552362", "paylocity:4552362", NA, NA))
+})
