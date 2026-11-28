@@ -15,7 +15,8 @@ toy_raw_rows <- function(df, platform, district) {
   }
   url <- pick("url", "Link")
   if (platform == "AppliTrack") {
-    tenant <- toy_registry()$Platform_Key[toy_registry()$District == district]
+    registry <- read_k12_registry(toy_registry_csv)
+    tenant <- registry$Platform_Key[registry$District == district]
     url <- dplyr::coalesce(applitrack_posting_url(tenant, pick("job_id")), url)
   }
   out <- data.frame(title = pick("title", "Title"), date_posted = pick("date_posted", "Posted_Date"),
@@ -42,7 +43,7 @@ toy_posting_identity <- function(rows) {
 toy_k12_run <- function(out_dir, run_date, session_factory = NULL) {
   app <- file.path(out_dir, "app"); archive <- file.path(out_dir, "Archivek12_Data")
   dir.create(app, recursive = TRUE, showWarnings = FALSE); dir.create(archive, showWarnings = FALSE)
-  registry <- toy_registry()
+  registry <- read_k12_registry(toy_registry_csv)
 
   # Scrape: every registry row through the package's dispatch.
   raw <- lapply(seq_len(nrow(registry)), function(i) {

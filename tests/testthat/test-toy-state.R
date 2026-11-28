@@ -57,7 +57,7 @@ test_that("the toy state runs end to end: two runs, a same-day re-run, its run e
   c1 <- toy_run(env, out, 1, "2026-11-02")
   expect_named(c1, K12_POSTING_COLUMNS)
   by_district <- table(c1$District)
-  expect_setequal(names(by_district), env$toy_registry()$District)
+  expect_setequal(names(by_district), read_k12_registry(env$toy_registry_csv)$District)
   expect_true(all(by_district > 0))
   methods <- tapply(c1$Posting_Identity_Method, c1$Posting_Source, unique)
   expect_equal(methods[["AppliTrack"]], "link"); expect_equal(methods[["SchoolSpring"]], "link")
@@ -95,7 +95,7 @@ test_that("what a new state still writes: the toy's own functions (shrinks as st
                                        identical(x[[3]][[1]], as.name("function"))) as.character(x[[2]])))
   }
   expect_setequal(c(defined(file.path(toy_dir, "state_config.R")), defined(file.path(toy_dir, "pipeline.R"))),
-                  c("toy_registry", "toy_raw_rows", "toy_posting_identity", "toy_k12_run"))
+                  c("toy_raw_rows", "toy_posting_identity", "toy_k12_run"))
 })
 
 test_that("a state's own OEWS area rows come in through state_config()", {
