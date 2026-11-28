@@ -230,3 +230,38 @@ test_that("find_k12_new_postings(): an ID change or a title edit is not new; a s
   h3 <- rbind(h, transform(h[7, ], Posting_ID = "c2"), transform(h[4, ], Posting_ID = "a3"))
   expect_setequal(find_k12_new_postings(h3)$Posting_ID, c("d", "c2", "a3"))
 })
+
+test_that("group_weekly_series counts a week with no row as 0 and starts at the group's first row", {
+  # WY's Fremont County SD 25 (k12_district_weekly_totals.csv, 2026-11-24): no rows on 10-09 and 10-16, so its
+  # last 12 rows reached back to 08-28 (full review 2026-11-27).
+  runs <- as.character(as.Date("2026-09-11") + 7 * 0:10)
+  totals <- rbind(
+    data.frame(District = "Other", Archive_Date = c(runs, "2026-11-24"), n = 5, n_not_marked = 4),
+    data.frame(District = "Fremont 25", Archive_Date = c("2026-08-28", "2026-09-04", runs[c(1:4, 7:11)], "2026-11-24"),
+               n = c(2, 2, 2, 2, 2, 2, 4, 4, 4, 26, 26, 25), n_not_marked = 1))
+  # 11-20 and 11-24 are in different ISO weeks, so both stay.
+  expect_equal(group_weekly_series(totals, totals$District == "Fremont 25", "n"),
+               c(2, 2, 2, 2, 0, 0, 4, 4, 4, 26, 26, 25))
+  # A group first read three weeks ago gets three values, not nine leading zeros.
+  new <- data.frame(District = "New", Archive_Date = tail(runs, 2), n = 3, n_not_marked = 3)
+  all <- rbind(totals, new)
+  expect_equal(group_weekly_series(all, all$District == "New", "n"), c(3, 3, 0))
+  expect_equal(group_weekly_series(all, all$District == "None", "n"), numeric(0))
+})
+
+test_that("js_attr_string keeps an apostrophe inside the JS string once the browser decodes the attribute", {
+  x <- js_attr_string(c("St Mary's School", 'A "B" & C\\D'))
+  expect_equal(x[1], "St Mary\\&#39;s School")  # decodes to St Mary\'s School
+  expect_equal(x[2], "A &quot;B&quot; &amp; C\\\\D")
+})
+
+test_that("county_subtitle adds County only where the name lacks it", {
+  expect_equal(county_subtitle(c("Gallatin County", "Albany County, Wyoming", "Park", NA, "")),
+               c("Gallatin County", "Albany County", "Park County", NA, NA))
+})
+
+test_that("trend_date_labels shows the year for month-or-wider ticks and the day for closer ones", {
+  expect_equal(trend_date_labels(as.Date(c("2025-01-01", "2025-04-01", NA))), c("Jan 2025", "Apr 2025", NA))
+  expect_equal(trend_date_labels(as.Date(c("2026-11-02", "2026-11-09"))), c("Nov 02", "Nov 09"))
+  expect_equal(trend_date_labels(as.Date("2026-11-02")), "Nov 2026")
+})

@@ -342,6 +342,55 @@ build_current_trends_table <- function(history, accent) {
   current
 }
 
+#' Last weeks of one group's run totals, with zero weeks
+#'
+#' [posting_run_totals()] writes no row for a group with no postings on a run, so taking a group's last 12 rows
+#' skipped its empty weeks and reached further back (WY's Fremont County SD 25 had 10 rows in the last 12 weeks,
+#' full review 2026-11-27). This takes the last `n` weeks of the whole table (each week's latest run) and counts 0
+#' for a week the group has no row, starting no earlier than the group's first row, so a newly added source doesn't
+#' show empty weeks from before it was read.
+#' @param totals Run totals for every group, with `Archive_Date`.
+#' @param keep Logical, which rows of `totals` belong to the group.
+#' @param count_col The count column (`n` or `n_not_marked`).
+#' @param n Number of weeks.
+#' @return Numeric counts, oldest first.
+#' @export
+group_weekly_series <- function(totals, keep, count_col, n = 12) {
+  runs <- sort(unique(latest_snapshot_per_week(totals)$Archive_Date))
+  grp <- totals[keep & !is.na(keep), , drop = FALSE]
+  if (nrow(grp) == 0) return(numeric(0))
+  runs <- utils::tail(runs[as.Date(runs) >= min(as.Date(grp$Archive_Date))], n)
+  vals <- grp[[count_col]][match(as.Date(runs), as.Date(grp$Archive_Date))]
+  as.numeric(ifelse(is.na(vals), 0, vals))
+}
+
+#' Link that sets a Shiny input from an onclick handler
+#'
+#' The value goes into a single-quoted JS string inside a double-quoted HTML attribute, so it is escaped for JS first
+#' (backslash, quote) and then for the attribute. Escaping only `'` as `&#39;` broke on names with an apostrophe
+#' (MT's "St Mary's School"): the browser decodes the entity before the JS runs (full review 2026-11-27).
+#' @param x Character values.
+#' @return The values, safe between `'...'` inside `onclick="..."`.
+#' @export
+js_attr_string <- function(x) {
+  x <- gsub("\\", "\\\\", as.character(x), fixed = TRUE)
+  x <- gsub("'", "\\'", x, fixed = TRUE)
+  htmltools::htmlEscape(x, attribute = TRUE)
+}
+
+#' County name for a card subtitle
+#'
+#' County columns differ by state: MT "Gallatin County", WY "Albany County, Wyoming". Drops a ", State" suffix and
+#' adds " County" only where the name lacks it (the compare cards read "Gallatin County County", full review
+#' 2026-11-27).
+#' @param county Character county names.
+#' @return Character, e.g. "Albany County".
+#' @export
+county_subtitle <- function(county) {
+  x <- trimws(sub(",.*$", "", as.character(county)))
+  ifelse(is.na(x) | x == "", NA_character_, ifelse(grepl("\\bCounty$", x), x, paste0(x, " County")))
+}
+
 #' Latest snapshot in each week
 #'
 #' The weekly-totals downloads keep one snapshot per week (decided 2026-11-02): a week with an extra run (the

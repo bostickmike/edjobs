@@ -151,14 +151,13 @@ dashboard_server_shared <- function(input, output, session, data, state_name, fe
   top_entity_table <- function(df, col, totals, accent) {
     top <- df %>% dplyr::count(.data[[col]], sort = TRUE, name = "Open Postings") %>% utils::head(5)
     top$`Last 12 Weeks` <- vapply(top[[col]], function(e) {
-      series <- totals[totals[[col]] %in% e, ] %>% dplyr::arrange(Archive_Date) %>% latest_snapshot_per_week() %>% utils::tail(12)
-      make_sparkline_svg(series[[home_count_col()]], accent = accent)
+      make_sparkline_svg(group_weekly_series(totals, totals[[col]] %in% e, home_count_col()), accent = accent)
     }, character(1))
     top[[col]] <- paste0(
       '<a href="#" onclick="Shiny.setInputValue(\'popup_view_jobs\', \'',
-      gsub("'", "&#39;", top[[col]], fixed = TRUE),
+      js_attr_string(top[[col]]),
       '\', {priority: \'event\'}); return false;">',
-      top[[col]],
+      htmltools::htmlEscape(top[[col]]),
       '</a>'
     )
     top
@@ -177,12 +176,11 @@ dashboard_server_shared <- function(input, output, session, data, state_name, fe
     top <- data.frame(Type = types, stringsAsFactors = FALSE) %>% dplyr::count(Type, sort = TRUE, name = "Open Postings") %>% utils::head(5)
     top$Share <- scales::percent(top$`Open Postings` / length(types), accuracy = 1)
     top$`Last 12 Weeks` <- vapply(top$Type, function(t) {
-      make_sparkline_svg(totals %>% dplyr::filter(Job_Type == t) %>% dplyr::arrange(Archive_Date) %>% latest_snapshot_per_week() %>% utils::tail(12) %>% dplyr::pull(!!home_count_col()),
-                         accent = accent)
+      make_sparkline_svg(group_weekly_series(totals, totals$Job_Type == t, home_count_col()), accent = accent)
     }, character(1))
     top$Type <- paste0('<a href="#" onclick="Shiny.setInputValue(\'', input_id, '\', \'',
-                       gsub("'", "&#39;", top$Type, fixed = TRUE), '\', {priority: \'event\'}); return false;">',
-                       gsub("/", "/<wbr>", top$Type, fixed = TRUE), '</a>')  # "Instructor/Teacher/Faculty" wraps on phones
+                       js_attr_string(top$Type), '\', {priority: \'event\'}); return false;">',
+                       gsub("/", "/<wbr>", htmltools::htmlEscape(top$Type), fixed = TRUE), '</a>')  # "Instructor/Teacher/Faculty" wraps on phones
     names(top)[1] <- "Job Type"
     top
   }
@@ -641,8 +639,6 @@ dashboard_server_shared <- function(input, output, session, data, state_name, fe
       shiny::need(nrow(df) > 0, "No data for selected districts.")
     )
 
-    all_dates <- sort(unique(df$Archive_Date))
-
     p <- ggplot2::ggplot(df, ggplot2::aes(
       x = Archive_Date,
       y = sum,
@@ -658,10 +654,8 @@ dashboard_server_shared <- function(input, output, session, data, state_name, fe
       ggplot2::geom_point(size = 1) +
       ggplot2::scale_color_manual(values = if (identical(input$k12_detail_level_trends, "detail")) K12_CATEGORY_COLORS_DETAIL else K12_CATEGORY_COLORS_AGG) +
       ggplot2::labs(x = "Archive Date", y = "Number of Postings") +
-      ggplot2::scale_x_date(
-        breaks = all_dates,
-        labels = scales::date_format("%b %d")
-      ) +
+      # About 8 ticks whatever the window: a tick on every run date crammed WY's 121 dates, with no year, into the axis.
+      ggplot2::scale_x_date(breaks = scales::breaks_pretty(n = 8), labels = trend_date_labels) +
       ggplot2::theme_minimal() +
       ggplot2::theme(
         axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 8),
@@ -838,7 +832,7 @@ dashboard_server_shared <- function(input, output, session, data, state_name, fe
           htmltools::div(
             class = "box-header with-border", style = "background: #f7f9fa; padding: 10px 15px;",
             htmltools::h4(style = "margin: 0; font-size: 15px; font-weight: 600; color: #222;", iname),
-            htmltools::tags$small(class = "text-muted", paste0(row$County[1], " County"))
+            htmltools::tags$small(class = "text-muted", county_subtitle(row$County[1]))
           ),
           htmltools::div(
             class = "box-body", style = "padding: 15px;",
@@ -1002,6 +996,7 @@ dashboard_server_shared <- function(input, output, session, data, state_name, fe
       ggplot2::geom_point(size = 1) +
       ggplot2::scale_color_manual(values = if (identical(input$he_detail_level_trends, "detail")) HE_CATEGORY_COLORS_DETAIL else HE_CATEGORY_COLORS_AGG) +
       ggplot2::labs(x = "Archive Date", y = "Number of Postings") +
+      ggplot2::scale_x_date(breaks = scales::breaks_pretty(n = 8), labels = trend_date_labels) +
       ggplot2::theme_minimal() +
       ggplot2::theme(
         axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 8),
@@ -1480,6 +1475,12 @@ dashboard_server_data_names <- function() {
 # (0.91.0), with the legend under the date axis, anchored left and titled "Category" above its items. ggplotly()'s
 # own horizontal legend put the column name to the left of the items, so on a full-width plot the title was clipped
 # ("road_Category") and the last item ran off the right edge ("Librai").
+# Date tick labels: "Mar 2026" when ticks are a month or more apart, "Mar 09" when closer.
+trend_date_labels <- function(x) {
+  gap <- suppressWarnings(min(diff(sort(as.numeric(x[!is.na(x)])))))
+  format(x, if (is.finite(gap) && gap < 28) "%b %d" else "%b %Y")
+}
+
 trends_plotly <- function(p) {
   plotly::ggplotly(p, height = 500, tooltip = "text") %>%
     plotly::layout(legend = list(orientation = "h", x = 0, xanchor = "left", y = -0.3, yanchor = "top",

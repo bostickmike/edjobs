@@ -405,6 +405,7 @@ reference:
   - compute_vacancy_rate_domain
   - compute_wow_delta
   - county_moe_summary
+  - county_subtitle
   - fill_first_seen
   - find_biggest_mover
   - format_bls_estimate
@@ -414,8 +415,10 @@ reference:
   - format_posted_or_listed_date
   - format_posted_pay
   - format_poverty_range
+  - group_weekly_series
   - he_map_name
   - indistinct_from_zero
+  - js_attr_string
   - latest_snapshot_per_week
   - make_sparkline_svg
   - make_sparkline_svg_light

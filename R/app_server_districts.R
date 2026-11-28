@@ -340,7 +340,7 @@ district_compare_cards <- function(selected, combined_map_data, spec) {
         div(
           class = "box-header with-border", style = "background: #f7f9fa; padding: 10px 15px;",
           htmltools::h4(style = "margin: 0; font-size: 15px; font-weight: 600; color: #222;", dname),
-          tags$small(class = "text-muted", paste0(row$County[1], " County"))
+          tags$small(class = "text-muted", county_subtitle(row$County[1]))
         ),
         div(
           class = "box-body", style = "padding: 15px;",
@@ -523,7 +523,7 @@ district_map_popups <- function(df, spec) {
     # Carries the active map search with it, so the Jobs tab opens on just the postings this popup counted.
     # URL-encoded so quotes in the query can't break out of the JS string.
     "<a href='#' onclick=\"Shiny.setInputValue('map_popup_view_jobs', {entity: '",
-    gsub("'", "&#39;", Name, fixed = TRUE),
+    js_attr_string(Name),
     "', query: '",
     ifelse(SearchActive,
            vapply(coalesce(SearchKeyword, ""), utils::URLencode, character(1), reserved = TRUE, USE.NAMES = FALSE),
