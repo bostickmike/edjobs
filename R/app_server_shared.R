@@ -783,8 +783,7 @@ dashboard_server_shared <- function(input, output, session, data, state_name, fe
   # Higher Ed Head-to-Head Comparator
   #--------------------------------------------------
   shiny::observeEvent(input$he_comp_preset_top, {
-    top_insts <- combined_map_data %>%
-      dplyr::filter(Type == "Higher Ed Institution") %>%
+    top_insts <- he_institution_rows(combined_map_data) %>%
       dplyr::arrange(dplyr::desc(CurrentCount)) %>%
       dplyr::pull(Name) %>%
       utils::head(3)
@@ -809,8 +808,7 @@ dashboard_server_shared <- function(input, output, session, data, state_name, fe
       TRUE ~ 3
     )
 
-    he_rows <- combined_map_data %>%
-      dplyr::filter(Type == "Higher Ed Institution", Name %in% selected)
+    he_rows <- he_institution_rows(combined_map_data) %>% dplyr::filter(Name %in% selected)
 
     cards <- lapply(selected, function(iname) {
       row <- he_rows %>% dplyr::filter(Name == iname)
@@ -1475,6 +1473,28 @@ dashboard_server_data_names <- function() {
 # (0.91.0), with the legend under the date axis, anchored left and titled "Category" above its items. ggplotly()'s
 # own horizontal legend put the column name to the left of the items, so on a full-width plot the title was clipped
 # ("road_Category") and the last item ran off the right edge ("Librai").
+#' One row per college, branch campuses counted in it
+#'
+#' The map gives a branch campus or site with postings its own dot (`Campus_Of` names its college). The Institution
+#' Summary and the comparator listed those dots as extra colleges, with 0 faculty openings and no IPEDS figures, while
+#' the main row's Current Openings left their postings out (full review 2026-11-27; Mike's call: main campuses only).
+#' Keeps the main rows and adds each one's campuses' `CurrentCount` and `WeeklyNew` to it.
+#' @param combined_map_data The map rows.
+#' @return The college rows, one per institution.
+#' @export
+he_institution_rows <- function(combined_map_data) {
+  he <- combined_map_data[combined_map_data$Type == "Higher Ed Institution", , drop = FALSE]
+  if (!"Campus_Of" %in% names(he)) return(he)
+  main <- he[is.na(he$Campus_Of), , drop = FALSE]
+  campus <- he[!is.na(he$Campus_Of), , drop = FALSE]
+  add <- function(col) {
+    extra <- tapply(dplyr::coalesce(as.numeric(campus[[col]]), 0), campus$Campus_Of, sum)
+    as.integer(dplyr::coalesce(as.numeric(main[[col]]), 0) + dplyr::coalesce(as.numeric(extra[main$Name]), 0))
+  }
+  for (col in intersect(c("CurrentCount", "WeeklyNew"), names(main))) main[[col]] <- add(col)
+  main
+}
+
 # Date tick labels: "Mar 2026" when ticks are a month or more apart, "Mar 09" when closer.
 trend_date_labels <- function(x) {
   gap <- suppressWarnings(min(diff(sort(as.numeric(x[!is.na(x)])))))

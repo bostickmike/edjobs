@@ -134,7 +134,7 @@ dashboard_server_configured <- function(input, output, session, combined_map_dat
 
   # Institution Summary: the map popups' data as an exportable table, not one marker at a time.
   output$he_summary_table <- DT::renderDT({
-    he_rows <- combined_map_data %>% dplyr::filter(Type == "Higher Ed Institution")
+    he_rows <- he_institution_rows(combined_map_data)
     appointment_counts <- ccdata %>%
       dplyr::count(Institution, Appointment, name = "Openings") %>%
       tidyr::complete(
